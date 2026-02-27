@@ -15,6 +15,8 @@
   --line-dark: rgba(11, 11, 12, 0.12);
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
   --shadow-soft: 0 14px 32px rgba(0, 0, 0, 0.12);
+  --menu-width: min(360px, 70vw);
+  --menu-shift: 0px;
 }
 
 * {
@@ -46,6 +48,17 @@ body::before {
   opacity: 0.2;
   pointer-events: none;
   z-index: 0;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 7, 8, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 110;
+  transition: opacity 0.6s ease;
 }
 
 h1,
@@ -89,6 +102,7 @@ main {
   background: rgba(7, 7, 8, 0.72);
   border-bottom: 1px solid var(--line-light);
   backdrop-filter: blur(12px);
+  transition: transform 0.6s ease;
 }
 
 .header-inner {
@@ -212,20 +226,30 @@ main {
 
 .site-nav {
   position: fixed;
-  inset: 0;
-  background: rgba(7, 7, 8, 0.96);
-  display: grid;
-  place-content: center;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--menu-width);
+  background: rgba(64, 64, 64, 0.96);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
   gap: 20px;
-  text-align: center;
+  padding: clamp(60px, 8vh, 200px) clamp(18px, 4vw, 64px) 40px;
+  text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.32em;
   font-size: clamp(0.85rem, 2vw, 1.15rem);
+  height: 100vh;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 90;
+  transform: translateX(-110%);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  z-index: 120;
+  box-shadow: 40px 0 90px rgba(0, 0, 0, 0.45);
 }
+
 
 .site-nav a {
   color: var(--cream);
@@ -263,6 +287,29 @@ main {
 body.nav-open .site-nav {
   opacity: 1;
   pointer-events: auto;
+  transform: translateX(0);
+}
+
+body.nav-open::after {
+  opacity: 1;
+}
+
+main,
+.site-footer {
+  transition: transform 0.6s ease;
+}
+
+body.nav-open main,
+body.nav-open .site-header,
+body.nav-open .site-footer {
+  transform: translateX(var(--menu-shift));
+}
+
+body.nav-open main,
+body.nav-open .site-footer {
+  opacity: 0.28;
+  filter: blur(2px);
+  pointer-events: none;
 }
 
 .hero,

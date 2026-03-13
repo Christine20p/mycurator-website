@@ -190,6 +190,7 @@ main {
   display: flex;
   flex-direction: column;
   line-height: 1.1;
+  min-width: 0;
 }
 
 .brand-name {
@@ -590,6 +591,7 @@ body.nav-open .site-footer {
 
 .glance-value {
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .services-grid,
@@ -660,6 +662,7 @@ body.nav-open .site-footer {
   background: rgba(15, 76, 75, 0.06);
   border: 1px solid rgba(15, 76, 75, 0.12);
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 .service-note {
@@ -779,6 +782,11 @@ body.nav-open .site-footer {
   background: rgba(15, 76, 75, 0.04);
   border: 1px solid rgba(15, 76, 75, 0.12);
   font-size: 0.95rem;
+}
+
+.panel-tile span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .page-hero .panel-tile {
@@ -2207,6 +2215,10 @@ body.nav-open .site-footer {
   text-transform: uppercase;
 }
 
+.footer-links a {
+  overflow-wrap: anywhere;
+}
+
 .footer-note {
   margin: 0;
 }
@@ -2448,6 +2460,117 @@ body.nav-open .site-footer {
   .career-value-card {
     padding: 18px;
     border-radius: 20px;
+  }
+}
+
+@media (max-width: 390px) {
+  :root {
+    --menu-width: min(250px, 86vw);
+  }
+
+  main {
+    padding-top: 148px;
+  }
+
+  .container {
+    width: calc(100vw - 20px);
+  }
+
+  .site-nav {
+    padding: 88px 18px 28px;
+    gap: 16px;
+    font-size: 0.76rem;
+    letter-spacing: 0.18em;
+  }
+
+  .hero {
+    min-height: auto;
+    padding: 118px 0 72px;
+  }
+
+  .page-hero {
+    padding: 96px 0 56px;
+  }
+
+  .hero h1,
+  .careers-hero-copy h1,
+  .page-hero-copy h1,
+  .section-heading h2,
+  .contact-copy h2,
+  .policy-title {
+    font-size: clamp(1.56rem, 8vw, 2rem);
+    letter-spacing: 0.08em;
+  }
+
+  .lead,
+  .section-heading p,
+  .career-block p,
+  .career-value-card p,
+  .career-apply-card p {
+    font-size: 0.95rem;
+  }
+
+  .glance-grid,
+  .services-grid,
+  .highlight-grid,
+  .steps,
+  .deliverables,
+  .destination-grid,
+  .service-list,
+  .career-list-grid,
+  .career-value-grid,
+  .contact-grid,
+  .map-card,
+  .portal-mini-grid,
+  .role-info-grid,
+  .role-stats,
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .service-panel,
+  .highlight-card,
+  .step,
+  .deliverable,
+  .destination-card,
+  .contact-form,
+  .panel-card,
+  .portal-card,
+  .dashboard-card,
+  .map-card,
+  .glance-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .destination-card {
+    min-height: 0;
+  }
+
+  .btn,
+  .header-cta,
+  .site-nav .nav-cta {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .hero-nav,
+  .footer-links,
+  .chips,
+  .app-badges,
+  .portal-highlight,
+  .integration-chips {
+    justify-content: center;
+  }
+
+  .footer-inner {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .footer-links {
+    gap: 8px;
+    letter-spacing: 0.12em;
   }
 }
 

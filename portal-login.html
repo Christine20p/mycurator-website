@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Curator Property Presentation Co. | Portal Access</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
+    <meta
+      name="description"
+      content="Register, log in, book services, and manage payments through the MyCurator client portal."
+    />
+<link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape shape-a" aria-hidden="true"></div>
+    <div class="bg-shape shape-b" aria-hidden="true"></div>
+    <div class="bg-shape shape-c" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">
+          <span class="nav-icon" aria-hidden="true"></span>
+          <span class="nav-label">Menu</span>
+        </button>
+        <a class="brand" href="index.html">
+          <img class="brand-logo" src="assets/companylogo.png" alt="Curator Property Presentation Co. logo" />
+          <span class="brand-text">
+            <span class="brand-name">Curator Property Presentation Co.</span>
+            <span class="brand-sub">because first impressions matter</span>
+          </span>
+        </a>
+        <div class="header-actions">
+          <a class="header-cta ghost" href="portal-login.html">Portal</a>
+          <a class="header-cta" href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div class="header-rule" aria-hidden="true"></div>
+      <nav class="site-nav" id="primary-nav" aria-label="Primary">
+<a href="index.html">Home</a>
+        <a href="company.html">Company</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="platform.html">Platform</a>
+        <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
+        <a class="is-active" href="portal-login.html">Portal</a>
+        <a class="nav-cta" href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section portal-auth-page" data-portal-login-page>
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow reveal">Client portal</p>
+            <h1 class="reveal">Secure access for Curator clients and agents</h1>
+            <p class="reveal">
+              Register or sign in to continue. Your activation status, bookings, and payments
+              are managed inside the MyCurator portal.
+            </p>
+          </div>
+          <p class="portal-message" data-portal-message></p>
+          <div class="portal-auth" data-portal-auth>
+            <div class="auth-card auth-card--login">
+              <div class="auth-header">
+                <h3>Login</h3>
+                <p>Secure access to bookings, payments, and readiness updates.</p>
+              </div>
+              <form class="portal-form" data-login-form>
+                <label class="field">Email
+                  <input type="email" name="login_email" placeholder="name@email.com" required />
+                </label>
+                <label class="field">Password
+                  <input type="password" name="login_password" placeholder="Password" required />
+                </label>
+                <div class="form-actions">
+                  <button class="btn primary" type="submit">Sign in</button>
+                  <button class="auth-link" type="button" data-reset-password>Forgot password?</button>
+                </div>
+                <p class="form-feedback" data-login-feedback role="status" aria-live="polite"></p>
+              </form>
+            </div>
+
+            <div class="auth-card">
+              <div class="auth-header">
+                <h3>Register</h3>
+                <p>Use the same details required in the MyCurator app.</p>
+              </div>
+              <form class="portal-form" data-register-form>
+                <div class="form-grid">
+                  <label class="field">Title
+                    <select name="title" required>
+                      <option value="" disabled selected>Select one</option>
+                      <option>Mr</option>
+                      <option>Mrs</option>
+                      <option>Ms</option>
+                      <option>Miss</option>
+                      <option>Dr</option>
+                      <option>Prof</option>
+                    </select>
+                  </label>
+                  <label class="field">Full name
+                    <input type="text" name="full_name" placeholder="Full name" required />
+                  </label>
+                  <label class="field">Surname
+                    <input type="text" name="surname" placeholder="Surname" required />
+                  </label>
+                  <label class="field">ID Number
+                    <input type="text" name="id_number" placeholder="South African ID" required />
+                  </label>
+                  <label class="field">Date of Birth (auto)
+                    <input type="text" name="dob" placeholder="Auto-filled from ID" disabled />
+                  </label>
+                  <label class="field">Cellphone
+                    <input type="tel" name="cellphone" placeholder="079 294 1992" required />
+                  </label>
+                  <label class="field">Address
+                    <input type="text" name="address" placeholder="Street, suburb, city" required />
+                  </label>
+                  <label class="field">Real estate agent code
+                    <input type="text" name="agent_code" placeholder="Agent code" required />
+                  </label>
+                  <label class="field">Email
+                    <input type="email" name="email" placeholder="name@email.com" required />
+                  </label>
+                  <label class="field">Create password
+                    <input type="password" name="password" placeholder="Create password" required />
+                  </label>
+                  <label class="field">Confirm password
+                    <input type="password" name="confirm_password" placeholder="Confirm password" required />
+                  </label>
+                </div>
+                <p class="portal-note">Curator operates within a verified real estate network. A registered agent code is required for activation.</p>
+                <label class="field checkbox">
+                  <input type="checkbox" required />
+                  I agree to the Privacy Policy and Terms & Conditions.
+                </label>
+                <div class="form-actions">
+                  <button class="btn primary" type="submit">Create account</button>
+                </div>
+                <p class="form-feedback" data-register-feedback role="status" aria-live="polite"></p>
+              </form>
+              <div class="otp-panel is-hidden" data-otp-panel>
+                <h4>Verify OTP</h4>
+                <p>Enter the one-time code sent to your phone to complete registration.</p>
+                <label class="field">OTP code
+                  <input type="text" name="otp_code" placeholder="Enter OTP" />
+                </label>
+                <div class="form-actions">
+                  <button class="btn primary" type="button" data-verify-otp>Verify OTP</button>
+                  <button class="btn ghost" type="button" data-resend-otp>Resend OTP</button>
+                </div>
+                <p class="form-feedback" data-otp-feedback role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+</main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>Curator Property Presentation Co.</strong>
+          <p>because first impressions matter</p>
+        </div>
+        <div class="footer-links">
+          <a href="company.html">Company</a>
+          <a href="services.html">Services</a>
+          <a href="portfolio.html">Portfolio</a>
+          <a href="platform.html">Platform</a>
+          <a href="portal-login.html">Portal</a>
+        
+          <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="legal.html">Legal</a>
+          <a href="popia.html">POPIA</a>
+        </div>
+        <p class="footer-note">Bookings: bookings@mycurator.co.za | 079 294 1992</p>
+      </div>
+    </footer>
+
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

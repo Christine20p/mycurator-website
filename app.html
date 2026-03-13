@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Curator Property Presentation Co. | MyCurator App</title>
+    <title>Curator Property Presentation Co. | Activation Status</title>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
     <meta
       name="description"
-      content="The MyCurator app by Curator Property Presentation Co. keeps property presentation, readiness, and service schedules in one place."
+      content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
 <link rel="stylesheet" href="styles.css" />
   </head>
@@ -30,7 +30,10 @@
             <span class="brand-sub">because first impressions matter</span>
           </span>
         </a>
-        <a class="header-cta" href="contact.html">Contact</a>
+        <div class="header-actions">
+          <a class="header-cta ghost" href="portal-login.html">Portal</a>
+          <a class="header-cta" href="contact.html">Contact</a>
+        </div>
       </div>
       <div class="header-rule" aria-hidden="true"></div>
       <nav class="site-nav" id="primary-nav" aria-label="Primary">
@@ -40,142 +43,156 @@
         <a href="portfolio.html">Portfolio</a>
         <a href="platform.html">Platform</a>
         <a href="community.html">Community</a>
-        <a class="is-active" href="app.html">App</a>
+        <a href="careers.html">Careers</a>
+        <a class="is-active" href="portal-login.html">Portal</a>
         <a class="nav-cta" href="contact.html">Contact</a>
       </nav>
     </header>
 
     <main>
-      <section class="page-hero">
-        <div class="container page-hero-grid">
-          <div class="page-hero-copy">
-            <p class="eyebrow reveal">MyCurator app</p>
-            <h1 class="reveal">
-              The first step to every Curator presentation plan.
-            </h1>
-            <p class="lead reveal">
-              The app provides inspection status, presentation plans, and live
-              progress updates. Clients and real estate agents use it to keep
-              listings ready for viewings.
-            </p>
-            <div class="hero-actions reveal">
-              <a class="btn primary" href="contact.html">Request a presentation plan</a>
-              <a class="btn ghost" href="services.html">View services</a>
-            </div>
-          </div>
-          <div class="hero-panel reveal">
-            <div class="panel-card">
-              <span class="panel-tag">App highlights</span>
-              <h2>Visibility for every listing.</h2>
-              <div class="panel-tiles">
-                <div class="panel-tile">
-                  <span>Inspection status</span>
-                  <span>Material-aware planning</span>
-                </div>
-                <div class="panel-tile">
-                  <span>Presentation progress</span>
-                  <span>25% to completion</span>
-                </div>
-                <div class="panel-tile">
-                  <span>Client & agent access</span>
-                  <span>Shared visibility</span>
-                </div>
-              </div>
-              <div class="panel-footer">Access is available after verification.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
+      <section class="section portal-dashboard-page" data-portal-activation-page>
         <div class="container">
-          <div class="section-heading">
-            <p class="eyebrow reveal">Features</p>
-            <h2 class="reveal">Built for clarity and confidence</h2>
+          <div class="dashboard-header">
+            <div>
+              <p class="eyebrow reveal">Client dashboard</p>
+              <h1 class="reveal">Activation status</h1>
+              <p class="lead reveal">Complete the assessment and mandate steps to unlock bookings.</p>
+              <p class="lead reveal">Welcome, <span data-user-name>Client</span>.</p>
+            </div>
+            <button class="btn ghost" type="button" data-signout>Sign out</button>
           </div>
-          <div class="highlight-grid">
-            <div class="highlight-card reveal">
-              <h3>Presentation overview</h3>
-              <p>See inspection status and readiness across listings.</p>
+          <p class="portal-message" data-portal-message></p>
+          <div class="dashboard-grid">
+            <div class="dashboard-card activation-card">
+              <h3>Activation status</h3>
+              <p class="status-title" data-status-title>Loading your profile...</p>
+              <p class="status-message" data-status-message>We are fetching your account status.</p>
+              <div class="status-amount" data-outstanding></div>
+              <ul class="activation-steps">
+                <li><span>Property Presentation Assessment Fee</span><span data-step="adminFee">Pending</span></li>
+                <li><span>Inspection</span><span data-step="inspection">Pending</span></li>
+                <li><span>Price Offer</span><span data-step="offer">Pending</span></li>
+                <li><span>Mandate</span><span data-step="mandate">Pending</span></li>
+                <li><span>Activation</span><span data-step="activation">Pending</span></li>
+              </ul>
+              <div class="form-actions">
+                <button class="btn primary" type="button" data-request-paynow>Request Pay Now link</button>
+                <button class="btn ghost" type="button" data-request-card>Pay by card</button>
+                <button class="btn ghost is-hidden" type="button" data-open-paynow>Open Pay Now</button>
+                <button class="btn ghost is-hidden" type="button" data-open-card>Open card payment</button>
+                <button class="btn ghost is-hidden" type="button" data-open-mandate>Open mandate link</button>
+                <button class="btn ghost is-hidden" type="button" data-request-mandate>Complete DebiCheck</button>
+              </div>
+              <form class="portal-form mandate-form is-hidden" data-mandate-form>
+                <p class="portal-note">
+                  <strong data-mandate-amount>Monthly amount: R0.00</strong><br />
+                  Reference: <span data-mandate-reference>Pending</span>
+                </p>
+                <div class="form-grid">
+                  <label class="field">Account holder
+                    <input type="text" name="debtor_name" placeholder="Account holder name" required />
+                  </label>
+                  <label class="field">Bank
+                    <select name="debtor_bank_id" required>
+                      <option value="">Select your bank</option>
+                      <option value="1">Standard Bank</option>
+                      <option value="2">Nedbank</option>
+                      <option value="3">FirstRand / FNB</option>
+                      <option value="6">Access Bank</option>
+                      <option value="7">African Bank</option>
+                      <option value="10">Capitec</option>
+                      <option value="16">Absa</option>
+                      <option value="44">Bidvest</option>
+                      <option value="55">Finbond</option>
+                      <option value="__other__">Tyme, Ubank, Discovery, Old Mutual or another supported bank</option>
+                    </select>
+                  </label>
+                  <div class="form-grid is-hidden" data-custom-bank-fields>
+                    <label class="field">NuPay bank name
+                      <input type="text" name="custom_bank_name" placeholder="Tyme Bank" />
+                    </label>
+                    <label class="field">NuPay bank ID
+                      <input type="text" name="custom_bank_id" inputmode="numeric" maxlength="6" placeholder="NuPay institution identifier" />
+                    </label>
+                  </div>
+                  <p class="portal-note is-hidden" data-custom-bank-note>
+                    Use this when your bank is supported by NuPay but not in the preset list. Enter the NuPay bank name and bank ID from your onboarding documents.
+                  </p>
+                  <label class="field">Branch code
+                    <input type="text" name="debtor_branch_number" inputmode="numeric" maxlength="6" placeholder="6-digit universal branch code" required />
+                  </label>
+                  <label class="field">Account number
+                    <input type="text" name="debtor_account_number" inputmode="numeric" placeholder="Bank account number" required />
+                  </label>
+                  <label class="field">Account type
+                    <select name="debtor_account_type" required>
+                      <option value="1">Current / Cheque</option>
+                      <option value="2">Savings</option>
+                      <option value="3">Transmission</option>
+                      <option value="4">Bond</option>
+                    </select>
+                  </label>
+                  <label class="field">ID type
+                    <select name="debtor_id_type" required>
+                      <option value="2">South African ID</option>
+                      <option value="1">Passport</option>
+                    </select>
+                  </label>
+                  <label class="field">ID or passport number
+                    <input type="text" name="debtor_id" placeholder="ID or passport number" required />
+                  </label>
+                  <label class="field">First collection date
+                    <input type="date" name="start_date" required />
+                  </label>
+                  <label class="field">Collection day
+                    <input type="number" name="collection_day" min="1" max="31" placeholder="1-31" required />
+                  </label>
+                  <label class="field">Tracking days
+                    <input type="number" name="tracking_days" min="0" max="10" value="0" />
+                  </label>
+                </div>
+                <label class="field checkbox">
+                  <input type="checkbox" name="mandate_consent" required />
+                  <span>I confirm that I am authorised to approve this bank account for DebiCheck collections.</span>
+                </label>
+                <div class="form-actions">
+                  <button class="btn primary" type="submit">Submit DebiCheck details</button>
+                  <button class="btn ghost" type="button" data-cancel-mandate>Cancel</button>
+                </div>
+              </form>
+              <p class="form-feedback" data-payment-feedback role="status" aria-live="polite"></p>
+              <p class="portal-note">The assessment fee includes the inspection report.</p>
             </div>
-            <div class="highlight-card reveal">
-              <h3>Progress milestones</h3>
-              <p>Live updates from 25% to completion.</p>
-            </div>
-            <div class="highlight-card reveal">
-              <h3>Agent visibility</h3>
-              <p>Real estate agents can track readiness with clients.</p>
-            </div>
-            <div class="highlight-card reveal">
-              <h3>Presentation notes</h3>
-              <p>Capture preferences and key presentation details.</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <section class="section rich">
-        <div class="container app-cta">
-          <div class="app-copy reveal">
-            <p class="eyebrow">Access</p>
-            <h2>Download MyCurator to begin</h2>
-            <p class="lead">
-              Access is provided after verification. If your real estate agent
-              is not yet registered, contact us and we will onboard them.
-            </p>
-            <div class="app-badges">
-              <a class="store-badge" href="contact.html">
-                <span>Request access</span>
-                iOS app
-              </a>
-              <a class="store-badge" href="contact.html">
-                <span>Request access</span>
-                Android app
-              </a>
-            </div>
-          </div>
-          <div class="app-panel reveal">
-            <div class="app-screen">Home</div>
-            <div class="app-screen">Schedule</div>
-            <div class="app-screen">Readiness</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section contact">
-        <div class="container">
-          <div class="contact-grid">
-            <div class="contact-copy reveal">
-              <p class="eyebrow">Next step</p>
-              <h2>Ready to start in the MyCurator app?</h2>
-              <p>Contact us for access and onboarding support.</p>
-              <div class="contact-note">
-                <span>Email us at bookings@mycurator.co.za</span>
+            <div class="dashboard-card help-card">
+              <h3>Need help with portal setup?</h3>
+              <p>Our team can assist with activation, payments, or account verification.</p>
+              <div class="contact-links">
+                <a class="contact-email" href="mailto:bookings@mycurator.co.za">bookings@mycurator.co.za</a>
+                <a class="contact-phone" href="tel:0792941992">079 294 1992</a>
+                <a class="contact-whatsapp" href="https://wa.me/27792941992">WhatsApp: 079 294 1992</a>
               </div>
             </div>
-            <div class="hero-actions reveal">
-              <a class="btn primary" href="contact.html">Request a presentation plan</a>
-              <a class="btn ghost" href="platform.html">See the platform</a>
-            </div>
           </div>
         </div>
       </section>
-    </main>
+</main>
 
     <footer class="site-footer">
       <div class="container footer-inner">
         <div>
           <strong>Curator Property Presentation Co.</strong>
-          <p>Curator Property Presentation Co.</p>
+          <p>because first impressions matter</p>
         </div>
         <div class="footer-links">
           <a href="company.html">Company</a>
           <a href="services.html">Services</a>
           <a href="portfolio.html">Portfolio</a>
           <a href="platform.html">Platform</a>
-          <a href="app.html">App</a>
+          <a href="portal-login.html">Portal</a>
         
           <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
           <a href="privacy.html">Privacy</a>
           <a href="legal.html">Legal</a>
           <a href="popia.html">POPIA</a>
@@ -184,6 +201,11 @@
       </div>
     </footer>
 
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

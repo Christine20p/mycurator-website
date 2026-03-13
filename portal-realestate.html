@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Curator Property Presentation Co. | Real Estate Dashboard</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
+    <meta
+      name="description"
+      content="Register, log in, book services, and manage payments through the MyCurator client portal."
+    />
+<link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape shape-a" aria-hidden="true"></div>
+    <div class="bg-shape shape-b" aria-hidden="true"></div>
+    <div class="bg-shape shape-c" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">
+          <span class="nav-icon" aria-hidden="true"></span>
+          <span class="nav-label">Menu</span>
+        </button>
+        <a class="brand" href="index.html">
+          <img class="brand-logo" src="assets/companylogo.png" alt="Curator Property Presentation Co. logo" />
+          <span class="brand-text">
+            <span class="brand-name">Curator Property Presentation Co.</span>
+            <span class="brand-sub">because first impressions matter</span>
+          </span>
+        </a>
+        <div class="header-actions">
+          <a class="header-cta ghost" href="portal-login.html">Portal</a>
+          <a class="header-cta" href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div class="header-rule" aria-hidden="true"></div>
+      <nav class="site-nav" id="primary-nav" aria-label="Primary">
+<a href="index.html">Home</a>
+        <a href="company.html">Company</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="platform.html">Platform</a>
+        <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
+        <a class="is-active" href="portal-login.html">Portal</a>
+        <a class="nav-cta" href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section portal-role-page portal-realestate-page" data-role-page data-realestate-page>
+        <div class="container">
+          <div class="dashboard-header">
+            <div>
+              <p class="eyebrow reveal">Real estate dashboard</p>
+              <h1 class="reveal">Client readiness and property visibility</h1>
+              <p class="lead reveal">Monitor curated listings, inspections, and booking activity.</p>
+              <p class="lead reveal">Welcome, <span data-user-name>User</span>.</p>
+            </div>
+            <button class="btn ghost" type="button" data-signout>Sign out</button>
+          </div>
+          <p class="portal-message" data-portal-message></p>
+
+          <div class="role-tabs" role="tablist" aria-label="Real estate navigation">
+            <button class="role-tab is-active" type="button" data-role-tab="dashboard">Dashboard</button>
+            <button class="role-tab" type="button" data-role-tab="clients">Clients</button>
+            <button class="role-tab" type="button" data-role-tab="properties">Properties</button>
+            <button class="role-tab" type="button" data-role-tab="bookings">Bookings</button>
+            <button class="role-tab" type="button" data-role-tab="profile">Profile</button>
+          </div>
+
+          <div class="role-panels">
+            <div class="role-panel is-active" data-role-panel="dashboard">
+              <div class="dashboard-grid">
+                <div class="dashboard-card">
+                  <h3>Portfolio overview</h3>
+                  <div class="role-stats">
+                    <div class="role-stat">
+                      <p>Clients</p>
+                      <strong data-agent-stat-clients>0</strong>
+                    </div>
+                    <div class="role-stat">
+                      <p>Properties</p>
+                      <strong data-agent-stat-properties>0</strong>
+                    </div>
+                    <div class="role-stat">
+                      <p>Bookings</p>
+                      <strong data-agent-stat-bookings>0</strong>
+                    </div>
+                    <div class="role-stat">
+                      <p>Curated</p>
+                      <strong data-agent-stat-curated>0</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="dashboard-card">
+                  <div class="role-panel-header">
+                    <div>
+                      <h3>Recent bookings</h3>
+                      <p>Latest inspections and presentation requests.</p>
+                    </div>
+                  </div>
+                  <div class="role-list" data-agent-recent-bookings>
+                    <p class="role-empty">Recent bookings will appear here.</p>
+                  </div>
+                </div>
+
+                <div class="dashboard-card help-card">
+                  <h3>Need help with portal setup?</h3>
+                  <p>Our team can assist with activation, access, or account verification.</p>
+                  <div class="contact-links">
+                    <a class="contact-email" href="mailto:bookings@mycurator.co.za">bookings@mycurator.co.za</a>
+                    <a class="contact-phone" href="tel:0792941992">079 294 1992</a>
+                    <a class="contact-whatsapp" href="https://wa.me/27792941992">WhatsApp: 079 294 1992</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="clients">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Clients</h3>
+                    <p>Linked clients and their readiness status.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-agent-clients>
+                  <p class="role-empty">Clients will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="properties">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Properties</h3>
+                    <p>Active, curated, and recently sold listings.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-agent-properties>
+                  <p class="role-empty">Properties will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="bookings">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Bookings</h3>
+                    <p>Service requests linked to your clients.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-agent-bookings>
+                  <p class="role-empty">Bookings will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="profile">
+              <div class="dashboard-card">
+                <h3>Profile</h3>
+                <div class="role-info-grid">
+                  <div>
+                    <span>Agent name</span>
+                    <strong data-agent-name>Agent</strong>
+                  </div>
+                  <div>
+                    <span>Company</span>
+                    <strong data-agent-company>—</strong>
+                  </div>
+                  <div>
+                    <span>Agent code</span>
+                    <strong data-agent-code>—</strong>
+                  </div>
+                  <div>
+                    <span>Phone</span>
+                    <strong data-agent-phone>—</strong>
+                  </div>
+                  <div>
+                    <span>Email</span>
+                    <strong data-agent-email>—</strong>
+                  </div>
+                  <div>
+                    <span>ID number</span>
+                    <strong data-agent-id>—</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+</main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>Curator Property Presentation Co.</strong>
+          <p>because first impressions matter</p>
+        </div>
+        <div class="footer-links">
+          <a href="company.html">Company</a>
+          <a href="services.html">Services</a>
+          <a href="portfolio.html">Portfolio</a>
+          <a href="platform.html">Platform</a>
+          <a href="portal-login.html">Portal</a>
+        
+          <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="legal.html">Legal</a>
+          <a href="popia.html">POPIA</a>
+        </div>
+        <p class="footer-note">Bookings: bookings@mycurator.co.za | 079 294 1992</p>
+      </div>
+    </footer>
+
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

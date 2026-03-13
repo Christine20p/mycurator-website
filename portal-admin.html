@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Curator Property Presentation Co. | Admin Dashboard</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
+    <meta
+      name="description"
+      content="Register, log in, book services, and manage payments through the MyCurator client portal."
+    />
+<link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape shape-a" aria-hidden="true"></div>
+    <div class="bg-shape shape-b" aria-hidden="true"></div>
+    <div class="bg-shape shape-c" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">
+          <span class="nav-icon" aria-hidden="true"></span>
+          <span class="nav-label">Menu</span>
+        </button>
+        <a class="brand" href="index.html">
+          <img class="brand-logo" src="assets/companylogo.png" alt="Curator Property Presentation Co. logo" />
+          <span class="brand-text">
+            <span class="brand-name">Curator Property Presentation Co.</span>
+            <span class="brand-sub">because first impressions matter</span>
+          </span>
+        </a>
+        <div class="header-actions">
+          <a class="header-cta ghost" href="portal-login.html">Portal</a>
+          <a class="header-cta" href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div class="header-rule" aria-hidden="true"></div>
+      <nav class="site-nav" id="primary-nav" aria-label="Primary">
+<a href="index.html">Home</a>
+        <a href="company.html">Company</a>
+        <a href="services.html">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="platform.html">Platform</a>
+        <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
+        <a class="is-active" href="portal-login.html">Portal</a>
+        <a class="nav-cta" href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section portal-role-page portal-admin-page" data-role-page data-admin-page>
+        <div class="container">
+          <div class="dashboard-header">
+            <div>
+              <p class="eyebrow reveal">Admin dashboard</p>
+              <h1 class="reveal">Curator operations hub</h1>
+              <p class="lead reveal">Manage clients, agents, bookings, and communications in one place.</p>
+              <p class="lead reveal">Welcome, <span data-user-name>User</span>.</p>
+            </div>
+            <button class="btn ghost" type="button" data-signout>Sign out</button>
+          </div>
+          <p class="portal-message" data-portal-message></p>
+
+          <div class="role-tabs" role="tablist" aria-label="Admin navigation">
+            <button class="role-tab is-active" type="button" data-role-tab="dashboard">Dashboard</button>
+            <button class="role-tab" type="button" data-role-tab="clients">Clients</button>
+            <button class="role-tab" type="button" data-role-tab="agents">Agents</button>
+            <button class="role-tab" type="button" data-role-tab="bookings">Bookings</button>
+            <button class="role-tab" type="button" data-role-tab="mandates">Mandates</button>
+            <button class="role-tab" type="button" data-role-tab="comms">Comms</button>
+            <button class="role-tab" type="button" data-role-tab="settings">Settings</button>
+          </div>
+
+          <div class="role-panels">
+            <div class="role-panel is-active" data-role-panel="dashboard">
+              <div class="dashboard-grid">
+                <div class="dashboard-card">
+                  <h3>Key totals</h3>
+                  <div class="role-stats">
+                    <div class="role-stat">
+                      <p>Clients</p>
+                      <strong data-admin-stat-clients>0</strong>
+                    </div>
+                    <div class="role-stat">
+                      <p>Agents</p>
+                      <strong data-admin-stat-agents>0</strong>
+                    </div>
+                    <div class="role-stat">
+                      <p>Workers</p>
+                      <strong data-admin-stat-workers>0</strong>
+                    </div>
+                    <div class="role-stat">
+                      <p>Bookings</p>
+                      <strong data-admin-stat-bookings>0</strong>
+                    </div>
+                    <div class="role-stat">
+                      <p>Mandates</p>
+                      <strong data-admin-stat-mandates>0</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="dashboard-card">
+                  <div class="role-panel-header">
+                    <div>
+                      <h3>Recent bookings</h3>
+                      <p>Latest booking activity across the portfolio.</p>
+                    </div>
+                  </div>
+                  <div class="role-list" data-admin-recent-bookings>
+                    <p class="role-empty">Bookings will appear here.</p>
+                  </div>
+                </div>
+
+                <div class="dashboard-card help-card">
+                  <h3>Need help with portal setup?</h3>
+                  <p>Our team can assist with activation, access, or account verification.</p>
+                  <div class="contact-links">
+                    <a class="contact-email" href="mailto:bookings@mycurator.co.za">bookings@mycurator.co.za</a>
+                    <a class="contact-phone" href="tel:0792941992">079 294 1992</a>
+                    <a class="contact-whatsapp" href="https://wa.me/27792941992">WhatsApp: 079 294 1992</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="clients">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Clients</h3>
+                    <p>Client accounts and activation status.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-admin-clients>
+                  <p class="role-empty">Clients will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="agents">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Real estate agents</h3>
+                    <p>Registered agents and their portfolios.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-admin-agents>
+                  <p class="role-empty">Agents will appear here.</p>
+                </div>
+              </div>
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Workers</h3>
+                    <p>Active worker accounts.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-admin-workers>
+                  <p class="role-empty">Workers will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="bookings">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Bookings</h3>
+                    <p>Inspection and presentation requests.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-admin-bookings>
+                  <p class="role-empty">Bookings will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="mandates">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>DebiCheck mandates</h3>
+                    <p>Client mandates and TT1 submission status.</p>
+                  </div>
+                </div>
+                <p class="form-feedback" data-admin-mandate-feedback role="status" aria-live="polite"></p>
+                <div class="role-list" data-admin-mandates>
+                  <p class="role-empty">Mandate requests will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="comms">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Compose notification</h3>
+                    <p>Send a portal update to clients or agents.</p>
+                  </div>
+                </div>
+                <form class="portal-form admin-comms-form" data-admin-comms-form>
+                  <label class="field">Title
+                    <input type="text" name="title" placeholder="Notification title" required />
+                  </label>
+                  <label class="field">Message
+                    <textarea name="message" rows="4" placeholder="Write the message" required></textarea>
+                  </label>
+                  <div class="form-grid">
+                    <label class="field">Target
+                      <select name="target" required>
+                        <option value="all">All users</option>
+                        <option value="user">Single user</option>
+                      </select>
+                    </label>
+                    <label class="field">Target user ID (optional)
+                      <input type="text" name="targetUserId" placeholder="User ID or client code" />
+                    </label>
+                  </div>
+                  <div class="form-actions">
+                    <button class="btn primary" type="submit">Send notification</button>
+                  </div>
+                  <p class="form-feedback" data-admin-comms-feedback role="status" aria-live="polite"></p>
+                </form>
+              </div>
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Recent communications</h3>
+                    <p>Latest notifications created by admins.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-admin-comms-recent>
+                  <p class="role-empty">Notifications will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="settings">
+              <div class="dashboard-card">
+                <h3>Settings</h3>
+                <p>Admin data field mapping is managed in the iOS admin app.</p>
+                <p class="portal-note">Contact engineering if you need to change Firestore field mappings.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+</main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>Curator Property Presentation Co.</strong>
+          <p>because first impressions matter</p>
+        </div>
+        <div class="footer-links">
+          <a href="company.html">Company</a>
+          <a href="services.html">Services</a>
+          <a href="portfolio.html">Portfolio</a>
+          <a href="platform.html">Platform</a>
+          <a href="portal-login.html">Portal</a>
+        
+          <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="legal.html">Legal</a>
+          <a href="popia.html">POPIA</a>
+        </div>
+        <p class="footer-note">Bookings: bookings@mycurator.co.za | 079 294 1992</p>
+      </div>
+    </footer>
+
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

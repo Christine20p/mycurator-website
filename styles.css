@@ -19,6 +19,11 @@
   --menu-shift: 0px;
 }
 
+html {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -79,7 +84,7 @@ img {
 }
 
 .container {
-  width: min(1120px, 92vw);
+  width: min(1120px, calc(100vw - 32px));
   margin: 0 auto;
 }
 
@@ -2243,6 +2248,8 @@ body.nav-open .site-footer {
   .brand {
     grid-column: 1 / -1;
     order: 2;
+    width: 100%;
+    min-width: 0;
   }
 
   .header-cta {
@@ -2256,11 +2263,16 @@ body.nav-open .site-footer {
 
   .brand-logo {
     height: 36px;
+    flex-shrink: 0;
   }
 
   .brand-name {
     font-size: 0.74rem;
     letter-spacing: 0.22em;
+  }
+
+  .brand-text {
+    min-width: 0;
   }
 
   .brand-sub {
@@ -2321,6 +2333,35 @@ body.nav-open .site-footer {
 }
 
 @media (max-width: 540px) {
+  .header-inner {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, auto);
+    justify-items: center;
+  }
+
+  .nav-toggle,
+  .header-actions,
+  .brand {
+    justify-self: center;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    gap: 10px;
+    text-align: center;
+  }
+
+  .brand-name {
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    overflow-wrap: anywhere;
+  }
+
   .header-cta {
     padding: 8px 12px;
     font-size: 0.6rem;
@@ -2337,6 +2378,51 @@ body.nav-open .site-footer {
   .portal-role-page .container {
     padding: 16px;
     border-radius: 18px;
+  }
+
+  .container {
+    width: calc(100vw - 24px);
+  }
+
+  .hero,
+  .page-hero {
+    text-align: center;
+  }
+
+  .hero h1,
+  .page-hero-copy h1,
+  .section-heading h2,
+  .policy-title {
+    letter-spacing: 0.1em;
+    overflow-wrap: anywhere;
+  }
+
+  .btn,
+  .hero-nav a,
+  .careers-anchor-nav a,
+  .destination-eyebrow,
+  .eyebrow,
+  .brand-sub {
+    letter-spacing: 0.14em;
+  }
+
+  .hero-actions {
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+  }
+
+  .hero-grid,
+  .page-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-tile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 
   .careers-anchor-nav {

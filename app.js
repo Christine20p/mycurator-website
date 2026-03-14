@@ -257,6 +257,23 @@ const formatDateTime = (date) =>
       })
     : "";
 
+const buildInitials = (value) =>
+  String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}.`)
+    .join(" ");
+
+const formatWelcomeName = (data, fallback, defaultLabel = "User") => {
+  const title = String(data?.title || "").trim();
+  const initials = buildInitials(data?.fullName || data?.name || "");
+  const surname = String(data?.surname || "").trim();
+  const preferred = [title, initials, surname].filter(Boolean).join(" ").trim();
+  if (preferred) return preferred;
+  return String(data?.fullName || data?.name || fallback || defaultLabel).trim();
+};
+
 const formatStatusLabel = (status) => {
   const raw = String(status || "").trim();
   if (!raw) return "";
@@ -483,7 +500,7 @@ if (!isFirebaseReady) {
     if (!data) return;
 
     if (userNameLabel) {
-      userNameLabel.textContent = data.fullName || currentUser?.email || "Client";
+      userNameLabel.textContent = formatWelcomeName(data, currentUser?.email, "Client");
     }
 
     const adminFeePaid = data.adminFeePaid === true;
@@ -2049,7 +2066,7 @@ if (!isFirebaseReady) {
         return;
       }
       if (userNameLabel) {
-        userNameLabel.textContent = currentUserData.fullName || currentUser.email || "User";
+        userNameLabel.textContent = formatWelcomeName(currentUserData, currentUser.email, "User");
       }
       if (role === "worker" || role === "inspector") {
         initWorkerDashboard();
@@ -2067,7 +2084,11 @@ if (!isFirebaseReady) {
         return;
       }
       if (userNameLabel) {
-        userNameLabel.textContent = currentUserData.fullName || currentUser.email || "Client";
+        userNameLabel.textContent = formatWelcomeName(
+          currentUserData,
+          currentUser.email,
+          "Client"
+        );
       }
       startUserListener(user.uid, updateDashboard);
       return;
@@ -2079,7 +2100,11 @@ if (!isFirebaseReady) {
         return;
       }
       if (userNameLabel) {
-        userNameLabel.textContent = currentUserData.fullName || currentUser.email || "Client";
+        userNameLabel.textContent = formatWelcomeName(
+          currentUserData,
+          currentUser.email,
+          "Client"
+        );
       }
       startUserListener(user.uid, updateDashboard);
       return;

@@ -1514,11 +1514,15 @@ body.nav-open .site-footer {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(11, 11, 12, 0.6);
+  min-width: 0;
 }
 
 .field input,
 .field select,
 .field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border-radius: 12px;
   border: 1px solid rgba(11, 11, 12, 0.2);
   padding: 10px 12px;

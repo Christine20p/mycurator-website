@@ -1647,18 +1647,25 @@ body.nav-open .site-footer {
   color: rgba(247, 241, 231, 0.78);
 }
 
-.portal-dashboard-page .lead,
-.portal-booking-page .lead,
-.portal-role-page .lead {
+.portal-dashboard-page .dashboard-header h1,
+.portal-dashboard-page .lead {
   color: #d8dadd;
 }
 
-.portal-dashboard-page [data-user-name],
-.portal-booking-page [data-user-name],
-.portal-role-page [data-user-name] {
+.portal-dashboard-page [data-user-name] {
   color: #f2f4f7;
   font-weight: 700;
   text-shadow: 0 0 14px rgba(255, 255, 255, 0.12);
+}
+
+.portal-dashboard-page [data-signout] {
+  color: #d8dadd;
+  border-color: rgba(216, 218, 221, 0.38);
+}
+
+.portal-dashboard-page [data-signout]:hover {
+  color: #f2f4f7;
+  border-color: rgba(242, 244, 247, 0.55);
 }
 
 .portal-auth {

@@ -619,6 +619,15 @@ body.nav-open .site-footer {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.contact-form {
+  display: grid;
+  gap: 14px;
+}
+
+.contact-form .btn {
+  margin-top: 10px;
+}
+
 .service-panel:hover,
 .destination-card:hover {
   transform: translateY(-4px);

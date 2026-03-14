@@ -1647,6 +1647,14 @@ body.nav-open .site-footer {
   color: rgba(247, 241, 231, 0.78);
 }
 
+.portal-dashboard-page [data-user-name],
+.portal-booking-page [data-user-name],
+.portal-role-page [data-user-name] {
+  color: #fff1b8;
+  font-weight: 700;
+  text-shadow: 0 0 18px rgba(211, 180, 106, 0.28);
+}
+
 .portal-auth {
   display: grid;
   grid-template-columns: minmax(260px, 340px) minmax(320px, 1fr);

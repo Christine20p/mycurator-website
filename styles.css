@@ -376,23 +376,27 @@ main {
   position: relative;
   display: inline-flex;
   align-items: center;
+  overflow: visible;
+}
+
+.site-nav .nav-link-mask {
+  display: inline-block;
   overflow: hidden;
-  opacity: 0;
-  transform: translate3d(-18px, 0, 0);
-  transition: opacity 0.24s ease, transform 0.24s ease;
+  padding: 0.12em 0;
+  margin: -0.12em 0;
 }
 
 .site-nav .nav-link-copy {
   display: inline-block;
-  transform: translate3d(-44px, 120%, 0) skewX(-16deg);
-  transform-origin: left center;
+  transform: translate3d(0, 140%, 0) skewY(7deg);
+  transform-origin: left bottom;
   opacity: 0;
-  filter: blur(10px);
+  filter: blur(12px);
   will-change: transform, opacity, filter;
   transition:
-    transform 0.72s cubic-bezier(0.2, 1, 0.2, 1),
-    opacity 0.36s ease,
-    filter 0.5s ease;
+    transform 0.88s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.34s ease,
+    filter 0.44s ease;
   transition-delay: 0s;
 }
 
@@ -437,24 +441,18 @@ body.nav-closing .site-nav {
   pointer-events: none;
 }
 
-body.nav-open .site-nav a,
-body.nav-closing .site-nav a {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
-
 body.nav-open .site-nav .nav-link-copy {
-  transform: translate3d(0, 0, 0) skewX(0deg);
+  transform: translate3d(0, 0, 0) skewY(0deg);
   opacity: 1;
   filter: blur(0);
-  transition-delay: calc(0.1s + var(--nav-item-index, 0) * 0.055s);
+  transition-delay: calc(0.08s + var(--nav-item-index, 0) * 0.065s);
 }
 
 body.nav-closing .site-nav .nav-link-copy {
-  transform: translate3d(34px, -118%, 0) skewX(-12deg);
+  transform: translate3d(0, -138%, 0) skewY(-7deg);
   opacity: 0;
-  filter: blur(8px);
-  transition-delay: calc((var(--nav-item-count, 1) - var(--nav-item-index, 0) - 1) * 0.04s);
+  filter: blur(10px);
+  transition-delay: calc((var(--nav-item-count, 1) - var(--nav-item-index, 0) - 1) * 0.05s);
 }
 
 body.nav-open .site-header,
@@ -2573,6 +2571,15 @@ body.nav-closing .site-footer {
 
 .footer-note {
   margin: 0;
+}
+
+.footer-legal {
+  margin: 0;
+  width: 100%;
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: none;
+  color: rgba(247, 241, 231, 0.62);
 }
 
 .reveal {

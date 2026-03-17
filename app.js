@@ -26,7 +26,8 @@ const navToggle = document.querySelector(".nav-toggle");
 const siteNav = document.querySelector(".site-nav");
 const navLabel = navToggle ? navToggle.querySelector(".nav-label") : null;
 const navLinks = siteNav ? Array.from(siteNav.querySelectorAll("a")) : [];
-const NAV_MENU_CLOSE_MS = 520;
+const NAV_MENU_CLOSE_MS = 860;
+const FOOTER_LEGAL_TEXT = "© 2026 Curator Property Presentation Co. Ltd, All Rights Reserved.";
 let navCloseTimer = null;
 
 function initPointerRing() {
@@ -320,13 +321,16 @@ if (navToggle && siteNav) {
   siteNav.style.setProperty("--nav-item-count", String(navLinks.length));
   navLinks.forEach((link, index) => {
     link.style.setProperty("--nav-item-index", String(index));
-    if (!link.querySelector(".nav-link-copy")) {
+    if (!link.querySelector(".nav-link-mask")) {
+      const mask = document.createElement("span");
+      mask.className = "nav-link-mask";
       const copy = document.createElement("span");
       copy.className = "nav-link-copy";
       while (link.firstChild) {
         copy.appendChild(link.firstChild);
       }
-      link.appendChild(copy);
+      mask.appendChild(copy);
+      link.appendChild(mask);
     }
   });
 
@@ -387,6 +391,17 @@ if (navToggle && siteNav) {
     }
   });
 }
+
+document.querySelectorAll(".site-footer .footer-note").forEach((note) => {
+  if (!(note instanceof HTMLElement) || note.nextElementSibling?.classList.contains("footer-legal")) {
+    return;
+  }
+
+  const legal = document.createElement("p");
+  legal.className = "footer-legal";
+  legal.textContent = FOOTER_LEGAL_TEXT;
+  note.insertAdjacentElement("afterend", legal);
+});
 
 const loginPage = document.querySelector("[data-portal-login-page]");
 const activationPage = document.querySelector("[data-portal-activation-page]");

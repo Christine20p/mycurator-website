@@ -1645,6 +1645,20 @@ body.nav-open .site-footer {
   color: var(--ink);
 }
 
+.field input[type="date"] {
+  display: block;
+  min-height: 44px;
+  line-height: 1.2;
+}
+
+.field input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.field input[type="date"]::-webkit-calendar-picker-indicator {
+  margin: 0;
+}
+
 .field input:focus,
 .field select:focus,
 .field textarea:focus {

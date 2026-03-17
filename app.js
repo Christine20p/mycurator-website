@@ -30,6 +30,8 @@ const NAV_MENU_CLOSE_MS = 860;
 const FOOTER_LEGAL_TEXT = `© ${new Date().getFullYear()} Curator Property Presentation Co. Ltd, All Rights Reserved.`;
 const CONTACT_INQUIRY_ENDPOINT =
   "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/submitInquiry";
+const CLOUD_FUNCTIONS_REGION = "africa-south1";
+const DEFAULT_FUNCTIONS_PROJECT_ID = "mycurator-cf6ab";
 let navCloseTimer = null;
 
 function initPointerRing() {
@@ -499,6 +501,20 @@ const statusTitle = document.querySelector("[data-status-title]");
 const statusMessage = document.querySelector("[data-status-message]");
 const outstandingBadge = document.querySelector("[data-outstanding]");
 const userNameLabel = document.querySelector("[data-user-name]");
+const emailChangeForm = document.querySelector("[data-email-change-form]");
+const passwordChangeForm = document.querySelector("[data-password-change-form]");
+const emailChangeFeedback = document.querySelector("[data-email-change-feedback]");
+const passwordChangeFeedback = document.querySelector("[data-password-change-feedback]");
+const settingsCurrentEmail = document.querySelector("[data-settings-current-email]");
+const settingsOtpDestination = document.querySelector("[data-settings-otp-destination]");
+const settingsOtpPanel = document.querySelector("[data-settings-otp-panel]");
+const settingsOtpTitle = document.querySelector("[data-settings-otp-title]");
+const settingsOtpMessage = document.querySelector("[data-settings-otp-message]");
+const settingsOtpInput = settingsOtpPanel?.querySelector("input[name='settings_otp_code']");
+const settingsOtpVerifyButton = document.querySelector("[data-settings-otp-verify]");
+const settingsOtpResendButton = document.querySelector("[data-settings-otp-resend]");
+const settingsOtpCancelButton = document.querySelector("[data-settings-otp-cancel]");
+const settingsOtpFeedback = document.querySelector("[data-settings-otp-feedback]");
 const payNowButton = document.querySelector("[data-request-paynow]");
 const openPayNowButton = document.querySelector("[data-open-paynow]");
 const cardPayButton = document.querySelector("[data-request-card]");
@@ -582,6 +598,7 @@ let adminDataLoaded = false;
 let workerFiltersBound = false;
 let adminMandatesBound = false;
 let adminCommsBound = false;
+let pendingSecurityChange = null;
 
 const CUSTOM_MANDATE_BANK_ID = "__other__";
 
@@ -608,6 +625,42 @@ const getOtpDeliveryWarning = (result) => {
     return "OTP delivery is not configured yet. Contact support before continuing.";
   }
   return "";
+};
+
+const buildHttpFunctionUrl = (path) => {
+  const normalizedPath = String(path || "").trim().replace(/^\/+/, "");
+  if (!normalizedPath) {
+    throw new Error("Cloud Function path is missing.");
+  }
+
+  const configuredProjectId = String(window.firebaseConfig?.projectId || "").trim();
+  const firebaseProjectId =
+    typeof firebase !== "undefined"
+      ? String(firebase.apps?.[0]?.options?.projectId || "").trim()
+      : "";
+  const activeProjectId = configuredProjectId || firebaseProjectId || DEFAULT_FUNCTIONS_PROJECT_ID;
+
+  return `https://${CLOUD_FUNCTIONS_REGION}-${activeProjectId}.cloudfunctions.net/${normalizedPath}`;
+};
+
+const postHttpFunction = async (path, payload) => {
+  const response = await fetch(buildHttpFunctionUrl(path), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(result.error || "Request failed.");
+  }
+  return result;
+};
+
+const maskCellphoneForDisplay = (value) => {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "your cellphone on file";
+  const lastFour = digits.slice(-4);
+  return `your cellphone ending in ${lastFour}`;
 };
 
 const disableForm = (form, disabled) => {
@@ -917,6 +970,44 @@ if (!isFirebaseReady) {
     syncCustomMandateBankFields();
   };
 
+  const updateAccountSettingsSummary = (data) => {
+    if (settingsCurrentEmail) {
+      settingsCurrentEmail.textContent = String(data?.email || currentUser?.email || "").trim() || "No email on file";
+    }
+    if (settingsOtpDestination) {
+      settingsOtpDestination.textContent = maskCellphoneForDisplay(
+        data?.cellphone || currentUser?.phoneNumber || ""
+      );
+    }
+  };
+
+  const setSettingsOtpBusy = (isBusy) => {
+    if (!settingsOtpPanel) return;
+    disableForm(settingsOtpPanel, isBusy);
+  };
+
+  const closeSettingsOtpPanel = () => {
+    if (!settingsOtpPanel) return;
+    settingsOtpPanel.classList.add("is-hidden");
+    setSettingsOtpBusy(false);
+    setFeedback(settingsOtpFeedback, "");
+    if (settingsOtpInput) {
+      settingsOtpInput.value = "";
+    }
+  };
+
+  const openSettingsOtpPanel = (title, message) => {
+    if (!settingsOtpPanel) return;
+    if (settingsOtpTitle) settingsOtpTitle.textContent = title;
+    if (settingsOtpMessage) settingsOtpMessage.textContent = message;
+    setFeedback(settingsOtpFeedback, "");
+    settingsOtpPanel.classList.remove("is-hidden");
+    if (settingsOtpInput) {
+      settingsOtpInput.value = "";
+      settingsOtpInput.focus();
+    }
+  };
+
   const normalizedStatus = (value) =>
     String(value || "")
       .trim()
@@ -936,6 +1027,7 @@ if (!isFirebaseReady) {
     if (userNameLabel) {
       userNameLabel.textContent = formatWelcomeName(data, currentUser?.email, "Client");
     }
+    updateAccountSettingsSummary(data);
 
     const adminFeePaid = data.adminFeePaid === true;
     const inspectionDone = ["completed", "complete", "done"].includes(
@@ -1246,19 +1338,10 @@ if (!isFirebaseReady) {
         );
 
         try {
-          const response = await fetch(
-            "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/sendOTP",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId: user.uid, type: "signup" }),
-            }
-          );
-          if (!response.ok) {
-            const payload = await response.json().catch(() => ({}));
-            throw new Error(payload.error || "Unable to send OTP.");
-          }
-          const payload = await response.json().catch(() => ({}));
+          const payload = await postHttpFunction("sendOTP", {
+            userId: user.uid,
+            type: "signup",
+          });
           const deliveryWarning = getOtpDeliveryWarning(payload);
           if (deliveryWarning) {
             setFeedback(registerFeedback, deliveryWarning, true);
@@ -1298,18 +1381,7 @@ if (!isFirebaseReady) {
         return;
       }
       try {
-        const response = await fetch(
-          "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/verifyOTP",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: pendingOtpUserId, code }),
-          }
-        );
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.error || "OTP verification failed.");
-        }
+        await postHttpFunction("verifyOTP", { userId: pendingOtpUserId, code, type: "signup" });
         setFeedback(otpFeedback, "OTP verified. Redirecting to activation...");
         if (otpPanel) otpPanel.classList.add("is-hidden");
         sessionStorage.removeItem("portalPendingOtp");
@@ -1327,19 +1399,10 @@ if (!isFirebaseReady) {
       }
       if (!pendingOtpUserId) return;
       try {
-        const response = await fetch(
-          "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/sendOTP",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: pendingOtpUserId, type: "signup" }),
-          }
-        );
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.error || "Unable to resend OTP.");
-        }
-        const payload = await response.json().catch(() => ({}));
+        const payload = await postHttpFunction("sendOTP", {
+          userId: pendingOtpUserId,
+          type: "signup",
+        });
         const deliveryWarning = getOtpDeliveryWarning(payload);
         if (deliveryWarning) {
           setFeedback(otpFeedback, deliveryWarning, true);
@@ -1355,6 +1418,199 @@ if (!isFirebaseReady) {
   if (signOutButton && auth) {
     signOutButton.addEventListener("click", () => {
       auth.signOut();
+    });
+  }
+
+  if (settingsOtpInput) {
+    settingsOtpInput.addEventListener("input", () => {
+      settingsOtpInput.value = settingsOtpInput.value.replace(/\D/g, "").slice(0, 8);
+    });
+  }
+
+  if (emailChangeForm && auth && db) {
+    emailChangeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!currentUser) return;
+
+      setFeedback(emailChangeFeedback, "");
+      setFeedback(settingsOtpFeedback, "");
+
+      const formData = new FormData(emailChangeForm);
+      const newEmail = String(formData.get("new_email") || "").trim().toLowerCase();
+      const currentEmail = String(currentUserData?.email || currentUser.email || "").trim().toLowerCase();
+
+      if (!newEmail) {
+        setFeedback(emailChangeFeedback, "Enter the new email address first.", true);
+        return;
+      }
+
+      if (newEmail === currentEmail) {
+        setFeedback(emailChangeFeedback, "Enter a different email address.", true);
+        return;
+      }
+
+      disableForm(emailChangeForm, true);
+      try {
+        const payload = await postHttpFunction("sendOTP", {
+          userId: currentUser.uid,
+          type: "email_change",
+        });
+        const deliveryWarning = getOtpDeliveryWarning(payload);
+        if (deliveryWarning) {
+          setFeedback(emailChangeFeedback, deliveryWarning, true);
+          pendingSecurityChange = null;
+          closeSettingsOtpPanel();
+          return;
+        }
+
+        pendingSecurityChange = {
+          type: "email_change",
+          newEmail,
+          title: "Verify Email Change",
+          message: "Enter the code sent to your cellphone.",
+        };
+        openSettingsOtpPanel(pendingSecurityChange.title, pendingSecurityChange.message);
+        setFeedback(emailChangeFeedback, "OTP sent to your cellphone.");
+      } catch (error) {
+        setFeedback(emailChangeFeedback, error.message || "Unable to send OTP.", true);
+      } finally {
+        disableForm(emailChangeForm, false);
+      }
+    });
+  }
+
+  if (passwordChangeForm && auth) {
+    passwordChangeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!currentUser) return;
+
+      setFeedback(passwordChangeFeedback, "");
+      setFeedback(settingsOtpFeedback, "");
+
+      const formData = new FormData(passwordChangeForm);
+      const newPassword = String(formData.get("new_password") || "");
+      const confirmPassword = String(formData.get("confirm_password") || "");
+
+      if (!newPassword || !confirmPassword) {
+        setFeedback(passwordChangeFeedback, "Enter and confirm the new password.", true);
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        setFeedback(passwordChangeFeedback, "Passwords do not match.", true);
+        return;
+      }
+
+      disableForm(passwordChangeForm, true);
+      try {
+        const payload = await postHttpFunction("sendOTP", {
+          userId: currentUser.uid,
+          type: "password_change",
+        });
+        const deliveryWarning = getOtpDeliveryWarning(payload);
+        if (deliveryWarning) {
+          setFeedback(passwordChangeFeedback, deliveryWarning, true);
+          pendingSecurityChange = null;
+          closeSettingsOtpPanel();
+          return;
+        }
+
+        pendingSecurityChange = {
+          type: "password_change",
+          newPassword,
+          title: "Verify Password Change",
+          message: "Enter the code sent to your cellphone.",
+        };
+        openSettingsOtpPanel(pendingSecurityChange.title, pendingSecurityChange.message);
+        setFeedback(passwordChangeFeedback, "OTP sent to your cellphone.");
+      } catch (error) {
+        setFeedback(passwordChangeFeedback, error.message || "Unable to send OTP.", true);
+      } finally {
+        disableForm(passwordChangeForm, false);
+      }
+    });
+  }
+
+  if (settingsOtpVerifyButton) {
+    settingsOtpVerifyButton.addEventListener("click", async () => {
+      if (!currentUser || !pendingSecurityChange) {
+        setFeedback(settingsOtpFeedback, "Start an email or password change first.", true);
+        return;
+      }
+
+      const code = settingsOtpInput?.value?.trim() || "";
+      if (!code) {
+        setFeedback(settingsOtpFeedback, "Enter the OTP code to continue.", true);
+        return;
+      }
+
+      setSettingsOtpBusy(true);
+      setFeedback(settingsOtpFeedback, "");
+
+      try {
+        await postHttpFunction("verifyOTP", {
+          userId: currentUser.uid,
+          code,
+          type: pendingSecurityChange.type,
+        });
+
+        if (pendingSecurityChange.type === "email_change") {
+          await currentUser.verifyBeforeUpdateEmail(pendingSecurityChange.newEmail);
+          await db.collection("users").doc(currentUser.uid).set(
+            { email: pendingSecurityChange.newEmail },
+            { merge: true }
+          );
+          currentUserData = {
+            ...(currentUserData || {}),
+            email: pendingSecurityChange.newEmail,
+          };
+          updateAccountSettingsSummary(currentUserData);
+          emailChangeForm?.reset();
+          setFeedback(emailChangeFeedback, "Verification email sent to your new address.");
+        } else if (pendingSecurityChange.type === "password_change") {
+          await currentUser.updatePassword(pendingSecurityChange.newPassword);
+          passwordChangeForm?.reset();
+          setFeedback(passwordChangeFeedback, "Password updated.");
+        }
+
+        pendingSecurityChange = null;
+        closeSettingsOtpPanel();
+      } catch (error) {
+        setFeedback(
+          settingsOtpFeedback,
+          error.message || "We couldn't apply that change. Please try again.",
+          true
+        );
+      } finally {
+        setSettingsOtpBusy(false);
+      }
+    });
+  }
+
+  if (settingsOtpResendButton) {
+    settingsOtpResendButton.addEventListener("click", async () => {
+      if (!currentUser || !pendingSecurityChange) return;
+      try {
+        const payload = await postHttpFunction("sendOTP", {
+          userId: currentUser.uid,
+          type: pendingSecurityChange.type,
+        });
+        const deliveryWarning = getOtpDeliveryWarning(payload);
+        if (deliveryWarning) {
+          setFeedback(settingsOtpFeedback, deliveryWarning, true);
+          return;
+        }
+        setFeedback(settingsOtpFeedback, "OTP resent.");
+      } catch (error) {
+        setFeedback(settingsOtpFeedback, error.message || "Unable to resend OTP.", true);
+      }
+    });
+  }
+
+  if (settingsOtpCancelButton) {
+    settingsOtpCancelButton.addEventListener("click", () => {
+      pendingSecurityChange = null;
+      closeSettingsOtpPanel();
     });
   }
 
@@ -2426,6 +2682,8 @@ if (!isFirebaseReady) {
       workerBookingsCache = [];
       agentDataLoaded = false;
       adminDataLoaded = false;
+      pendingSecurityChange = null;
+      closeSettingsOtpPanel();
       if (activationPage || bookingPage || rolePage) {
         redirectTo("portal-login.html");
       }
@@ -2493,6 +2751,7 @@ if (!isFirebaseReady) {
           "Client"
         );
       }
+      updateDashboard(currentUserData);
       startUserListener(user.uid, updateDashboard);
       return;
     }
@@ -2509,6 +2768,7 @@ if (!isFirebaseReady) {
           "Client"
         );
       }
+      updateDashboard(currentUserData);
       startUserListener(user.uid, updateDashboard);
       return;
     }

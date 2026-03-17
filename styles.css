@@ -680,6 +680,96 @@ body.nav-open .site-footer {
   font-size: 0.9rem;
 }
 
+.service-category-stack {
+  display: grid;
+  gap: 22px;
+}
+
+.service-category-card {
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 28px;
+  border: 1px solid rgba(11, 11, 12, 0.08);
+  box-shadow: var(--shadow-soft);
+}
+
+.service-category-media {
+  position: relative;
+  aspect-ratio: 16 / 6;
+  overflow: hidden;
+  background: rgba(11, 11, 12, 0.08);
+}
+
+.service-category-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.service-category-body {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.service-category-intro {
+  display: grid;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.service-category-kicker {
+  display: inline-flex;
+  width: fit-content;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(15, 76, 75, 0.08);
+  border: 1px solid rgba(15, 76, 75, 0.14);
+  color: var(--deep-teal);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.service-category-intro h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+}
+
+.service-category-intro p {
+  margin: 0;
+  color: rgba(11, 11, 12, 0.7);
+}
+
+.service-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.service-detail-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(15, 76, 75, 0.05), rgba(245, 239, 226, 0.7));
+  border: 1px solid rgba(15, 76, 75, 0.12);
+}
+
+.service-detail-card h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.service-detail-card p {
+  margin: 0;
+  color: rgba(11, 11, 12, 0.72);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
 .step-number {
   display: inline-flex;
   padding: 4px 10px;
@@ -2469,6 +2559,14 @@ body.nav-open .site-footer {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+
+  .service-category-media {
+    aspect-ratio: 4 / 3;
+  }
+
+  .service-category-body {
+    padding: 18px;
   }
 
   .careers-anchor-nav {

@@ -314,6 +314,29 @@ body.nav-open .site-nav {
   transform: translateX(0);
 }
 
+body.nav-open .site-header {
+  z-index: 130;
+}
+
+body.nav-open .nav-toggle {
+  position: relative;
+  z-index: 140;
+  border-color: rgba(247, 241, 231, 0.35);
+  background: rgba(7, 7, 8, 0.88);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+body.nav-open .nav-icon::before {
+  top: 4px;
+  box-shadow: none;
+  transform: rotate(45deg);
+}
+
+body.nav-open .nav-icon::after {
+  bottom: 4px;
+  transform: rotate(-45deg);
+}
+
 body.nav-open::after {
   opacity: 1;
 }

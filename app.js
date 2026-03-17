@@ -56,13 +56,170 @@ function initPointerRing() {
   ].join(", ");
   const editableSelector =
     "input:not([type='button']):not([type='submit']):not([type='reset']):not([type='checkbox']):not([type='radio']), textarea";
+  const imageCanvasCache = new WeakMap();
 
   let pointerX = window.innerWidth / 2;
   let pointerY = window.innerHeight / 2;
   let isVisible = false;
   let isClickable = false;
   let isPressed = false;
+  let pointerTone = "dark";
   let frameId = null;
+
+  const setPointerTone = (tone) => {
+    if (pointerTone === tone) {
+      return;
+    }
+
+    pointerTone = tone;
+    document.body.classList.toggle("pointer-on-mid", tone === "mid");
+    document.body.classList.toggle("pointer-on-light", tone === "light");
+  };
+
+  const parseCssColor = (value) => {
+    const match = String(value || "").match(/^rgba?\(([^)]+)\)$/i);
+    if (!match) {
+      return null;
+    }
+
+    const parts = match[1].split(",").map((part) => Number.parseFloat(part.trim()));
+    if (parts.length < 3 || parts.some((part) => Number.isNaN(part))) {
+      return null;
+    }
+
+    return {
+      red: parts[0],
+      green: parts[1],
+      blue: parts[2],
+      alpha: Number.isFinite(parts[3]) ? parts[3] : 1,
+    };
+  };
+
+  const luminanceFromColor = ({ red, green, blue }) => {
+    const channels = [red, green, blue].map((channel) => {
+      const normalized = channel / 255;
+      return normalized <= 0.03928
+        ? normalized / 12.92
+        : ((normalized + 0.055) / 1.055) ** 2.4;
+    });
+
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+
+  const toneFromLuminance = (luminance) => {
+    if (luminance >= 0.72) {
+      return "light";
+    }
+
+    if (luminance >= 0.42) {
+      return "mid";
+    }
+
+    return "dark";
+  };
+
+  const getImageSampler = (image) => {
+    if (!(image instanceof HTMLImageElement) || !image.complete || !image.naturalWidth) {
+      return null;
+    }
+
+    const cached = imageCanvasCache.get(image);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    try {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) {
+        imageCanvasCache.set(image, null);
+        return null;
+      }
+
+      const maxDimension = 180;
+      const scale = Math.min(
+        1,
+        maxDimension / image.naturalWidth,
+        maxDimension / image.naturalHeight
+      );
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      const sampler = { canvas, context };
+      imageCanvasCache.set(image, sampler);
+      return sampler;
+    } catch (error) {
+      imageCanvasCache.set(image, null);
+      return null;
+    }
+  };
+
+  const toneFromImage = (image, clientX, clientY) => {
+    const sampler = getImageSampler(image);
+    if (!sampler) {
+      return null;
+    }
+
+    const rect = image.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return null;
+    }
+
+    const localX = Math.min(Math.max(clientX - rect.left, 0), rect.width - 1);
+    const localY = Math.min(Math.max(clientY - rect.top, 0), rect.height - 1);
+    const sampleX = Math.min(
+      sampler.canvas.width - 1,
+      Math.round((localX / rect.width) * (sampler.canvas.width - 1))
+    );
+    const sampleY = Math.min(
+      sampler.canvas.height - 1,
+      Math.round((localY / rect.height) * (sampler.canvas.height - 1))
+    );
+    const pixel = sampler.context.getImageData(sampleX, sampleY, 1, 1).data;
+
+    if (pixel[3] < 26) {
+      return null;
+    }
+
+    return toneFromLuminance(
+      luminanceFromColor({ red: pixel[0], green: pixel[1], blue: pixel[2] })
+    );
+  };
+
+  const resolvePointerTone = (element) => {
+    if (!(element instanceof Element)) {
+      return "dark";
+    }
+
+    const stack =
+      typeof document.elementsFromPoint === "function"
+        ? document.elementsFromPoint(pointerX, pointerY)
+        : [element];
+
+    for (const candidate of stack) {
+      if (!(candidate instanceof Element) || candidate === pointerRing) {
+        continue;
+      }
+
+      if (candidate instanceof HTMLImageElement) {
+        const imageTone = toneFromImage(candidate, pointerX, pointerY);
+        if (imageTone) {
+          return imageTone;
+        }
+      }
+
+      const style = window.getComputedStyle(candidate);
+      const background = parseCssColor(style.backgroundColor);
+
+      if (background && background.alpha > 0.12) {
+        return toneFromLuminance(luminanceFromColor(background));
+      }
+    }
+
+    const bodyBackground = parseCssColor(window.getComputedStyle(document.body).backgroundColor);
+    return bodyBackground ? toneFromLuminance(luminanceFromColor(bodyBackground)) : "dark";
+  };
 
   const render = () => {
     const scale = isClickable ? (isPressed ? 1.45 : 1.95) : isPressed ? 0.82 : 1;
@@ -87,6 +244,7 @@ function initPointerRing() {
       "pointer-editing",
       Boolean(element && element.closest(editableSelector))
     );
+    setPointerTone(resolvePointerTone(element));
     queueRender();
   };
 
@@ -111,6 +269,7 @@ function initPointerRing() {
     if (!event.relatedTarget) {
       isVisible = false;
       isClickable = false;
+      setPointerTone("dark");
       queueRender();
     }
   });
@@ -129,6 +288,7 @@ function initPointerRing() {
     isPressed = false;
     isVisible = false;
     isClickable = false;
+    setPointerTone("dark");
     queueRender();
   });
 
@@ -145,6 +305,7 @@ function initPointerRing() {
       isPressed = false;
       isVisible = false;
       isClickable = false;
+      setPointerTone("dark");
       queueRender();
     }
   });

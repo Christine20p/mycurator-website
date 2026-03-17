@@ -39,6 +39,39 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
+  body.has-pointer-ring {
+    --pointer-border: rgba(244, 236, 228, 0.84);
+    --pointer-fill: rgba(228, 214, 198, 0.12);
+    --pointer-edge: rgba(255, 250, 245, 0.06);
+    --pointer-shadow: rgba(0, 0, 0, 0.18);
+    --pointer-click-border: rgba(222, 201, 181, 0.96);
+    --pointer-click-fill: rgba(217, 196, 176, 0.18);
+    --pointer-click-halo: rgba(214, 193, 173, 0.16);
+    --pointer-pressed-fill: rgba(210, 189, 170, 0.24);
+  }
+
+  body.has-pointer-ring.pointer-on-mid {
+    --pointer-border: rgba(122, 112, 103, 0.9);
+    --pointer-fill: rgba(170, 156, 142, 0.16);
+    --pointer-edge: rgba(255, 255, 255, 0.2);
+    --pointer-shadow: rgba(45, 39, 35, 0.12);
+    --pointer-click-border: rgba(98, 90, 82, 0.96);
+    --pointer-click-fill: rgba(154, 140, 126, 0.22);
+    --pointer-click-halo: rgba(128, 117, 106, 0.18);
+    --pointer-pressed-fill: rgba(122, 111, 101, 0.24);
+  }
+
+  body.has-pointer-ring.pointer-on-light {
+    --pointer-border: rgba(74, 68, 63, 0.94);
+    --pointer-fill: rgba(165, 149, 134, 0.18);
+    --pointer-edge: rgba(255, 255, 255, 0.3);
+    --pointer-shadow: rgba(40, 33, 28, 0.1);
+    --pointer-click-border: rgba(52, 47, 43, 0.98);
+    --pointer-click-fill: rgba(144, 128, 115, 0.24);
+    --pointer-click-halo: rgba(105, 95, 86, 0.18);
+    --pointer-pressed-fill: rgba(106, 96, 88, 0.24);
+  }
+
   body.has-pointer-ring,
   body.has-pointer-ring a,
   body.has-pointer-ring button,
@@ -99,9 +132,9 @@ body::after {
   width: 18px;
   height: 18px;
   border-radius: 999px;
-  border: 1.5px solid rgba(236, 232, 226, 0.78);
-  background: rgba(247, 241, 231, 0.08);
-  box-shadow: 0 0 0 1px rgba(247, 241, 231, 0.05), 0 10px 30px rgba(0, 0, 0, 0.18);
+  border: 1.5px solid var(--pointer-border);
+  background: var(--pointer-fill);
+  box-shadow: 0 0 0 1px var(--pointer-edge), 0 10px 30px var(--pointer-shadow);
   opacity: 0;
   pointer-events: none;
   transform: translate3d(-50%, -50%, 0) scale(0.9);
@@ -120,13 +153,13 @@ body.pointer-editing .pointer-ring {
 }
 
 .pointer-ring.is-clickable {
-  background: rgba(211, 180, 106, 0.14);
-  border-color: rgba(211, 180, 106, 0.96);
-  box-shadow: 0 0 0 12px rgba(211, 180, 106, 0.08), 0 14px 32px rgba(0, 0, 0, 0.22);
+  background: var(--pointer-click-fill);
+  border-color: var(--pointer-click-border);
+  box-shadow: 0 0 0 12px var(--pointer-click-halo), 0 14px 32px var(--pointer-shadow);
 }
 
 .pointer-ring.is-pressed {
-  background: rgba(211, 180, 106, 0.22);
+  background: var(--pointer-pressed-fill);
 }
 
 h1,

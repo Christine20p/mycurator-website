@@ -572,6 +572,7 @@ let currentUserData = null;
 let userListener = null;
 let payNowListener = null;
 let pendingOtpUserId = null;
+let registrationProfilePending = false;
 let hasRedirectedToBooking = false;
 let workerBookingsListener = null;
 let workerBookingsCache = [];
@@ -1083,24 +1084,6 @@ if (!isFirebaseReady) {
     }
   };
 
-  const generateClientCode = () => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let code = "C";
-    for (let i = 0; i < 6; i += 1) {
-      code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
-  };
-
-  const ensureUniqueClientCode = async () => {
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const candidate = generateClientCode();
-      const snapshot = await db.collection("users").where("clientCode", "==", candidate).get();
-      if (snapshot.empty) return candidate;
-    }
-    return `C-${Date.now().toString(36).toUpperCase()}`;
-  };
-
   const isValidSouthAfricanID = (id) => {
     if (!/^[0-9]{13}$/.test(id)) return false;
     let sum = 0;
@@ -1225,81 +1208,25 @@ if (!isFirebaseReady) {
         return;
       }
 
-      const agentDoc = await db.collection("realEstateCodes").doc(realEstateCode).get();
-      if (!agentDoc.exists) {
-        setFeedback(
-          registerFeedback,
-          "We couldn't find that real estate agent code. Please check it and try again.",
-          true
-        );
-        return;
-      }
-      const agentId = agentDoc.data().agentId;
-
+      let user = null;
+      let profileReady = false;
+      registrationProfilePending = true;
+      disableForm(registerForm, true);
       try {
         const result = await auth.createUserWithEmailAndPassword(email, password);
-        const user = result.user;
-        const clientCode = await ensureUniqueClientCode();
-        const userData = {
+        user = result.user;
+        await functions.httpsCallable("completeClientRegistration")({
           title,
           fullName,
           surname,
-          IdNumber: idNumber,
-          dateOfBirth: dob,
-          clientCode,
+          idNumber,
+          dob,
           cellphone,
           address,
           realEstateCode,
-          realEstateAgentId: agentId,
-          adminFeeCents: 29999,
-          adminFeePaid: false,
-          servicesEnabled: false,
-          inspectionStatus: "pending",
-          outstandingBalanceCents: 0,
-          outstandingReason: "",
-          payNowStatus: "",
-          payNowUrl: "",
-          payNowReference: "",
-          mandateStatus: "not_requested",
-          mandateType: "debiCheck",
-          mandateAmountCents: 0,
-          mandateOfferStatus: "pending",
-          mandateReference: clientCode,
-          mandateAuthType: "DELAYED",
-          mandateFrequencyCode: "MNTH",
-          mandateInstalments: 12,
-          mandateTrackingDays: 0,
-          mandateDebitValueTypeId: "1",
-          mandateCollectionDay: "1",
-          mandateStatusCode: "",
-          mandateReason: "",
-          mandateUrl: "",
-          mandatePdfLink: "",
-          mandateStatusUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          userType: "Contract",
-          role: "contract",
           email,
-          uid: user.uid,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        };
-
-        await db.collection("users").doc(user.uid).set(userData);
-        await db
-          .collection("users")
-          .doc(user.uid)
-          .collection("properties")
-          .doc("home")
-          .set({
-            name: "Home Address",
-            address,
-            userId: user.uid,
-            isSold: false,
-            servicesEnabled: false,
-            billingActive: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            realEstateCode,
-            realEstateAgentId: agentId,
-          });
+        });
+        profileReady = true;
 
         pendingOtpUserId = user.uid;
         sessionStorage.setItem("portalPendingOtp", user.uid);
@@ -1311,16 +1238,34 @@ if (!isFirebaseReady) {
           "Account created. Enter the OTP sent to your phone to complete registration."
         );
 
-        await fetch(
-          "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/sendOTP",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user.uid, type: "signup" }),
-          }
-        );
+        try {
+          await fetch(
+            "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/sendOTP",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: user.uid, type: "signup" }),
+            }
+          );
+        } catch (otpError) {
+          setFeedback(
+            registerFeedback,
+            otpError.message || "Account created, but the OTP could not be sent. Use Resend OTP or contact support.",
+            true
+          );
+        }
       } catch (error) {
+        if (user && !profileReady) {
+          try {
+            await user.delete();
+          } catch (deleteError) {
+            await auth.signOut().catch(() => {});
+          }
+        }
         setFeedback(registerFeedback, error.message || "Unable to create account.", true);
+      } finally {
+        registrationProfilePending = false;
+        disableForm(registerForm, false);
       }
     });
   }
@@ -2474,11 +2419,17 @@ if (!isFirebaseReady) {
     try {
       profileDoc = await db.collection("users").doc(user.uid).get();
     } catch (error) {
+      if (loginPage && registrationProfilePending) {
+        return;
+      }
       showMessage("We could not load your profile. Please contact support.");
       return;
     }
 
     if (!profileDoc || !profileDoc.exists) {
+      if (loginPage && registrationProfilePending) {
+        return;
+      }
       showMessage("We could not load your profile. Please contact support.");
       return;
     }

@@ -816,7 +816,7 @@ body.nav-open .site-footer {
 
 .service-category-media {
   position: sticky;
-  top: 104px;
+  top: 0;
   aspect-ratio: 16 / 6;
   overflow: hidden;
   background: rgba(11, 11, 12, 0.08);

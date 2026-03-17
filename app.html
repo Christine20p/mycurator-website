@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-<link rel="stylesheet" href="styles.css?v=20260317c" />
+<link rel="stylesheet" href="styles.css?v=20260317d" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -148,7 +148,7 @@
                     <input type="number" name="collection_day" min="1" max="31" placeholder="1-31" required />
                   </label>
                   <label class="field">Tracking days
-                    <input type="number" name="tracking_days" min="0" max="10" value="0" />
+                    <input type="number" name="tracking_days" min="10" max="10" value="10" readonly />
                   </label>
                 </div>
                 <label class="field checkbox">
@@ -206,6 +206,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260314e"></script>
+    <script src="app.js?v=20260317d"></script>
   </body>
 </html>

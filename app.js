@@ -478,7 +478,7 @@ if (!isFirebaseReady) {
     );
     setMandateFieldIfEmpty(
       "input[name='tracking_days']",
-      String(Number(data.mandateTrackingDays || 0))
+      "10"
     );
     syncCustomMandateBankFields();
   };
@@ -1154,7 +1154,7 @@ if (!isFirebaseReady) {
           debtorId: String(formData.get("debtor_id") || "").trim(),
           startDate: String(formData.get("start_date") || "").trim(),
           collectionDay: Number(formData.get("collection_day") || 1),
-          trackingIndicator: Number(formData.get("tracking_days") || 0),
+          trackingIndicator: 10,
         });
         const result = response.data || {};
         setFeedback(

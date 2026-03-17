@@ -27,7 +27,7 @@ const siteNav = document.querySelector(".site-nav");
 const navLabel = navToggle ? navToggle.querySelector(".nav-label") : null;
 const navLinks = siteNav ? Array.from(siteNav.querySelectorAll("a")) : [];
 const NAV_MENU_CLOSE_MS = 860;
-const FOOTER_LEGAL_TEXT = "© 2026 Curator Property Presentation Co. Ltd, All Rights Reserved.";
+const FOOTER_LEGAL_TEXT = `© ${new Date().getFullYear()} Curator Property Presentation Co. Ltd, All Rights Reserved.`;
 let navCloseTimer = null;
 
 function initPointerRing() {

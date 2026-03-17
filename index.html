@@ -53,7 +53,7 @@
         "url": "https://mycurator.co.za/"
       }
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260317m" />
+    <link rel="stylesheet" href="styles.css?v=20260317n" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -613,18 +613,22 @@
                 >
               </div>
             </div>
-            <form class="contact-form reveal" action="#" method="post">
+            <form class="contact-form reveal" action="#" method="post" data-contact-form="homepage">
               <label>
                 Name
-                <input type="text" name="name" placeholder="Full name" />
+                <input type="text" name="name" placeholder="Full name" required />
               </label>
               <label>
                 Email
-                <input type="email" name="email" placeholder="name@email.com" />
+                <input type="email" name="email" placeholder="name@email.com" required />
               </label>
               <label>
                 Company
                 <input type="text" name="company" placeholder="Company" />
+              </label>
+              <label class="contact-form-trap" aria-hidden="true">
+                Leave this field empty
+                <input type="text" name="website" tabindex="-1" autocomplete="off" />
               </label>
               <label>
                 Message
@@ -632,12 +636,12 @@
                   name="message"
                   rows="4"
                   placeholder="Property type, location, presentation goals, and timing."
+                  required
                 ></textarea>
               </label>
               <button class="btn primary" type="submit">Send inquiry</button>
-              <p class="form-note">
-                This form is static. Email bookings@mycurator.co.za to submit
-                requests.
+              <p class="form-note" data-contact-feedback>
+                Send your inquiry and our team will reply to you by email.
               </p>
             </form>
           </div>
@@ -668,6 +672,6 @@
       </div>
     </footer>
 
-    <script src="app.js?v=20260317m"></script>
+    <script src="app.js?v=20260317n"></script>
   </body>
 </html>

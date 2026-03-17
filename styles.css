@@ -796,6 +796,7 @@ body.nav-closing .site-footer {
 .contact-form {
   display: grid;
   gap: 14px;
+  position: relative;
 }
 
 .contact-form .btn {
@@ -1728,6 +1729,21 @@ body.nav-closing .site-footer {
   font-size: 0.95rem;
 }
 
+.contact-form button[disabled] {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.contact-form-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .portal-card {
   background: rgba(255, 255, 255, 0.94);
   color: var(--ink);
@@ -2537,6 +2553,14 @@ body.nav-closing .site-footer {
   font-size: 0.8rem;
   color: rgba(11, 11, 12, 0.6);
   margin: 0;
+}
+
+.form-note.is-success {
+  color: var(--deep-teal);
+}
+
+.form-note.is-error {
+  color: #9d3c2e;
 }
 
 .site-footer {

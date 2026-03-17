@@ -28,6 +28,8 @@ const navLabel = navToggle ? navToggle.querySelector(".nav-label") : null;
 const navLinks = siteNav ? Array.from(siteNav.querySelectorAll("a")) : [];
 const NAV_MENU_CLOSE_MS = 860;
 const FOOTER_LEGAL_TEXT = `© ${new Date().getFullYear()} Curator Property Presentation Co. Ltd, All Rights Reserved.`;
+const CONTACT_INQUIRY_ENDPOINT =
+  "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/submitInquiry";
 let navCloseTimer = null;
 
 function initPointerRing() {
@@ -401,6 +403,75 @@ document.querySelectorAll(".site-footer .footer-note").forEach((note) => {
   legal.className = "footer-legal";
   legal.textContent = FOOTER_LEGAL_TEXT;
   note.insertAdjacentElement("afterend", legal);
+});
+
+document.querySelectorAll("[data-contact-form]").forEach((form) => {
+  if (!(form instanceof HTMLFormElement)) {
+    return;
+  }
+
+  const feedback = form.querySelector("[data-contact-feedback]");
+  const submitButton = form.querySelector("button[type='submit']");
+  const defaultButtonLabel = submitButton ? submitButton.textContent : "";
+
+  const setContactFeedback = (message, isError = false) => {
+    if (!(feedback instanceof HTMLElement)) {
+      return;
+    }
+    feedback.textContent = message;
+    feedback.classList.toggle("is-error", isError);
+    feedback.classList.toggle("is-success", !isError);
+  };
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(form);
+    const payload = {
+      name: String(formData.get("name") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      company: String(formData.get("company") || "").trim(),
+      message: String(formData.get("message") || "").trim(),
+      website: String(formData.get("website") || "").trim(),
+      page: window.location.pathname || "/",
+      source: String(form.dataset.contactForm || "website").trim(),
+    };
+
+    if (!payload.name || !payload.email || !payload.message) {
+      setContactFeedback("Please complete your name, email, and message.", true);
+      return;
+    }
+
+    if (submitButton instanceof HTMLButtonElement) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending...";
+    }
+    setContactFeedback("Sending your inquiry...");
+
+    try {
+      const response = await fetch(CONTACT_INQUIRY_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to send your inquiry right now.");
+      }
+
+      form.reset();
+      setContactFeedback(result.message || "Inquiry received. We will get back to you shortly.");
+    } catch (error) {
+      setContactFeedback(error.message || "Unable to send your inquiry right now.", true);
+    } finally {
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = false;
+        submitButton.textContent = defaultButtonLabel;
+      }
+    }
+  });
 });
 
 const loginPage = document.querySelector("[data-portal-login-page]");

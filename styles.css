@@ -851,10 +851,23 @@ body.nav-open .site-footer {
   padding: 30px 24px 24px;
   position: relative;
   z-index: 1;
-  margin-top: -72px;
   background: #ffffff;
-  border-radius: 28px 28px 0 0;
-  box-shadow: 0 -24px 48px rgba(255, 255, 255, 0.88);
+}
+
+.service-category-body::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -84px;
+  height: 84px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.78) 58%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  pointer-events: none;
 }
 
 .service-category-intro {
@@ -2633,8 +2646,10 @@ body.nav-open .site-footer {
   .service-category-body {
     margin-top: 0;
     padding: 24px 20px 20px;
-    border-radius: 0;
-    box-shadow: none;
+  }
+
+  .service-category-body::before {
+    display: none;
   }
 }
 

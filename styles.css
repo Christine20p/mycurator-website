@@ -370,11 +370,30 @@ main {
   box-shadow: 40px 0 90px rgba(0, 0, 0, 0.45);
 }
 
-
 .site-nav a {
   color: var(--cream);
   padding: 6px 0;
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  opacity: 0;
+  transform: translate3d(-18px, 0, 0);
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.site-nav .nav-link-copy {
+  display: inline-block;
+  transform: translate3d(-44px, 120%, 0) skewX(-16deg);
+  transform-origin: left center;
+  opacity: 0;
+  filter: blur(10px);
+  will-change: transform, opacity, filter;
+  transition:
+    transform 0.72s cubic-bezier(0.2, 1, 0.2, 1),
+    opacity 0.36s ease,
+    filter 0.5s ease;
+  transition-delay: 0s;
 }
 
 .site-nav a::after {
@@ -404,17 +423,47 @@ main {
   color: var(--gold);
 }
 
-body.nav-open .site-nav {
+body.nav-open .site-nav,
+body.nav-closing .site-nav {
   opacity: 1;
-  pointer-events: auto;
   transform: translateX(0);
 }
 
-body.nav-open .site-header {
+body.nav-open .site-nav {
+  pointer-events: auto;
+}
+
+body.nav-closing .site-nav {
+  pointer-events: none;
+}
+
+body.nav-open .site-nav a,
+body.nav-closing .site-nav a {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+body.nav-open .site-nav .nav-link-copy {
+  transform: translate3d(0, 0, 0) skewX(0deg);
+  opacity: 1;
+  filter: blur(0);
+  transition-delay: calc(0.1s + var(--nav-item-index, 0) * 0.055s);
+}
+
+body.nav-closing .site-nav .nav-link-copy {
+  transform: translate3d(34px, -118%, 0) skewX(-12deg);
+  opacity: 0;
+  filter: blur(8px);
+  transition-delay: calc((var(--nav-item-count, 1) - var(--nav-item-index, 0) - 1) * 0.04s);
+}
+
+body.nav-open .site-header,
+body.nav-closing .site-header {
   z-index: 130;
 }
 
-body.nav-open .nav-toggle {
+body.nav-open .nav-toggle,
+body.nav-closing .nav-toggle {
   position: relative;
   z-index: 140;
   border-color: rgba(247, 241, 231, 0.35);
@@ -422,18 +471,21 @@ body.nav-open .nav-toggle {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
 }
 
-body.nav-open .nav-icon::before {
+body.nav-open .nav-icon::before,
+body.nav-closing .nav-icon::before {
   top: 4px;
   box-shadow: none;
   transform: rotate(45deg);
 }
 
-body.nav-open .nav-icon::after {
+body.nav-open .nav-icon::after,
+body.nav-closing .nav-icon::after {
   bottom: 4px;
   transform: rotate(-45deg);
 }
 
-body.nav-open::after {
+body.nav-open::after,
+body.nav-closing::after {
   opacity: 1;
 }
 
@@ -444,12 +496,17 @@ main,
 
 body.nav-open main,
 body.nav-open .site-header,
-body.nav-open .site-footer {
+body.nav-open .site-footer,
+body.nav-closing main,
+body.nav-closing .site-header,
+body.nav-closing .site-footer {
   transform: translateX(var(--menu-shift));
 }
 
 body.nav-open main,
-body.nav-open .site-footer {
+body.nav-open .site-footer,
+body.nav-closing main,
+body.nav-closing .site-footer {
   opacity: 0.28;
   filter: blur(2px);
   pointer-events: none;

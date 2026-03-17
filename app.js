@@ -25,6 +25,9 @@ if (prefersReduced) {
 const navToggle = document.querySelector(".nav-toggle");
 const siteNav = document.querySelector(".site-nav");
 const navLabel = navToggle ? navToggle.querySelector(".nav-label") : null;
+const navLinks = siteNav ? Array.from(siteNav.querySelectorAll("a")) : [];
+const NAV_MENU_CLOSE_MS = 520;
+let navCloseTimer = null;
 
 function initPointerRing() {
   if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
@@ -314,24 +317,74 @@ function initPointerRing() {
 initPointerRing();
 
 if (navToggle && siteNav) {
-  navToggle.addEventListener("click", () => {
-    const isOpen = document.body.classList.toggle("nav-open");
-    navToggle.setAttribute("aria-expanded", String(isOpen));
-    if (navLabel) {
-      navLabel.textContent = isOpen ? "Close" : "Menu";
+  siteNav.style.setProperty("--nav-item-count", String(navLinks.length));
+  navLinks.forEach((link, index) => {
+    link.style.setProperty("--nav-item-index", String(index));
+    if (!link.querySelector(".nav-link-copy")) {
+      const copy = document.createElement("span");
+      copy.className = "nav-link-copy";
+      while (link.firstChild) {
+        copy.appendChild(link.firstChild);
+      }
+      link.appendChild(copy);
     }
   });
 
-  siteNav.querySelectorAll("a").forEach((link) => {
+  const openNav = () => {
+    if (navCloseTimer) {
+      window.clearTimeout(navCloseTimer);
+      navCloseTimer = null;
+    }
+    document.body.classList.remove("nav-closing");
+    document.body.classList.add("nav-open");
+    navToggle.setAttribute("aria-expanded", "true");
+    if (navLabel) {
+      navLabel.textContent = "Close";
+    }
+  };
+
+  const closeNav = () => {
+    if (!document.body.classList.contains("nav-open") && !document.body.classList.contains("nav-closing")) {
+      return;
+    }
+
+    if (navCloseTimer) {
+      window.clearTimeout(navCloseTimer);
+    }
+
+    document.body.classList.add("nav-closing");
+    navToggle.setAttribute("aria-expanded", "false");
+    if (navLabel) {
+      navLabel.textContent = "Menu";
+    }
+
+    navCloseTimer = window.setTimeout(() => {
+      document.body.classList.remove("nav-open", "nav-closing");
+      navCloseTimer = null;
+    }, NAV_MENU_CLOSE_MS);
+  };
+
+  navToggle.addEventListener("click", () => {
+    if (document.body.classList.contains("nav-open") && !document.body.classList.contains("nav-closing")) {
+      closeNav();
+      return;
+    }
+
+    openNav();
+  });
+
+  navLinks.forEach((link) => {
     link.addEventListener("click", () => {
       if (document.body.classList.contains("nav-open")) {
-        document.body.classList.remove("nav-open");
-        navToggle.setAttribute("aria-expanded", "false");
-        if (navLabel) {
-          navLabel.textContent = "Menu";
-        }
+        closeNav();
       }
     });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.body.classList.contains("nav-open")) {
+      closeNav();
+    }
   });
 }
 

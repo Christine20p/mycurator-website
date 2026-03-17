@@ -38,6 +38,32 @@ body {
   position: relative;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  body.has-pointer-ring,
+  body.has-pointer-ring a,
+  body.has-pointer-ring button,
+  body.has-pointer-ring .btn,
+  body.has-pointer-ring .nav-toggle,
+  body.has-pointer-ring .header-cta,
+  body.has-pointer-ring .auth-link,
+  body.has-pointer-ring [role="button"],
+  body.has-pointer-ring summary,
+  body.has-pointer-ring select,
+  body.has-pointer-ring input[type="button"],
+  body.has-pointer-ring input[type="submit"],
+  body.has-pointer-ring input[type="reset"],
+  body.has-pointer-ring input[type="checkbox"],
+  body.has-pointer-ring input[type="radio"],
+  body.has-pointer-ring label[for] {
+    cursor: none;
+  }
+
+  body.has-pointer-ring input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+  body.has-pointer-ring textarea {
+    cursor: text;
+  }
+}
+
 body.nav-open {
   overflow: hidden;
 }
@@ -64,6 +90,43 @@ body::after {
   pointer-events: none;
   z-index: 110;
   transition: opacity 0.6s ease;
+}
+
+.pointer-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(236, 232, 226, 0.78);
+  background: rgba(247, 241, 231, 0.08);
+  box-shadow: 0 0 0 1px rgba(247, 241, 231, 0.05), 0 10px 30px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0) scale(0.9);
+  transform-origin: center;
+  transition: opacity 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  z-index: 1000;
+  will-change: transform, opacity;
+}
+
+.pointer-ring.is-visible {
+  opacity: 1;
+}
+
+body.pointer-editing .pointer-ring {
+  opacity: 0;
+}
+
+.pointer-ring.is-clickable {
+  background: rgba(211, 180, 106, 0.14);
+  border-color: rgba(211, 180, 106, 0.96);
+  box-shadow: 0 0 0 12px rgba(211, 180, 106, 0.08), 0 14px 32px rgba(0, 0, 0, 0.22);
+}
+
+.pointer-ring.is-pressed {
+  background: rgba(211, 180, 106, 0.22);
 }
 
 h1,

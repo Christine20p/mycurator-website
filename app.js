@@ -26,6 +26,132 @@ const navToggle = document.querySelector(".nav-toggle");
 const siteNav = document.querySelector(".site-nav");
 const navLabel = navToggle ? navToggle.querySelector(".nav-label") : null;
 
+function initPointerRing() {
+  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    return;
+  }
+
+  const pointerRing = document.createElement("div");
+  pointerRing.className = "pointer-ring";
+  pointerRing.setAttribute("aria-hidden", "true");
+  document.body.appendChild(pointerRing);
+  document.body.classList.add("has-pointer-ring");
+
+  const clickableSelector = [
+    "a[href]",
+    "button",
+    "[role='button']",
+    "summary",
+    "label[for]",
+    "select",
+    "input[type='button']",
+    "input[type='submit']",
+    "input[type='reset']",
+    "input[type='checkbox']",
+    "input[type='radio']",
+    ".btn",
+    ".nav-toggle",
+    ".header-cta",
+    ".auth-link",
+  ].join(", ");
+  const editableSelector =
+    "input:not([type='button']):not([type='submit']):not([type='reset']):not([type='checkbox']):not([type='radio']), textarea";
+
+  let pointerX = window.innerWidth / 2;
+  let pointerY = window.innerHeight / 2;
+  let isVisible = false;
+  let isClickable = false;
+  let isPressed = false;
+  let frameId = null;
+
+  const render = () => {
+    const scale = isClickable ? (isPressed ? 1.45 : 1.95) : isPressed ? 0.82 : 1;
+
+    pointerRing.classList.toggle("is-visible", isVisible);
+    pointerRing.classList.toggle("is-clickable", isClickable);
+    pointerRing.classList.toggle("is-pressed", isPressed);
+    pointerRing.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0) translate(-50%, -50%) scale(${scale})`;
+    frameId = null;
+  };
+
+  const queueRender = () => {
+    if (!frameId) {
+      frameId = window.requestAnimationFrame(render);
+    }
+  };
+
+  const updateTargetState = (target) => {
+    const element = target instanceof Element ? target : null;
+    isClickable = Boolean(element && element.closest(clickableSelector));
+    document.body.classList.toggle(
+      "pointer-editing",
+      Boolean(element && element.closest(editableSelector))
+    );
+    queueRender();
+  };
+
+  window.addEventListener(
+    "mousemove",
+    (event) => {
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+      isVisible = true;
+      updateTargetState(event.target);
+      queueRender();
+    },
+    { passive: true }
+  );
+
+  window.addEventListener("mouseover", (event) => {
+    isVisible = true;
+    updateTargetState(event.target);
+  });
+
+  window.addEventListener("mouseout", (event) => {
+    if (!event.relatedTarget) {
+      isVisible = false;
+      isClickable = false;
+      queueRender();
+    }
+  });
+
+  window.addEventListener("mousedown", () => {
+    isPressed = true;
+    queueRender();
+  });
+
+  window.addEventListener("mouseup", () => {
+    isPressed = false;
+    queueRender();
+  });
+
+  window.addEventListener("blur", () => {
+    isPressed = false;
+    isVisible = false;
+    isClickable = false;
+    queueRender();
+  });
+
+  document.addEventListener(
+    "focusin",
+    (event) => {
+      updateTargetState(event.target);
+    },
+    true
+  );
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      isPressed = false;
+      isVisible = false;
+      isClickable = false;
+      queueRender();
+    }
+  });
+}
+
+initPointerRing();
+
 if (navToggle && siteNav) {
   navToggle.addEventListener("click", () => {
     const isOpen = document.body.classList.toggle("nav-open");

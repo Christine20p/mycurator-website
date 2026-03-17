@@ -152,6 +152,41 @@ function initPointerRing() {
 
 initPointerRing();
 
+function initServiceImageDissolve() {
+  const serviceCards = Array.from(document.querySelectorAll(".service-category-card"));
+  if (!serviceCards.length || prefersReduced) {
+    return;
+  }
+
+  let frameId = null;
+
+  const update = () => {
+    const viewportHeight = window.innerHeight || 1;
+    const start = viewportHeight * 0.92;
+    const end = Math.max(88, viewportHeight * 0.16);
+
+    serviceCards.forEach((card) => {
+      const rect = card.getBoundingClientRect();
+      const progress = Math.min(Math.max((start - rect.top) / (start - end), 0), 1);
+      card.style.setProperty("--media-progress", progress.toFixed(3));
+    });
+
+    frameId = null;
+  };
+
+  const queueUpdate = () => {
+    if (!frameId) {
+      frameId = window.requestAnimationFrame(update);
+    }
+  };
+
+  update();
+  window.addEventListener("scroll", queueUpdate, { passive: true });
+  window.addEventListener("resize", queueUpdate);
+}
+
+initServiceImageDissolve();
+
 if (navToggle && siteNav) {
   navToggle.addEventListener("click", () => {
     const isOpen = document.body.classList.toggle("nav-open");

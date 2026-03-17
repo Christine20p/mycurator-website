@@ -772,6 +772,7 @@ body.nav-open .site-footer {
 }
 
 .service-category-card {
+  --media-progress: 0;
   overflow: hidden;
   background: #ffffff;
   border-radius: 28px;
@@ -783,7 +784,20 @@ body.nav-open .site-footer {
   position: relative;
   aspect-ratio: 16 / 6;
   overflow: hidden;
-  background: rgba(11, 11, 12, 0.08);
+  background: linear-gradient(180deg, rgba(11, 11, 12, 0.1), rgba(247, 241, 231, 0.96));
+}
+
+.service-category-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, calc(var(--media-progress) * 0.18)) 50%,
+    rgba(255, 255, 255, calc(0.16 + var(--media-progress) * 0.84)) 100%
+  );
+  pointer-events: none;
 }
 
 .service-category-media img {
@@ -791,12 +805,23 @@ body.nav-open .site-footer {
   height: 100%;
   object-fit: cover;
   display: block;
+  transform-origin: center top;
+  transform: translateY(calc(var(--media-progress) * -34px))
+    scale(calc(1.04 - var(--media-progress) * 0.14));
+  opacity: calc(1 - var(--media-progress) * 0.9);
+  filter: saturate(calc(1 - var(--media-progress) * 0.22))
+    contrast(calc(1 - var(--media-progress) * 0.08));
+  transition: transform 0.18s linear, opacity 0.18s linear, filter 0.18s linear;
 }
 
 .service-category-body {
   display: grid;
   gap: 18px;
   padding: 24px;
+  position: relative;
+  z-index: 1;
+  transform: translateY(calc(var(--media-progress) * -28px));
+  transition: transform 0.18s linear;
 }
 
 .service-category-intro {
@@ -2667,6 +2692,7 @@ body.nav-open .site-footer {
 
   .service-category-body {
     padding: 18px;
+    transform: translateY(calc(var(--media-progress) * -18px));
   }
 
   .careers-anchor-nav {

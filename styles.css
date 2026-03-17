@@ -805,19 +805,22 @@ body.nav-open .site-footer {
 }
 
 .service-category-card {
-  --media-progress: 0;
+  position: relative;
   overflow: hidden;
   background: #ffffff;
   border-radius: 28px;
   border: 1px solid rgba(11, 11, 12, 0.08);
   box-shadow: var(--shadow-soft);
+  isolation: isolate;
 }
 
 .service-category-media {
-  position: relative;
+  position: sticky;
+  top: 104px;
   aspect-ratio: 16 / 6;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(11, 11, 12, 0.1), rgba(247, 241, 231, 0.96));
+  background: rgba(11, 11, 12, 0.08);
+  z-index: 0;
 }
 
 .service-category-media::after {
@@ -827,8 +830,9 @@ body.nav-open .site-footer {
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, calc(var(--media-progress) * 0.18)) 50%,
-    rgba(255, 255, 255, calc(0.16 + var(--media-progress) * 0.84)) 100%
+    rgba(255, 255, 255, 0.05) 58%,
+    rgba(255, 255, 255, 0.84) 88%,
+    rgba(255, 255, 255, 1) 100%
   );
   pointer-events: none;
 }
@@ -838,23 +842,19 @@ body.nav-open .site-footer {
   height: 100%;
   object-fit: cover;
   display: block;
-  transform-origin: center top;
-  transform: translateY(calc(var(--media-progress) * -34px))
-    scale(calc(1.04 - var(--media-progress) * 0.14));
-  opacity: calc(1 - var(--media-progress) * 0.9);
-  filter: saturate(calc(1 - var(--media-progress) * 0.22))
-    contrast(calc(1 - var(--media-progress) * 0.08));
-  transition: transform 0.18s linear, opacity 0.18s linear, filter 0.18s linear;
+  transform: scale(1.02);
 }
 
 .service-category-body {
   display: grid;
   gap: 18px;
-  padding: 24px;
+  padding: 30px 24px 24px;
   position: relative;
   z-index: 1;
-  transform: translateY(calc(var(--media-progress) * -28px));
-  transition: transform 0.18s linear;
+  margin-top: -72px;
+  background: #ffffff;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -24px 48px rgba(255, 255, 255, 0.88);
 }
 
 .service-category-intro {
@@ -2624,6 +2624,18 @@ body.nav-open .site-footer {
   .apply-mini-grid {
     grid-template-columns: 1fr;
   }
+
+  .service-category-media {
+    position: relative;
+    top: auto;
+  }
+
+  .service-category-body {
+    margin-top: 0;
+    padding: 24px 20px 20px;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 540px) {
@@ -2725,7 +2737,6 @@ body.nav-open .site-footer {
 
   .service-category-body {
     padding: 18px;
-    transform: translateY(calc(var(--media-progress) * -18px));
   }
 
   .careers-anchor-nav {

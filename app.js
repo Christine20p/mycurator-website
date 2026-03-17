@@ -603,6 +603,13 @@ const setFeedback = (el, message, isError = false) => {
   el.style.color = isError ? "crimson" : "inherit";
 };
 
+const getOtpDeliveryWarning = (result) => {
+  if (result?.delivery === "log") {
+    return "OTP delivery is not configured yet. Contact support before continuing.";
+  }
+  return "";
+};
+
 const disableForm = (form, disabled) => {
   if (!form) return;
   form.querySelectorAll("input, select, textarea, button").forEach((el) => {
@@ -1239,7 +1246,7 @@ if (!isFirebaseReady) {
         );
 
         try {
-          await fetch(
+          const response = await fetch(
             "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/sendOTP",
             {
               method: "POST",
@@ -1247,6 +1254,15 @@ if (!isFirebaseReady) {
               body: JSON.stringify({ userId: user.uid, type: "signup" }),
             }
           );
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.error || "Unable to send OTP.");
+          }
+          const payload = await response.json().catch(() => ({}));
+          const deliveryWarning = getOtpDeliveryWarning(payload);
+          if (deliveryWarning) {
+            setFeedback(registerFeedback, deliveryWarning, true);
+          }
         } catch (otpError) {
           setFeedback(
             registerFeedback,
@@ -1311,7 +1327,7 @@ if (!isFirebaseReady) {
       }
       if (!pendingOtpUserId) return;
       try {
-        await fetch(
+        const response = await fetch(
           "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/sendOTP",
           {
             method: "POST",
@@ -1319,9 +1335,19 @@ if (!isFirebaseReady) {
             body: JSON.stringify({ userId: pendingOtpUserId, type: "signup" }),
           }
         );
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || "Unable to resend OTP.");
+        }
+        const payload = await response.json().catch(() => ({}));
+        const deliveryWarning = getOtpDeliveryWarning(payload);
+        if (deliveryWarning) {
+          setFeedback(otpFeedback, deliveryWarning, true);
+          return;
+        }
         setFeedback(otpFeedback, "OTP resent.");
       } catch (error) {
-        setFeedback(otpFeedback, "Unable to resend OTP.", true);
+        setFeedback(otpFeedback, error.message || "Unable to resend OTP.", true);
       }
     });
   }

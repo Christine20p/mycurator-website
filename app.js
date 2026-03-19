@@ -210,6 +210,12 @@ function initPointerRing() {
         continue;
       }
 
+      const toneOverrideHost = candidate.closest("[data-pointer-tone]");
+      const toneOverride = toneOverrideHost?.dataset.pointerTone;
+      if (toneOverride === "dark" || toneOverride === "mid" || toneOverride === "light") {
+        return toneOverride;
+      }
+
       if (candidate instanceof HTMLImageElement) {
         const imageTone = toneFromImage(candidate, pointerX, pointerY);
         if (imageTone) {
@@ -491,9 +497,40 @@ const otpResendButton = document.querySelector("[data-resend-otp]");
 const resetPasswordButton = document.querySelector("[data-reset-password]");
 const signOutButton = document.querySelector("[data-signout]");
 const bookingForm = document.querySelector("[data-booking-form]");
+const registerAddressFieldset = registerForm?.querySelector('[data-address-fieldset="register"]');
+const bookingAddressFieldset = bookingForm?.querySelector('[data-address-fieldset="booking"]');
 const paymentFeedback = document.querySelector("[data-payment-feedback]");
 const bookingFeedback = document.querySelector("[data-booking-feedback]");
 const bookingOpenPaymentButton = document.querySelector("[data-booking-open-payment]");
+const bookingCurrentPropertyLabel = document.querySelector("[data-booking-current-property]");
+const bookingCurrentScopeLabel = document.querySelector("[data-booking-current-scope]");
+const bookingServiceDayLabel = document.querySelector("[data-booking-service-day]");
+const bookingServiceTimeLabel = document.querySelector("[data-booking-service-time]");
+const bookingPropertyGrid = document.querySelector("[data-booking-property-grid]");
+const bookingPropertyEmpty = document.querySelector("[data-booking-property-empty]");
+const bookingCategoryCards = document.querySelectorAll("[data-booking-category-card]");
+const bookingServicesPanel = document.querySelector("[data-booking-services-panel]");
+const bookingServicesTitle = document.querySelector("[data-booking-services-title]");
+const bookingServiceGrid = document.querySelector("[data-booking-service-grid]");
+const bookingSelectionNote = document.querySelector("[data-booking-selection-note]");
+const bookingOpenSheetButton = document.querySelector("[data-booking-open-sheet]");
+const bookingSheet = document.querySelector("[data-booking-sheet]");
+const bookingSheetPanel = document.querySelector("[data-booking-sheet-panel]");
+const bookingSheetCloseButtons = document.querySelectorAll("[data-booking-sheet-close]");
+const bookingDateInput = document.querySelector("[data-booking-date]");
+const bookingTimeInput = document.querySelector("[data-booking-time]");
+const bookingSummaryDate = document.querySelector("[data-booking-summary-date]");
+const bookingSummaryTime = document.querySelector("[data-booking-summary-time]");
+const bookingSummaryCategory = document.querySelector("[data-booking-summary-category]");
+const bookingSummaryProperty = document.querySelector("[data-booking-summary-property]");
+const bookingSummaryPropertyPill = document.querySelector("[data-booking-summary-property-pill]");
+const bookingSummaryServicesCount = document.querySelector("[data-booking-summary-services-count]");
+const bookingSummaryServices = document.querySelector("[data-booking-summary-services]");
+const bookingPricingBlock = document.querySelector("[data-booking-pricing-block]");
+const bookingPricingRows = document.querySelector("[data-booking-price-rows]");
+const bookingPricingNote = document.querySelector("[data-booking-pricing-note]");
+const bookingPricingMessage = document.querySelector("[data-booking-pricing-message]");
+const bookingSubmitButton = document.querySelector("[data-booking-submit]");
 const loginFeedback = document.querySelector("[data-login-feedback]");
 const registerFeedback = document.querySelector("[data-register-feedback]");
 const otpFeedback = document.querySelector("[data-otp-feedback]");
@@ -610,8 +647,65 @@ let workerFiltersBound = false;
 let adminMandatesBound = false;
 let adminCommsBound = false;
 let pendingSecurityChange = null;
+let bookingPropertiesListener = null;
+let bookingProperties = [];
+let bookingSelectedPropertyId = "";
+let bookingSelectedCategory = "";
+let bookingSelectedServices = [];
+let bookingPricingLines = [];
+let bookingPayNowTotalCents = 0;
+let bookingHasMonthlyServices = false;
+let bookingPricingReady = false;
+let bookingPricingMessageText = "";
+let bookingPricingRequestId = 0;
+let bookingSubmitting = false;
 
 const CUSTOM_MANDATE_BANK_ID = "__other__";
+const BOOKING_CATEGORY_SERVICES = {
+  Residential: [
+    "Standard Cleaning",
+    "Deep Cleaning",
+    "Staging Furniture",
+    "Pest Control",
+    "Odour Control",
+    "Repainting",
+    "Pool Cleaning",
+    "Lawn Mowing",
+    "Plant Trimming",
+    "Lawn Colour Shading",
+    "Interior Wear & Tears Repair",
+    "Pavement Cleaning",
+  ],
+  Office: [
+    "Standard Cleaning",
+    "Deep Cleaning",
+    "Staging Furniture",
+    "Pest Control",
+    "Odour Control",
+    "Repainting",
+    "Pool Cleaning",
+    "Lawn Mowing",
+    "Plant Trimming",
+    "Lawn Colour Shading",
+    "Interior Wear & Tears Repair",
+    "Pavement Cleaning",
+  ],
+  Commercial: [
+    "Standard Cleaning",
+    "Deep Cleaning",
+    "Staging Furniture",
+    "Pest Control",
+    "Odour Control",
+    "Repainting",
+    "Pool Cleaning",
+    "Lawn Mowing",
+    "Plant Trimming",
+    "Lawn Colour Shading",
+    "Interior Wear & Tears Repair",
+    "Pavement Cleaning",
+  ],
+  "Vacant Land": ["Plant Uprooting", "Site Excavation", "Weed Removal"],
+};
 
 const showMessage = (message, isError = false) => {
   if (!portalMessage) return;
@@ -693,6 +787,229 @@ const disableForm = (form, disabled) => {
     el.disabled = disabled;
   });
 };
+
+const normalizeLocationText = (value) => String(value || "").trim();
+
+const buildStructuredAddress = (draft) => {
+  const streetLine = [draft.houseNumber, draft.route]
+    .map((value) => normalizeLocationText(value))
+    .filter(Boolean)
+    .join(" ");
+
+  const formattedAddress = [
+    draft.apartmentNumber,
+    streetLine,
+    draft.suburb,
+    draft.town,
+    draft.province,
+    draft.postalCode,
+    draft.country || "South Africa",
+  ]
+    .map((value) => normalizeLocationText(value))
+    .filter(Boolean)
+    .join(", ");
+
+  const location = {};
+  const latitude = Number(draft.latitude);
+  const longitude = Number(draft.longitude);
+  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+    location.lat = latitude;
+    location.lng = longitude;
+  }
+
+  return {
+    placeId: normalizeLocationText(draft.placeId),
+    apartmentNumber: normalizeLocationText(draft.apartmentNumber),
+    houseNumber: normalizeLocationText(draft.houseNumber),
+    route: normalizeLocationText(draft.route),
+    suburb: normalizeLocationText(draft.suburb),
+    town: normalizeLocationText(draft.town),
+    province: normalizeLocationText(draft.province),
+    postalCode: normalizeLocationText(draft.postalCode),
+    country: normalizeLocationText(draft.country) || "South Africa",
+    formattedAddress,
+    ...(Object.keys(location).length ? { location } : {}),
+  };
+};
+
+const buildStructuredAddressFromRecord = (data, fallbackAddress = "") => {
+  const details = buildStructuredAddress({
+    placeId: data?.addressPlaceId,
+    apartmentNumber: data?.apartmentNumber,
+    houseNumber: data?.houseNumber,
+    route: data?.route,
+    suburb: data?.suburb,
+    town: data?.town,
+    province: data?.province,
+    postalCode: data?.postalCode,
+    country: data?.country || "South Africa",
+    latitude: data?.location?.lat ?? data?.propertyLocation?.lat,
+    longitude: data?.location?.lng ?? data?.propertyLocation?.lng,
+  });
+
+  return {
+    ...details,
+    formattedAddress: details.formattedAddress || normalizeLocationText(fallbackAddress),
+  };
+};
+
+const isStructuredAddressComplete = (details) =>
+  Boolean(
+    normalizeLocationText(details.houseNumber) &&
+      normalizeLocationText(details.route) &&
+      normalizeLocationText(details.town) &&
+      normalizeLocationText(details.province)
+  );
+
+const createPlacesAddressController = (fieldset) => {
+  if (!fieldset) return null;
+
+  const searchInput = fieldset.querySelector("input[name$='address_search']");
+  const apartmentInput = fieldset.querySelector("input[name$='apartment_number']");
+  const houseInput = fieldset.querySelector("input[name$='house_number']");
+  const routeInput = fieldset.querySelector("input[name$='route']");
+  const suburbInput = fieldset.querySelector("input[name$='suburb']");
+  const townInput = fieldset.querySelector("input[name$='town']");
+  const provinceInput = fieldset.querySelector("input[name$='province']");
+  const postalCodeInput = fieldset.querySelector("input[name$='postal_code']");
+  const addressInput = fieldset.querySelector("input[name$='address']");
+  const placeIdInput = fieldset.querySelector("input[name$='place_id']");
+  const latitudeInput = fieldset.querySelector("input[name$='lat']");
+  const longitudeInput = fieldset.querySelector("input[name$='lng']");
+  const suggestionsBox = fieldset.querySelector("[data-place-suggestions]");
+  let searchTimer = null;
+  let requestIndex = 0;
+
+  const renderSuggestions = (suggestions, onSelect) => {
+    if (!suggestionsBox) return;
+    if (!Array.isArray(suggestions) || !suggestions.length) {
+      suggestionsBox.innerHTML = "";
+      suggestionsBox.classList.remove("is-visible");
+      return;
+    }
+
+    suggestionsBox.innerHTML = suggestions
+      .map(
+        (item, index) => `
+          <button class="places-suggestion" type="button" data-place-index="${index}">
+            <strong>${escapeHtml(item.primaryText || item.text || "")}</strong>
+            <span>${escapeHtml(item.secondaryText || "")}</span>
+          </button>
+        `
+      )
+      .join("");
+    suggestionsBox.classList.add("is-visible");
+    suggestionsBox.querySelectorAll("[data-place-index]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.getAttribute("data-place-index"));
+        const item = suggestions[index];
+        if (item) {
+          onSelect(item);
+        }
+      });
+    });
+  };
+
+  const collect = () =>
+    buildStructuredAddress({
+      placeId: placeIdInput?.value,
+      apartmentNumber: apartmentInput?.value,
+      houseNumber: houseInput?.value,
+      route: routeInput?.value,
+      suburb: suburbInput?.value,
+      town: townInput?.value,
+      province: provinceInput?.value,
+      postalCode: postalCodeInput?.value,
+      country: "South Africa",
+      latitude: latitudeInput?.value,
+      longitude: longitudeInput?.value,
+    });
+
+  const syncAddress = () => {
+    const details = collect();
+    if (addressInput) {
+      addressInput.value = details.formattedAddress;
+    }
+    return details;
+  };
+
+  const apply = (details) => {
+    if (searchInput) searchInput.value = details.formattedAddress || "";
+    if (apartmentInput) apartmentInput.value = details.apartmentNumber || "";
+    if (houseInput) houseInput.value = details.houseNumber || "";
+    if (routeInput) routeInput.value = details.route || "";
+    if (suburbInput) suburbInput.value = details.suburb || "";
+    if (townInput) townInput.value = details.town || "";
+    if (provinceInput) provinceInput.value = details.province || "";
+    if (postalCodeInput) postalCodeInput.value = details.postalCode || "";
+    if (placeIdInput) placeIdInput.value = details.placeId || "";
+    if (latitudeInput) latitudeInput.value = details.location?.lat ?? "";
+    if (longitudeInput) longitudeInput.value = details.location?.lng ?? "";
+    syncAddress();
+    renderSuggestions([], () => {});
+  };
+
+  [apartmentInput, houseInput, routeInput, suburbInput, townInput, provinceInput, postalCodeInput]
+    .filter(Boolean)
+    .forEach((input) => {
+      input.addEventListener("input", () => {
+        if (input === postalCodeInput) {
+          postalCodeInput.value = postalCodeInput.value.replace(/\D/g, "").slice(0, 6);
+        }
+        syncAddress();
+      });
+    });
+
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      const query = normalizeLocationText(searchInput.value);
+      if (searchTimer) {
+        window.clearTimeout(searchTimer);
+      }
+
+      if (query.length < 3 || !functions) {
+        renderSuggestions([], () => {});
+        return;
+      }
+
+      searchTimer = window.setTimeout(async () => {
+        const currentRequest = requestIndex + 1;
+        requestIndex = currentRequest;
+        try {
+          const response = await functions.httpsCallable("searchPlacesAutocomplete")({ input: query });
+          if (currentRequest !== requestIndex) return;
+          const suggestions = Array.isArray(response.data?.suggestions) ? response.data.suggestions : [];
+          renderSuggestions(suggestions, async (item) => {
+            try {
+              const detailsResponse = await functions.httpsCallable("getPlaceAddressDetails")({
+                placeId: item.placeId,
+              });
+              const details = detailsResponse.data?.address || {};
+              apply(details);
+            } catch (error) {
+              console.error("Unable to resolve place details", error);
+            }
+          });
+        } catch (error) {
+          console.error("Unable to search places", error);
+          renderSuggestions([], () => {});
+        }
+      }, 320);
+    });
+  }
+
+  syncAddress();
+  return {
+    collect,
+    syncAddress,
+    isValid() {
+      return isStructuredAddressComplete(collect());
+    },
+  };
+};
+
+const registerAddressController = createPlacesAddressController(registerAddressFieldset);
+const bookingAddressController = createPlacesAddressController(bookingAddressFieldset);
 
 const downloadBase64File = (base64, fileName, mimeType) => {
   if (!base64 || !fileName) return;
@@ -912,6 +1229,516 @@ if (!isFirebaseReady) {
     const safeDay = Math.min(Math.max(Number(collectionDay || 1), 1), monthEnd);
     target.setDate(safeDay);
     return toIsoDateValue(target);
+  };
+
+  const bookingDayName = (value) => {
+    const direct = String(value || "").trim();
+    if (direct) return direct;
+    const index = Number(currentUserData?.serviceDayIndex);
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    return Number.isFinite(index) ? days[((index % days.length) + days.length) % days.length] : "Assigning weekly day";
+  };
+
+  const bookingSlotLabel = (value) => {
+    const direct = String(value || "").trim();
+    if (direct) return direct;
+    const index = Number(currentUserData?.serviceSlotIndex);
+    const slots = ["06:00", "11:00"];
+    return Number.isFinite(index) ? slots[((index % slots.length) + slots.length) % slots.length] : "06:00";
+  };
+
+  const normalizeBookingCategory = (value) => {
+    const normalized = String(value || "")
+      .trim()
+      .toLowerCase();
+    return (
+      Object.keys(BOOKING_CATEGORY_SERVICES).find(
+        (category) => category.toLowerCase() === normalized
+      ) || ""
+    );
+  };
+
+  const getBookingServicesForCategory = (category) =>
+    BOOKING_CATEGORY_SERVICES[normalizeBookingCategory(category)] || [];
+
+  const getSelectedBookingProperty = () =>
+    bookingProperties.find((property) => property.id === bookingSelectedPropertyId) || null;
+
+  const bookingSelectionsReady = () =>
+    Boolean(getSelectedBookingProperty() && bookingSelectedServices.length && bookingSelectedCategory);
+
+  const stopBookingPropertiesListener = () => {
+    if (bookingPropertiesListener) bookingPropertiesListener();
+    bookingPropertiesListener = null;
+  };
+
+  const resetBookingPricingState = (message = "Select a property and services to see pricing.") => {
+    bookingPricingLines = [];
+    bookingPayNowTotalCents = 0;
+    bookingHasMonthlyServices = false;
+    bookingPricingReady = false;
+    bookingPricingMessageText = message;
+  };
+
+  const resetBookingDraft = ({ preserveProperty = true } = {}) => {
+    if (!preserveProperty) {
+      bookingSelectedPropertyId = "";
+    }
+    bookingSelectedCategory = "";
+    bookingSelectedServices = [];
+    bookingPricingRequestId += 1;
+    resetBookingPricingState();
+    if (bookingDateInput) bookingDateInput.value = "";
+    if (bookingTimeInput) bookingTimeInput.value = "";
+  };
+
+  const parseBookingPropertyDocument = (doc) => {
+    const data = doc.data() || {};
+    const fallbackAddress = String(data.address || data.homeAddress || "").trim();
+    const addressDetails = buildStructuredAddressFromRecord(data, fallbackAddress);
+    const address = addressDetails.formattedAddress || fallbackAddress;
+    const servicesEnabled = data.servicesEnabled !== false;
+    const billingActive = data.billingActive !== false;
+    const isSold = data.isSold === true;
+
+    return {
+      id: doc.id,
+      name: String(data.name || (doc.id === "home" ? "Home Address" : "Property")).trim() || "Property",
+      address: address || "Address pending",
+      addressDetails,
+      isSold,
+      servicesEnabled,
+      billingActive,
+      isBookable: !isSold && servicesEnabled && billingActive,
+    };
+  };
+
+  const renderBookingHeroState = () => {
+    const selectedProperty = getSelectedBookingProperty();
+    if (bookingCurrentPropertyLabel) {
+      bookingCurrentPropertyLabel.textContent = selectedProperty?.name || "Select property";
+    }
+    if (bookingCurrentScopeLabel) {
+      bookingCurrentScopeLabel.textContent = bookingSelectedServices.length
+        ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} services`
+        : "Services pending";
+    }
+    if (bookingOpenSheetButton) {
+      bookingOpenSheetButton.disabled = !bookingSelectionsReady();
+    }
+    if (bookingServiceDayLabel) {
+      bookingServiceDayLabel.textContent = bookingDayName(currentUserData?.serviceDayOfWeek);
+    }
+    if (bookingServiceTimeLabel) {
+      bookingServiceTimeLabel.textContent = bookingSlotLabel(currentUserData?.serviceSlot);
+    }
+    if (bookingSelectionNote) {
+      bookingSelectionNote.textContent =
+        selectedProperty && bookingSelectedServices.length
+          ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} services ready`
+          : "Select a property and at least one service to continue.";
+    }
+  };
+
+  const renderBookingProperties = () => {
+    if (!bookingPropertyGrid) return;
+
+    const sorted = bookingProperties
+      .slice()
+      .sort((left, right) => {
+        if (left.id === "home" && right.id !== "home") return -1;
+        if (right.id === "home" && left.id !== "home") return 1;
+        if (left.isBookable !== right.isBookable) return left.isBookable ? -1 : 1;
+        return left.name.localeCompare(right.name);
+      });
+
+    bookingPropertyGrid.innerHTML = "";
+
+    if (bookingPropertyEmpty) {
+      bookingPropertyEmpty.classList.toggle("is-hidden", sorted.length > 0);
+      bookingPropertyEmpty.textContent = sorted.length
+        ? ""
+        : "No saved properties were found. Add a property in the app first, then return here to book.";
+    }
+
+    sorted.forEach((property) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "booking-property-card";
+      if (property.id === bookingSelectedPropertyId) {
+        button.classList.add("is-selected");
+      }
+      if (!property.isBookable) {
+        button.classList.add("is-disabled");
+        button.disabled = true;
+      }
+
+      let statusLabel = "Ready";
+      if (property.isSold) {
+        statusLabel = "Sold";
+      } else if (!property.servicesEnabled || !property.billingActive) {
+        statusLabel = "Unavailable";
+      }
+
+      button.innerHTML = `
+        <div class="booking-property-card-head">
+          <strong>${escapeHtml(property.name)}</strong>
+          <span class="booking-property-status">${escapeHtml(statusLabel)}</span>
+        </div>
+        <p>${escapeHtml(property.address)}</p>
+      `;
+
+      button.addEventListener("click", () => {
+        bookingSelectedPropertyId = property.id;
+        renderBookingProperties();
+        renderBookingHeroState();
+        renderBookingSummary();
+        refreshBookingPricing();
+      });
+
+      bookingPropertyGrid.appendChild(button);
+    });
+  };
+
+  const renderBookingCategories = () => {
+    bookingCategoryCards.forEach((card) => {
+      const category = normalizeBookingCategory(card.dataset.category);
+      const isSelected = category === bookingSelectedCategory;
+      card.classList.toggle("is-selected", isSelected);
+      card.setAttribute("aria-pressed", String(isSelected));
+      const count = card.querySelector(".booking-category-copy span");
+      if (count) {
+        count.textContent = `${getBookingServicesForCategory(category).length} services`;
+      }
+    });
+  };
+
+  const renderBookingServices = () => {
+    if (!bookingServicesPanel || !bookingServiceGrid) return;
+
+    const services = getBookingServicesForCategory(bookingSelectedCategory);
+    bookingServicesPanel.classList.toggle("is-hidden", services.length === 0);
+    if (!services.length) {
+      bookingServiceGrid.innerHTML = "";
+      return;
+    }
+
+    if (bookingServicesTitle) {
+      bookingServicesTitle.textContent = `${bookingSelectedCategory} selections`;
+    }
+
+    bookingServiceGrid.innerHTML = "";
+    services.forEach((service) => {
+      const selected = bookingSelectedServices.includes(service);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "booking-service-card";
+      if (selected) {
+        button.classList.add("is-selected");
+      }
+      button.innerHTML = `
+        <span class="booking-service-icon">${selected ? "✓" : "+"}</span>
+        <strong>${escapeHtml(service)}</strong>
+      `;
+      button.addEventListener("click", () => {
+        if (bookingSelectedServices.includes(service)) {
+          bookingSelectedServices = bookingSelectedServices.filter((item) => item !== service);
+        } else {
+          bookingSelectedServices = [...bookingSelectedServices, service];
+        }
+        renderBookingHeroState();
+        renderBookingServices();
+        renderBookingSummary();
+        refreshBookingPricing();
+      });
+      bookingServiceGrid.appendChild(button);
+    });
+  };
+
+  const formatBookingSummaryDate = (value) => {
+    if (!value) return "Pending selection";
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime())
+      ? "Pending selection"
+      : date.toLocaleDateString("en-ZA", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+  };
+
+  const formatBookingSummaryTime = (value) => {
+    if (!value) return "Pending selection";
+    const date = new Date(`1970-01-01T${value}`);
+    return Number.isNaN(date.getTime())
+      ? "Pending selection"
+      : date.toLocaleTimeString("en-ZA", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+  };
+
+  const renderBookingSummary = () => {
+    const selectedProperty = getSelectedBookingProperty();
+    const selectedDateValue = bookingDateInput?.value || "";
+    const selectedTimeValue = bookingTimeInput?.value || "";
+
+    if (bookingSummaryDate) {
+      bookingSummaryDate.textContent = formatBookingSummaryDate(selectedDateValue);
+    }
+    if (bookingSummaryTime) {
+      bookingSummaryTime.textContent = formatBookingSummaryTime(selectedTimeValue);
+    }
+    if (bookingSummaryCategory) {
+      bookingSummaryCategory.textContent =
+        bookingSelectedCategory || "Choose a presentation lane";
+    }
+    if (bookingSummaryProperty) {
+      bookingSummaryProperty.textContent =
+        selectedProperty?.name || "Choose a property";
+    }
+    if (bookingSummaryPropertyPill) {
+      bookingSummaryPropertyPill.textContent =
+        selectedProperty?.name || "Property pending";
+    }
+    if (bookingSummaryServicesCount) {
+      bookingSummaryServicesCount.textContent = bookingSelectedServices.length
+        ? `${bookingSelectedServices.length} services`
+        : "No services selected";
+    }
+    if (bookingSummaryServices) {
+      bookingSummaryServices.innerHTML = bookingSelectedServices.length
+        ? bookingSelectedServices
+            .map((service) => `<span>${escapeHtml(service)}</span>`)
+            .join("")
+        : "";
+    }
+    if (bookingPricingRows) {
+      bookingPricingRows.innerHTML = "";
+      if (bookingPricingReady) {
+        bookingPricingLines.forEach((line) => {
+          const row = document.createElement("div");
+          row.className = "booking-summary-row";
+          row.innerHTML = `<span>${escapeHtml(line.name)}</span><strong>${escapeHtml(
+            formatCurrency(line.amountCents)
+          )}</strong>`;
+          bookingPricingRows.appendChild(row);
+        });
+        if (bookingPayNowTotalCents > 0) {
+          const totalRow = document.createElement("div");
+          totalRow.className = "booking-summary-row booking-summary-row--total";
+          totalRow.innerHTML = `<span>Ozow EFT Total</span><strong>${escapeHtml(
+            formatCurrency(bookingPayNowTotalCents)
+          )}</strong>`;
+          bookingPricingRows.appendChild(totalRow);
+        }
+      }
+    }
+    if (bookingPricingBlock) {
+      const shouldShowPricingBlock =
+        bookingPricingReady &&
+        (bookingPricingLines.length > 0 || bookingPayNowTotalCents > 0 || bookingHasMonthlyServices);
+      bookingPricingBlock.classList.toggle("is-hidden", !shouldShowPricingBlock);
+    }
+    if (bookingPricingNote) {
+      bookingPricingNote.textContent = bookingHasMonthlyServices
+        ? "Monthly services will be billed separately after approval."
+        : "";
+      bookingPricingNote.classList.toggle("is-hidden", !bookingHasMonthlyServices);
+    }
+    if (bookingPricingMessage) {
+      bookingPricingMessage.textContent = bookingPricingReady ? "" : bookingPricingMessageText;
+      bookingPricingMessage.classList.toggle(
+        "is-hidden",
+        bookingPricingReady || !bookingPricingMessageText
+      );
+    }
+  };
+
+  const refreshBookingPricing = async () => {
+    if (!db || !currentUser) {
+      resetBookingPricingState("Sign in to see pricing.");
+      renderBookingSummary();
+      return;
+    }
+
+    const selectedProperty = getSelectedBookingProperty();
+    if (!selectedProperty) {
+      resetBookingPricingState("Select a property to see pricing.");
+      renderBookingSummary();
+      return;
+    }
+
+    if (!bookingSelectedServices.length) {
+      resetBookingPricingState("Select services to see pricing.");
+      renderBookingSummary();
+      return;
+    }
+
+    const requestId = bookingPricingRequestId + 1;
+    bookingPricingRequestId = requestId;
+    bookingPricingReady = false;
+    bookingPricingMessageText = "Loading pricing...";
+    bookingPricingLines = [];
+    bookingPayNowTotalCents = 0;
+    bookingHasMonthlyServices = false;
+    renderBookingSummary();
+
+    try {
+      const [overridesSnap, catalogSnap] = await Promise.all([
+        db
+          .collection("users")
+          .doc(currentUser.uid)
+          .collection("properties")
+          .doc(selectedProperty.id)
+          .collection("serviceOverrides")
+          .get(),
+        db.collection("services").get(),
+      ]);
+
+      if (requestId !== bookingPricingRequestId) return;
+
+      const catalogById = new Map();
+      const catalogByName = new Map();
+      catalogSnap.docs.forEach((doc) => {
+        const data = doc.data() || {};
+        const docId = String(doc.id || "")
+          .trim()
+          .toLowerCase();
+        const name = String(data.name || doc.id || "")
+          .trim()
+          .toLowerCase();
+        const cents = Number(data.priceCents || data.basePriceCents || 0);
+        const timing = String(data.paymentTiming || data.billingTiming || "pay_now")
+          .trim()
+          .toLowerCase();
+        if (docId) {
+          catalogById.set(docId, { id: docId, name, cents, timing });
+        }
+        if (name) {
+          catalogByName.set(name, { id: docId || name, cents, timing });
+        }
+      });
+
+      const overrides = new Map();
+      overridesSnap.docs.forEach((doc) => {
+        const data = doc.data() || {};
+        overrides.set(String(doc.id || "").trim().toLowerCase(), {
+          enabled: data.isEnabled !== false,
+          cents:
+            data.overridePriceCents === undefined || data.overridePriceCents === null
+              ? null
+              : Number(data.overridePriceCents || 0),
+          timing:
+            data.paymentTiming === undefined || data.paymentTiming === null
+              ? null
+              : String(data.paymentTiming).trim().toLowerCase(),
+        });
+      });
+
+      const lines = [];
+      let total = 0;
+      let monthly = false;
+
+      bookingSelectedServices.forEach((service) => {
+        const normalizedService = String(service || "")
+          .trim()
+          .toLowerCase();
+        if (!normalizedService) return;
+
+        const catalogEntry = catalogByName.get(normalizedService) || catalogById.get(normalizedService);
+        const overrideKey = overrides.has(normalizedService)
+          ? normalizedService
+          : catalogEntry?.id || "";
+        const override = overrideKey ? overrides.get(overrideKey) : null;
+        const catalogTiming = catalogEntry?.timing || "pay_now";
+        const catalogCents = Number(catalogEntry?.cents || 0);
+
+        if (override) {
+          if (!override.enabled) return;
+          const timing = override.timing || catalogTiming;
+          if (timing === "monthly") {
+            monthly = true;
+            return;
+          }
+          const cents = override.cents ?? catalogCents;
+          if (cents > 0) {
+            total += cents;
+            lines.push({ name: service, amountCents: cents, paymentTiming: timing });
+          }
+          return;
+        }
+
+        if (catalogEntry) {
+          if (catalogTiming === "monthly") {
+            monthly = true;
+            return;
+          }
+          if (catalogCents > 0) {
+            total += catalogCents;
+            lines.push({ name: service, amountCents: catalogCents, paymentTiming: catalogTiming });
+          }
+        }
+      });
+
+      bookingPricingLines = lines;
+      bookingPayNowTotalCents = total;
+      bookingHasMonthlyServices = monthly;
+      bookingPricingReady = true;
+      bookingPricingMessageText =
+        lines.length || monthly ? "" : "Pricing will appear once admin sets service prices.";
+    } catch (error) {
+      bookingPricingReady = false;
+      bookingPricingMessageText = "Pricing will appear once admin sets service prices.";
+    }
+
+    renderBookingSummary();
+  };
+
+  const setBookingSheetOpen = (open) => {
+    if (!bookingSheet) return;
+    bookingSheet.classList.toggle("is-hidden", !open);
+    bookingSheet.setAttribute("aria-hidden", open ? "false" : "true");
+    document.body.classList.toggle("booking-sheet-open", open);
+  };
+
+  const setBookingMinimumDate = () => {
+    if (!bookingDateInput) return;
+    const minimumDate = new Date();
+    minimumDate.setDate(minimumDate.getDate() + 1);
+    bookingDateInput.min = toIsoDateValue(minimumDate);
+  };
+
+  const startBookingPropertiesListener = (uid) => {
+    if (!db || !uid) return;
+    stopBookingPropertiesListener();
+    bookingPropertiesListener = db
+      .collection("users")
+      .doc(uid)
+      .collection("properties")
+      .onSnapshot(
+        (snapshot) => {
+          bookingProperties = snapshot.docs.map(parseBookingPropertyDocument);
+          if (
+            bookingSelectedPropertyId &&
+            !bookingProperties.some((property) => property.id === bookingSelectedPropertyId)
+          ) {
+            bookingSelectedPropertyId = "";
+          }
+          renderBookingProperties();
+          renderBookingHeroState();
+          renderBookingSummary();
+          refreshBookingPricing();
+        },
+        () => {
+          bookingProperties = [];
+          renderBookingProperties();
+          renderBookingHeroState();
+          resetBookingPricingState("We couldn't load your properties.");
+          renderBookingSummary();
+        }
+      );
   };
 
   const setMandateFieldIfEmpty = (selector, value) => {
@@ -1188,6 +2015,17 @@ if (!isFirebaseReady) {
     const canProceed =
       adminFeePaid && servicesEnabled && !hasOutstanding && inspectionDone && mandateActive;
 
+    if (bookingPage) {
+      renderBookingHeroState();
+      renderBookingSummary();
+      if (canProceed && currentUser?.uid) {
+        startBookingPropertiesListener(currentUser.uid);
+      } else {
+        stopBookingPropertiesListener();
+        setBookingSheetOpen(false);
+      }
+    }
+
     if (activationPage && canProceed && !hasRedirectedToBooking) {
       hasRedirectedToBooking = true;
       showMessage("Activation complete. Redirecting to booking request...");
@@ -1304,7 +2142,8 @@ if (!isFirebaseReady) {
       const idNumber = String(formData.get("id_number") || "").trim();
       const dob = String(formData.get("dob") || "").trim();
       const cellphone = String(formData.get("cellphone") || "").trim();
-      const address = String(formData.get("address") || "").trim();
+      const addressDetails = registerAddressController?.collect() || {};
+      const address = String(addressDetails.formattedAddress || formData.get("address") || "").trim();
       const realEstateCode = String(formData.get("agent_code") || "").trim().toUpperCase();
       const email = String(formData.get("email") || "").trim().toLowerCase();
       const password = String(formData.get("password") || "");
@@ -1317,6 +2156,7 @@ if (!isFirebaseReady) {
         !idNumber ||
         !cellphone ||
         !address ||
+        !isStructuredAddressComplete(addressDetails) ||
         !realEstateCode ||
         !email ||
         !password ||
@@ -1351,6 +2191,7 @@ if (!isFirebaseReady) {
           dob,
           cellphone,
           address,
+          addressDetails,
           realEstateCode,
           email,
         });
@@ -1886,47 +2727,146 @@ if (!isFirebaseReady) {
     });
   }
 
+  renderBookingCategories();
+  renderBookingHeroState();
+  renderBookingSummary();
+
+  bookingCategoryCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const category = normalizeBookingCategory(card.dataset.category);
+      if (!category) return;
+
+      if (bookingSelectedCategory === category) {
+        bookingSelectedCategory = "";
+        bookingSelectedServices = [];
+      } else {
+        bookingSelectedCategory = category;
+        bookingSelectedServices = [];
+      }
+
+      renderBookingCategories();
+      renderBookingServices();
+      renderBookingHeroState();
+      resetBookingPricingState(
+        bookingSelectedCategory ? "Select services to see pricing." : "Select a property and services to see pricing."
+      );
+      renderBookingSummary();
+    });
+  });
+
+  if (bookingDateInput) {
+    bookingDateInput.addEventListener("input", () => {
+      renderBookingSummary();
+    });
+  }
+
+  if (bookingTimeInput) {
+    bookingTimeInput.addEventListener("input", () => {
+      renderBookingSummary();
+    });
+  }
+
+  if (bookingOpenSheetButton) {
+    bookingOpenSheetButton.addEventListener("click", () => {
+      if (!getSelectedBookingProperty()) {
+        setFeedback(bookingFeedback, "Please select a property before continuing.", true);
+        return;
+      }
+      if (!bookingSelectedCategory) {
+        setFeedback(bookingFeedback, "Please choose a presentation lane first.", true);
+        return;
+      }
+      if (!bookingSelectedServices.length) {
+        setFeedback(bookingFeedback, "Please select at least one service before continuing.", true);
+        return;
+      }
+
+      setBookingMinimumDate();
+      setFeedback(bookingFeedback, "");
+      renderBookingSummary();
+      setBookingSheetOpen(true);
+    });
+  }
+
+  bookingSheetCloseButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setBookingSheetOpen(false);
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && bookingSheet && !bookingSheet.classList.contains("is-hidden")) {
+      setBookingSheetOpen(false);
+    }
+  });
+
   if (bookingForm && db) {
     bookingForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       setFeedback(bookingFeedback, "");
       if (!currentUser || !currentUserData) return;
+      if (bookingSubmitting) return;
       if (bookingOpenPaymentButton) {
         bookingOpenPaymentButton.classList.add("is-hidden");
         bookingOpenPaymentButton.onclick = null;
       }
 
-      const formData = new FormData(bookingForm);
-      const propertyName = String(formData.get("property_name") || "").trim();
-      const propertyAddress = String(formData.get("property_address") || "").trim();
-      const category = String(formData.get("service_category") || "").trim();
-      const bookingDateValue = String(formData.get("booking_date") || "").trim();
-      const bookingTimeValue = String(formData.get("booking_time") || "").trim();
-      const priorities = String(formData.get("priorities") || "").trim();
+      const selectedProperty = getSelectedBookingProperty();
+      const bookingDateValue = String(bookingDateInput?.value || "").trim();
+      const bookingTimeValue = String(bookingTimeInput?.value || "").trim();
 
-      const selectedServices = formData.getAll("services").map((item) => String(item));
-
-      if (!propertyName || !propertyAddress || !category || !bookingDateValue || !bookingTimeValue) {
-        setFeedback(bookingFeedback, "Please complete all booking fields.", true);
+      if (!selectedProperty) {
+        setFeedback(bookingFeedback, "Please select a property before continuing.", true);
         return;
       }
-
-      if (!selectedServices.length) {
+      if (!bookingSelectedCategory) {
+        setFeedback(bookingFeedback, "Please choose a presentation lane before continuing.", true);
+        return;
+      }
+      if (!bookingSelectedServices.length) {
         setFeedback(bookingFeedback, "Please select at least one service.", true);
+        return;
+      }
+      if (!bookingDateValue || !bookingTimeValue) {
+        setFeedback(bookingFeedback, "Please choose a date and time before continuing.", true);
+        return;
+      }
+      if (!selectedProperty.isBookable) {
+        setFeedback(
+          bookingFeedback,
+          selectedProperty.isSold
+            ? "This property is marked as sold. Services have been stopped for it."
+            : "Services are paused for this property. Please contact support.",
+          true
+        );
+        return;
+      }
+      if (!bookingPricingReady) {
+        setFeedback(bookingFeedback, bookingPricingMessageText || "Loading pricing. Please wait.", true);
+        return;
+      }
+      if (!bookingPricingLines.length && !bookingHasMonthlyServices) {
+        setFeedback(bookingFeedback, "Pricing is not available yet. Please wait for admin pricing.", true);
         return;
       }
 
       const bookingPayload = {
-        selectedProperty: propertyName,
-        propertyAddress,
-        category,
+        selectedProperty: selectedProperty.name,
+        propertyId: selectedProperty.id,
+        propertyAddress: selectedProperty.address,
+        propertyAddressDetails: selectedProperty.addressDetails,
+        category: bookingSelectedCategory,
         bookingDateValue,
         bookingTimeValue,
-        services: selectedServices,
-        priorities,
+        services: bookingSelectedServices.slice(),
       };
 
       try {
+        bookingSubmitting = true;
+        if (bookingSubmitButton) {
+          bookingSubmitButton.disabled = true;
+          bookingSubmitButton.textContent = "Preparing payment...";
+        }
         const response = await functions.httpsCallable("submitBookingRequest")({
           gateway: "ozow",
           booking: bookingPayload,
@@ -1935,7 +2875,12 @@ if (!isFirebaseReady) {
 
         if (result.status === "created") {
           setFeedback(bookingFeedback, "Booking submitted. We'll confirm shortly.");
-          bookingForm.reset();
+          resetBookingDraft();
+          renderBookingCategories();
+          renderBookingServices();
+          renderBookingHeroState();
+          renderBookingSummary();
+          setBookingSheetOpen(false);
           return;
         }
 
@@ -1972,7 +2917,12 @@ if (!isFirebaseReady) {
                 bookingOpenPaymentButton.onclick = null;
               }
               setFeedback(bookingFeedback, "Payment received. Your booking is confirmed.");
-              bookingForm.reset();
+              resetBookingDraft();
+              renderBookingCategories();
+              renderBookingServices();
+              renderBookingHeroState();
+              renderBookingSummary();
+              setBookingSheetOpen(false);
               stopPayNowListener();
             } else if (bookingStillSyncing) {
               if (bookingOpenPaymentButton) {
@@ -1998,6 +2948,12 @@ if (!isFirebaseReady) {
           });
       } catch (error) {
         setFeedback(bookingFeedback, error.message || "Unable to submit booking.", true);
+      } finally {
+        bookingSubmitting = false;
+        if (bookingSubmitButton) {
+          bookingSubmitButton.disabled = false;
+          bookingSubmitButton.textContent = "Continue to Payment";
+        }
       }
     });
   }
@@ -2721,12 +3677,21 @@ if (!isFirebaseReady) {
     if (!user) {
       stopUserListener();
       stopPayNowListener();
+      stopBookingPropertiesListener();
       if (workerBookingsListener) workerBookingsListener();
       workerBookingsListener = null;
       workerBookingsCache = [];
       agentDataLoaded = false;
       adminDataLoaded = false;
       pendingSecurityChange = null;
+      bookingProperties = [];
+      resetBookingDraft({ preserveProperty: false });
+      renderBookingProperties();
+      renderBookingCategories();
+      renderBookingServices();
+      renderBookingHeroState();
+      renderBookingSummary();
+      setBookingSheetOpen(false);
       closeSettingsOtpPanel();
       if (activationPage || bookingPage || rolePage) {
         redirectTo("portal-login.html");

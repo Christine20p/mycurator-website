@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-<link rel="stylesheet" href="styles.css?v=20260317q" />
+<link rel="stylesheet" href="styles.css?v=20260319d" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -62,55 +62,155 @@
             <button class="btn ghost" type="button" data-signout>Sign out</button>
           </div>
           <p class="portal-message" data-portal-message></p>
-          <div class="dashboard-grid">
-            <div class="dashboard-card booking-card">
-              <h3>Booking details</h3>
-              <form class="portal-form" data-booking-form>
-                <div class="form-grid">
-                  <label class="field">Property name
-                    <input type="text" name="property_name" placeholder="Property name" required />
-                  </label>
-                  <label class="field">Property address
-                    <input type="text" name="property_address" placeholder="Street, suburb, city" required />
-                  </label>
-                  <label class="field">Service category
-                    <select name="service_category" required>
-                      <option value="" disabled selected>Select one</option>
-                      <option>Residential</option>
-                      <option>Office</option>
-                      <option>Commercial</option>
-                      <option>Vacant land</option>
-                    </select>
-                  </label>
-                  <label class="field">Inspection date
-                    <input type="date" name="booking_date" required />
-                  </label>
-                  <label class="field">Inspection time
-                    <input type="time" name="booking_time" required />
-                  </label>
+          <div class="dashboard-grid booking-dashboard-grid">
+            <div class="dashboard-card booking-card booking-experience">
+              <div class="booking-hero-panel">
+                <div class="booking-hero-copy">
+                  <p class="booking-kicker">Property Presentation</p>
+                  <h3>Curator Property Presentation Co.</h3>
                 </div>
-                <div class="service-checks">
-                  <label><input type="checkbox" name="services" value="Standard Cleaning" />Standard Cleaning</label>
-                  <label><input type="checkbox" name="services" value="Deep Cleaning" />Deep Cleaning</label>
-                  <label><input type="checkbox" name="services" value="Staging Furniture" />Staging Furniture</label>
-                  <label><input type="checkbox" name="services" value="Pest Control" />Pest Control</label>
-                  <label><input type="checkbox" name="services" value="Odour Control" />Odour Control</label>
-                  <label><input type="checkbox" name="services" value="Repainting" />Repainting</label>
-                  <label><input type="checkbox" name="services" value="Pool Cleaning" />Pool Cleaning</label>
-                  <label><input type="checkbox" name="services" value="Lawn Mowing" />Lawn Mowing</label>
-                  <label><input type="checkbox" name="services" value="Plant Trimming" />Plant Trimming</label>
-                  <label><input type="checkbox" name="services" value="Lawn Colour Shading" />Lawn Colour Shading</label>
-                  <label><input type="checkbox" name="services" value="Interior Wear & Tears Repair" />Interior Wear & Tears Repair</label>
-                  <label><input type="checkbox" name="services" value="Pavement Cleaning" />Pavement Cleaning</label>
+                <div class="booking-hero-pills">
+                  <div class="booking-hero-pill">
+                    <span>Current property</span>
+                    <strong data-booking-current-property>Select property</strong>
+                  </div>
+                  <div class="booking-hero-pill">
+                    <span>Presentation scope</span>
+                    <strong data-booking-current-scope>Services pending</strong>
+                  </div>
                 </div>
-                <label class="field">Presentation priorities
-                  <textarea name="priorities" rows="3" placeholder="Key rooms, staging requests, inspection notes."></textarea>
-                </label>
-                <div class="form-actions">
-                  <button class="btn primary" type="submit">Submit booking</button>
-                  <button class="btn ghost is-hidden" type="button" data-booking-open-payment>Open payment link</button>
+              </div>
+
+              <div class="booking-flow-card booking-cadence-card">
+                <div class="booking-section-copy">
+                  <p class="booking-section-tag">Weekly Cadence</p>
+                  <h3>Reserved service window</h3>
+                  <p>Your recurring presentation slot stays visible here so the weekly rhythm is clear without repeating the whole booking state.</p>
                 </div>
-                <p class="form-feedback" data-booking-feedback role="status" aria-live="polite"></p>
+                <div class="booking-cadence-pills">
+                  <span data-booking-service-day>Assigning weekly day</span>
+                  <span data-booking-service-time>06:00</span>
+                </div>
+              </div>
+
+              <form class="portal-form booking-flow-form" data-booking-form novalidate>
+                <section class="booking-flow-card">
+                  <div class="booking-section-copy">
+                    <p class="booking-section-tag">Property</p>
+                    <h3>Choose the presentation address</h3>
+                    <p>Select one of your saved properties. The website now uses the same property loading sequence as iOS instead of manual address entry.</p>
+                  </div>
+                  <div class="booking-property-grid" data-booking-property-grid></div>
+                  <p class="portal-note booking-empty-note" data-booking-property-empty>Loading your properties...</p>
+                </section>
+
+                <section class="booking-flow-card">
+                  <div class="booking-section-copy">
+                    <p class="booking-section-tag">Categories</p>
+                    <h3>Choose the presentation lane</h3>
+                  </div>
+                  <div class="booking-category-grid">
+                    <button class="booking-category-card" type="button" data-booking-category-card data-category="Residential" data-pointer-tone="light">
+                      <img src="assets/services-residential.webp" alt="Residential presentation" />
+                      <div class="booking-category-copy">
+                        <strong>Residential</strong>
+                        <span>12 services</span>
+                      </div>
+                    </button>
+                    <button class="booking-category-card" type="button" data-booking-category-card data-category="Office" data-pointer-tone="light">
+                      <img src="assets/services-office.jpeg" alt="Office presentation" />
+                      <div class="booking-category-copy">
+                        <strong>Office</strong>
+                        <span>12 services</span>
+                      </div>
+                    </button>
+                    <button class="booking-category-card" type="button" data-booking-category-card data-category="Commercial" data-pointer-tone="light">
+                      <img src="assets/services-commercial.jpg" alt="Commercial presentation" />
+                      <div class="booking-category-copy">
+                        <strong>Commercial</strong>
+                        <span>12 services</span>
+                      </div>
+                    </button>
+                    <button class="booking-category-card" type="button" data-booking-category-card data-category="Vacant Land" data-pointer-tone="light">
+                      <img src="assets/services-vacant-land.jpg" alt="Vacant land presentation" />
+                      <div class="booking-category-copy">
+                        <strong>Vacant Land</strong>
+                        <span>3 services</span>
+                      </div>
+                    </button>
+                  </div>
+                </section>
+
+                <section class="booking-flow-card is-hidden" data-booking-services-panel>
+                  <div class="booking-section-copy">
+                    <p class="booking-section-tag">Services</p>
+                    <h3 data-booking-services-title>Presentation selections</h3>
+                    <p>Select the services that define the presentation standard for this booking.</p>
+                  </div>
+                  <div class="booking-service-grid" data-booking-service-grid></div>
+                </section>
+
+                <div class="booking-submit-bar">
+                  <button class="btn primary booking-primary-cta" type="button" data-booking-open-sheet>Book Presentation</button>
+                  <p class="portal-note booking-selection-note" data-booking-selection-note>Select a property and at least one service to continue.</p>
+                </div>
+
+                <div class="booking-sheet is-hidden" data-booking-sheet aria-hidden="true">
+                  <button class="booking-sheet-backdrop" type="button" data-booking-sheet-close aria-label="Close booking details"></button>
+                  <div class="booking-sheet-panel" data-booking-sheet-panel role="dialog" aria-modal="true" aria-labelledby="booking-sheet-title">
+                    <div class="booking-sheet-header">
+                      <div>
+                        <p class="booking-section-tag">Booking</p>
+                        <h3 id="booking-sheet-title">Booking Details</h3>
+                      </div>
+                      <button class="booking-sheet-close" type="button" data-booking-sheet-close aria-label="Close booking details">&times;</button>
+                    </div>
+
+                    <div class="booking-sheet-pills">
+                      <span class="booking-meta-pill" data-booking-summary-property-pill>Property pending</span>
+                      <span class="booking-meta-pill" data-booking-summary-services-count>No services selected</span>
+                    </div>
+
+                    <div class="booking-sheet-grid">
+                      <label class="booking-sheet-select">
+                        <span>Date</span>
+                        <input type="date" name="booking_date" data-booking-date required />
+                      </label>
+                      <label class="booking-sheet-select">
+                        <span>Time</span>
+                        <input type="time" name="booking_time" data-booking-time required />
+                      </label>
+                    </div>
+
+                    <div class="booking-summary-card">
+                      <div class="booking-summary-header">
+                        <div>
+                          <p class="booking-section-tag">Summary</p>
+                          <h4>Booking Summary</h4>
+                        </div>
+                      </div>
+                      <div class="booking-summary-rows">
+                        <div class="booking-summary-row"><span>Date</span><strong data-booking-summary-date>Pending selection</strong></div>
+                        <div class="booking-summary-row"><span>Time</span><strong data-booking-summary-time>Pending selection</strong></div>
+                        <div class="booking-summary-row"><span>Category</span><strong data-booking-summary-category>Choose a presentation lane</strong></div>
+                        <div class="booking-summary-row"><span>Property</span><strong data-booking-summary-property>Choose a property</strong></div>
+                      </div>
+                      <div class="booking-summary-services" data-booking-summary-services></div>
+                      <div class="booking-pricing-block" data-booking-pricing-block>
+                        <p class="booking-section-tag">Pricing</p>
+                        <div class="booking-pricing-rows" data-booking-price-rows></div>
+                        <p class="booking-pricing-note" data-booking-pricing-note></p>
+                      </div>
+                      <p class="booking-pricing-message" data-booking-pricing-message></p>
+                    </div>
+
+                    <div class="booking-sheet-actions">
+                      <button class="btn primary" type="submit" data-booking-submit>Continue to Payment</button>
+                      <button class="btn ghost is-hidden" type="button" data-booking-open-payment>Open Ozow EFT</button>
+                    </div>
+                    <p class="form-feedback" data-booking-feedback role="status" aria-live="polite"></p>
+                  </div>
+                </div>
               </form>
             </div>
 
@@ -156,6 +256,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260317q"></script>
+    <script src="app.js?v=20260319d"></script>
   </body>
 </html>

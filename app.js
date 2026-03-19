@@ -613,22 +613,28 @@ let pendingSecurityChange = null;
 
 const CUSTOM_MANDATE_BANK_ID = "__other__";
 
-const showMessage = (message) => {
+const showMessage = (message, isError = false) => {
   if (!portalMessage) return;
   portalMessage.textContent = message;
+  portalMessage.classList.toggle("is-error", Boolean(message) && isError);
+  portalMessage.classList.toggle("is-success", Boolean(message) && !isError);
   portalMessage.classList.add("is-visible");
 };
 
 const clearMessage = () => {
   if (!portalMessage) return;
   portalMessage.textContent = "";
+  portalMessage.classList.remove("is-error", "is-success");
   portalMessage.classList.remove("is-visible");
 };
 
 const setFeedback = (el, message, isError = false) => {
   if (!el) return;
+  const hasMessage = Boolean(message);
   el.textContent = message;
-  el.style.color = isError ? "crimson" : "inherit";
+  el.classList.toggle("is-visible", hasMessage);
+  el.classList.toggle("is-error", hasMessage && isError);
+  el.classList.toggle("is-success", hasMessage && !isError);
 };
 
 if (loginPage && portalMessage) {

@@ -1912,6 +1912,7 @@ body.nav-closing .site-footer {
   letter-spacing: 0.16em;
   font-size: 0.65rem;
   padding: 0;
+  align-self: flex-start;
 }
 
 .auth-link:hover {
@@ -1920,15 +1921,38 @@ body.nav-closing .site-footer {
 
 .form-feedback {
   margin: 0;
-  min-height: 1.2em;
-  color: var(--deep-teal);
+  display: none;
   font-weight: 600;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.form-feedback.is-visible {
+  display: block;
+}
+
+.form-feedback.is-error {
+  color: #8f2d2d;
+  background: rgba(183, 66, 66, 0.08);
+  border: 1px solid rgba(183, 66, 66, 0.18);
+}
+
+.form-feedback.is-success {
+  color: #1d6b52;
+  background: rgba(29, 107, 82, 0.08);
+  border: 1px solid rgba(29, 107, 82, 0.18);
 }
 
 .portal-note {
   margin: 0;
   font-size: 0.85rem;
   color: rgba(11, 11, 12, 0.6);
+}
+
+.auth-reset-note {
+  margin-top: -2px;
 }
 
 .mandate-form {
@@ -1959,6 +1983,18 @@ body.nav-closing .site-footer {
 
 .portal-message.is-visible {
   display: block;
+}
+
+.portal-message.is-error {
+  color: #8f2d2d;
+  background: rgba(183, 66, 66, 0.12);
+  border-color: rgba(183, 66, 66, 0.2);
+}
+
+.portal-message.is-success {
+  color: #1d6b52;
+  background: rgba(29, 107, 82, 0.12);
+  border-color: rgba(29, 107, 82, 0.2);
 }
 
 .portal-auth-page .container,

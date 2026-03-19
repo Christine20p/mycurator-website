@@ -518,6 +518,17 @@ const settingsOtpFeedback = document.querySelector("[data-settings-otp-feedback]
 const payNowButton = document.querySelector("[data-request-paynow]");
 const openPayNowButton = document.querySelector("[data-open-paynow]");
 const cardPayButton = document.querySelector("[data-request-card]");
+const PASSWORD_RESET_SETTINGS = {
+  url: "https://mycurator.co.za/portal-login.html?reset=complete",
+  handleCodeInApp: false,
+  iOS: {
+    bundleId: "Curator-Property-Cleaners.MyCurator",
+  },
+  android: {
+    packageName: "za.co.mycurator.mycurator",
+    installApp: false,
+  },
+};
 const openCardButton = document.querySelector("[data-open-card]");
 const openMandateButton = document.querySelector("[data-open-mandate]");
 const mandateButton = document.querySelector("[data-request-mandate]");
@@ -619,6 +630,13 @@ const setFeedback = (el, message, isError = false) => {
   el.textContent = message;
   el.style.color = isError ? "crimson" : "inherit";
 };
+
+if (loginPage && portalMessage) {
+  const resetState = new URLSearchParams(window.location.search).get("reset");
+  if (resetState === "complete") {
+    showMessage("Password updated. Sign in with your new password.");
+  }
+}
 
 const getOtpDeliveryWarning = (result) => {
   if (result?.delivery === "log") {
@@ -1248,14 +1266,19 @@ if (!isFirebaseReady) {
 
   if (resetPasswordButton && auth) {
     resetPasswordButton.addEventListener("click", async () => {
-      const email = loginForm?.login_email?.value?.trim();
+      const email = String(loginForm?.login_email?.value || "")
+        .trim()
+        .toLowerCase();
       if (!email) {
         setFeedback(loginFeedback, "Enter your email first.", true);
         return;
       }
       try {
-        await auth.sendPasswordResetEmail(email);
-        setFeedback(loginFeedback, "Password reset email sent.");
+        await auth.sendPasswordResetEmail(email, PASSWORD_RESET_SETTINGS);
+        setFeedback(
+          loginFeedback,
+          "If an account exists for that email, a reset link has been sent. Check spam or junk if it does not arrive shortly."
+        );
       } catch (error) {
         setFeedback(loginFeedback, error.message || "Unable to send reset email.", true);
       }
@@ -1923,6 +1946,9 @@ if (!isFirebaseReady) {
             const data = doc.data() || {};
             const redirectUrl = String(data.redirectUrl || data.payNowUrl || "").trim();
             const status = String(data.status || data.payNowStatus || "").trim().toLowerCase();
+            const paymentStatus = String(data.paymentStatus || "").trim().toLowerCase();
+            const bookingSyncStatus = String(data.bookingSyncStatus || "").trim().toLowerCase();
+            const processingMessage = String(data.processingMessage || "").trim();
             const errorMessage = String(data.errorMessage || "").trim();
 
             if (redirectUrl && bookingOpenPaymentButton) {
@@ -1931,7 +1957,10 @@ if (!isFirebaseReady) {
               setFeedback(bookingFeedback, "Payment link is ready. Complete payment to confirm your booking.");
             }
 
-            if (status === "paid") {
+            const bookingReady = status === "paid" || (paymentStatus === "paid" && bookingSyncStatus === "ready");
+            const bookingStillSyncing = paymentStatus === "paid" && bookingSyncStatus === "pending";
+
+            if (bookingReady) {
               if (bookingOpenPaymentButton) {
                 bookingOpenPaymentButton.classList.add("is-hidden");
                 bookingOpenPaymentButton.onclick = null;
@@ -1939,6 +1968,15 @@ if (!isFirebaseReady) {
               setFeedback(bookingFeedback, "Payment received. Your booking is confirmed.");
               bookingForm.reset();
               stopPayNowListener();
+            } else if (bookingStillSyncing) {
+              if (bookingOpenPaymentButton) {
+                bookingOpenPaymentButton.classList.add("is-hidden");
+                bookingOpenPaymentButton.onclick = null;
+              }
+              setFeedback(
+                bookingFeedback,
+                processingMessage || "Payment received. We are finalising your booking."
+              );
             } else if (errorMessage || status === "failed" || status === "declined") {
               if (bookingOpenPaymentButton) {
                 bookingOpenPaymentButton.classList.add("is-hidden");

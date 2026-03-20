@@ -2812,7 +2812,13 @@ if (!isFirebaseReady) {
         }
 
         const result = await functions.httpsCallable("submitIncidentReport")(payload);
-        setFeedback(feedback, String(result?.data?.message || "Incident submitted."));
+        setFeedback(
+          feedback,
+          String(
+            result?.data?.message ||
+              "Your incident has been successfully reported. It will be reviewed and the necessary precautions will be taken."
+          )
+        );
         form.reset();
       } catch (error) {
         setFeedback(feedback, error.message || "Unable to submit incident.", true);

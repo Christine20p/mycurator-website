@@ -757,22 +757,44 @@ const closeBookingNotice = () => {
   bookingNotice.setAttribute("aria-hidden", "true");
 };
 
+const BOOKING_CONFIRMATION_MESSAGE =
+  "Thank you for booking with Curator Property Presentation Co. Your curator is getting ready, and we’ll ensure your space is cleaned to perfection ♡";
+
+const BOOKING_INVALID_TIME_MESSAGE = `Please choose a date and time at least 24 hours from now.
+
+Bookings are available on the hour and half hour only.
+
+Our Working Hours:
+Monday:     07:00 AM – 18:30 PM
+Tuesday:    07:00 AM – 18:30 PM
+Wednesday:  07:00 AM – 18:30 PM
+Thursday:   07:00 AM – 18:30 PM
+Friday:     07:00 AM – 18:00 PM
+Saturday:   09:00 AM – 15:00 PM
+Sunday:     09:00 AM – 15:00 PM`;
+
 const resolveBookingNoticeMeta = (message, isError) => {
   const normalized = String(message || "").toLowerCase();
+  if (normalized.includes("cleaned to perfection")) {
+    return { kicker: "Booking confirmed", title: "Booking Confirmed" };
+  }
   if (isError) {
+    if (normalized.includes("please choose a date and time at least 24 hours from now")) {
+      return { kicker: "Booking time", title: "Invalid Booking Time" };
+    }
     return {
       kicker: "Booking issue",
       title: normalized.includes("payment") ? "Payment Issue" : "Booking Issue",
     };
   }
-  if (normalized.includes("payment received") || normalized.includes("booking is confirmed")) {
-    return { kicker: "Booking confirmed", title: "Payment Received" };
+  if (normalized.includes("finalising your booking")) {
+    return { kicker: "Processing", title: "Booking Update" };
+  }
+  if (normalized.includes("booking is confirmed")) {
+    return { kicker: "Booking confirmed", title: "Booking Confirmed" };
   }
   if (normalized.includes("payment link")) {
     return { kicker: "Payment ready", title: "Continue to Payment" };
-  }
-  if (normalized.includes("finalising your booking")) {
-    return { kicker: "Processing", title: "Booking Update" };
   }
   return { kicker: "Booking update", title: "Booking Update" };
 };
@@ -1351,6 +1373,139 @@ if (!isFirebaseReady) {
     return Number.isFinite(index) ? slots[((index % slots.length) + slots.length) % slots.length] : "06:00";
   };
 
+  const BOOKING_TIME_STEP_MINUTES = 30;
+  const BOOKING_TIME_STEP_SECONDS = BOOKING_TIME_STEP_MINUTES * 60;
+  const BOOKING_ALLOWED_TIME_RANGES = {
+    0: { start: 9 * 60, end: 15 * 60 },
+    1: { start: 7 * 60, end: 18 * 60 + 30 },
+    2: { start: 7 * 60, end: 18 * 60 + 30 },
+    3: { start: 7 * 60, end: 18 * 60 + 30 },
+    4: { start: 7 * 60, end: 18 * 60 + 30 },
+    5: { start: 7 * 60, end: 18 * 60 },
+    6: { start: 9 * 60, end: 15 * 60 },
+  };
+
+  const parseBookingDateValue = (value) => {
+    const [year, month, day] = String(value || "")
+      .split("-")
+      .map((part) => Number(part));
+    if (!year || !month || !day) return null;
+    const date = new Date(year, month - 1, day);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const parseTimeValueToMinutes = (value) => {
+    const [hours, minutes] = String(value || "")
+      .split(":")
+      .map((part) => Number(part));
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+    return hours * 60 + minutes;
+  };
+
+  const formatTimeMinutes = (minutes) => {
+    const safeMinutes = Math.max(0, Math.min(Number(minutes || 0), 23 * 60 + 59));
+    const hours = String(Math.floor(safeMinutes / 60)).padStart(2, "0");
+    const mins = String(safeMinutes % 60).padStart(2, "0");
+    return `${hours}:${mins}`;
+  };
+
+  const roundUpToBookingStep = (date) => {
+    const rounded = new Date(date.getTime());
+    rounded.setSeconds(0, 0);
+    const minutes = rounded.getMinutes();
+    const remainder = minutes % BOOKING_TIME_STEP_MINUTES;
+    if (remainder !== 0) {
+      rounded.setMinutes(minutes + (BOOKING_TIME_STEP_MINUTES - remainder));
+    }
+    return rounded;
+  };
+
+  const getBookingTimeRangeForDateValue = (value, now = new Date()) => {
+    const bookingDate = parseBookingDateValue(value);
+    if (!bookingDate) return null;
+    const allowedRange = BOOKING_ALLOWED_TIME_RANGES[bookingDate.getDay()];
+    if (!allowedRange) return null;
+
+    const dayOpen = new Date(bookingDate);
+    dayOpen.setHours(Math.floor(allowedRange.start / 60), allowedRange.start % 60, 0, 0);
+    const dayClose = new Date(bookingDate);
+    dayClose.setHours(Math.floor(allowedRange.end / 60), allowedRange.end % 60, 0, 0);
+
+    const minimumDateTime = roundUpToBookingStep(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+    const windowStart = new Date(Math.max(dayOpen.getTime(), minimumDateTime.getTime()));
+    if (windowStart.getTime() > dayClose.getTime()) {
+      return null;
+    }
+
+    const minMinutes = windowStart.getHours() * 60 + windowStart.getMinutes();
+    const maxMinutes = allowedRange.end;
+
+    return {
+      minMinutes,
+      maxMinutes,
+      minValue: formatTimeMinutes(minMinutes),
+      maxValue: formatTimeMinutes(maxMinutes),
+    };
+  };
+
+  const getFirstBookableDate = (now = new Date()) => {
+    const candidate = new Date(now);
+    candidate.setHours(0, 0, 0, 0);
+    candidate.setDate(candidate.getDate() + 1);
+
+    for (let offset = 0; offset < 45; offset += 1) {
+      const nextDate = new Date(candidate);
+      nextDate.setDate(candidate.getDate() + offset);
+      if (getBookingTimeRangeForDateValue(toIsoDateValue(nextDate), now)) {
+        return nextDate;
+      }
+    }
+
+    return candidate;
+  };
+
+  const normalizeBookingTimeValue = (value, range) => {
+    if (!range) return "";
+    const totalMinutes = parseTimeValueToMinutes(value);
+    if (totalMinutes === null) return "";
+    const rounded = Math.round(totalMinutes / BOOKING_TIME_STEP_MINUTES) * BOOKING_TIME_STEP_MINUTES;
+    const clamped = Math.min(Math.max(rounded, range.minMinutes), range.maxMinutes);
+    return formatTimeMinutes(clamped);
+  };
+
+  const syncBookingTimeConstraints = () => {
+    if (!bookingTimeInput) return null;
+    bookingTimeInput.step = String(BOOKING_TIME_STEP_SECONDS);
+    const range = getBookingTimeRangeForDateValue(bookingDateInput?.value || "");
+    if (!range) {
+      bookingTimeInput.min = "";
+      bookingTimeInput.max = "";
+      if (bookingTimeInput.value) {
+        bookingTimeInput.value = "";
+      }
+      return null;
+    }
+
+    bookingTimeInput.min = range.minValue;
+    bookingTimeInput.max = range.maxValue;
+
+    if (bookingTimeInput.value) {
+      const normalizedValue = normalizeBookingTimeValue(bookingTimeInput.value, range);
+      if (!normalizedValue || normalizedValue !== bookingTimeInput.value) {
+        bookingTimeInput.value = normalizedValue;
+      }
+    }
+
+    return range;
+  };
+
+  const isBookingDateTimeValid = (dateValue, timeValue) => {
+    const range = getBookingTimeRangeForDateValue(dateValue);
+    if (!range || !timeValue) return false;
+    const normalizedValue = normalizeBookingTimeValue(timeValue, range);
+    return Boolean(normalizedValue) && normalizedValue === timeValue;
+  };
+
   const normalizeBookingCategory = (value) => {
     const normalized = String(value || "")
       .trim()
@@ -1825,9 +1980,12 @@ if (!isFirebaseReady) {
 
   const setBookingMinimumDate = () => {
     if (!bookingDateInput) return;
-    const minimumDate = new Date();
-    minimumDate.setDate(minimumDate.getDate() + 1);
+    const minimumDate = getFirstBookableDate();
     bookingDateInput.min = toIsoDateValue(minimumDate);
+    if (bookingDateInput.value && bookingDateInput.value < bookingDateInput.min) {
+      bookingDateInput.value = bookingDateInput.min;
+    }
+    syncBookingTimeConstraints();
   };
 
   const startBookingPropertiesListener = (uid) => {
@@ -2918,8 +3076,26 @@ if (!isFirebaseReady) {
     });
   }
 
+  if (bookingDateInput) {
+    bookingDateInput.addEventListener("input", () => {
+      syncBookingTimeConstraints();
+      renderBookingSummary();
+    });
+  }
+
   if (bookingTimeInput) {
     bookingTimeInput.addEventListener("input", () => {
+      const range = syncBookingTimeConstraints();
+      if (range && bookingTimeInput.value) {
+        bookingTimeInput.value = normalizeBookingTimeValue(bookingTimeInput.value, range);
+      }
+      renderBookingSummary();
+    });
+    bookingTimeInput.addEventListener("change", () => {
+      const range = syncBookingTimeConstraints();
+      if (range && bookingTimeInput.value) {
+        bookingTimeInput.value = normalizeBookingTimeValue(bookingTimeInput.value, range);
+      }
       renderBookingSummary();
     });
   }
@@ -2990,7 +3166,17 @@ if (!isFirebaseReady) {
         return;
       }
       if (!bookingDateValue || !bookingTimeValue) {
+        if (bookingDateValue && !getBookingTimeRangeForDateValue(bookingDateValue)) {
+          setBookingFeedback(BOOKING_INVALID_TIME_MESSAGE, true);
+          return;
+        }
         setBookingFeedback("Please choose a date and time before continuing.", true);
+        return;
+      }
+      const bookingTimeRange = syncBookingTimeConstraints();
+      if (!bookingTimeRange || !isBookingDateTimeValid(bookingDateValue, bookingTimeValue)) {
+        setBookingFeedback(BOOKING_INVALID_TIME_MESSAGE, true);
+        renderBookingSummary();
         return;
       }
       if (!hasAcceptedTerms(bookingPaymentTermsCheckbox)) {
@@ -3042,7 +3228,7 @@ if (!isFirebaseReady) {
         const result = response.data || {};
 
         if (result.status === "created") {
-          setBookingFeedback("Booking submitted. We'll confirm shortly.");
+          setBookingFeedback(BOOKING_CONFIRMATION_MESSAGE);
           resetBookingDraft();
           renderBookingCategories();
           renderBookingServices();
@@ -3084,15 +3270,16 @@ if (!isFirebaseReady) {
               setBookingFeedback("Payment link is ready. Complete payment to confirm your booking.");
             }
 
-            const bookingReady = status === "paid" || (paymentStatus === "paid" && bookingSyncStatus === "ready");
-            const bookingStillSyncing = paymentStatus === "paid" && bookingSyncStatus === "pending";
+            const bookingReady = paymentStatus === "paid" && bookingSyncStatus === "ready";
+            const bookingStillSyncing =
+              status === "paid" || paymentStatus === "paid" || bookingSyncStatus === "pending";
 
             if (bookingReady) {
               if (bookingOpenPaymentButton) {
                 bookingOpenPaymentButton.classList.add("is-hidden");
                 bookingOpenPaymentButton.onclick = null;
               }
-              setBookingFeedback("Payment received. Your booking is confirmed.");
+              setBookingFeedback(BOOKING_CONFIRMATION_MESSAGE);
               resetBookingDraft();
               renderBookingCategories();
               renderBookingServices();

@@ -707,6 +707,10 @@ const BOOKING_CATEGORY_SERVICES = {
   "Vacant Land": ["Plant Uprooting", "Site Excavation", "Weed Removal"],
 };
 
+if (bookingSheet && bookingSheet.parentElement !== document.body) {
+  document.body.appendChild(bookingSheet);
+}
+
 const showMessage = (message, isError = false) => {
   if (!portalMessage) return;
   portalMessage.textContent = message;
@@ -1701,6 +1705,15 @@ if (!isFirebaseReady) {
     bookingSheet.classList.toggle("is-hidden", !open);
     bookingSheet.setAttribute("aria-hidden", open ? "false" : "true");
     document.body.classList.toggle("booking-sheet-open", open);
+    if (open) {
+      bookingSheet.scrollTop = 0;
+      if (bookingSheetPanel) {
+        bookingSheetPanel.scrollTop = 0;
+        window.requestAnimationFrame(() => {
+          bookingSheetPanel.focus({ preventScroll: true });
+        });
+      }
+    }
   };
 
   const setBookingMinimumDate = () => {

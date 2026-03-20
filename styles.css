@@ -2121,49 +2121,58 @@ body.nav-closing .site-footer {
 }
 
 .portal-dashboard-page .dashboard-header h1,
-.portal-dashboard-page .lead {
+.portal-dashboard-page .lead,
+.portal-booking-page .dashboard-header h1,
+.portal-booking-page .lead {
   color: #d8dadd;
 }
 
-.portal-dashboard-page .dashboard-header > div {
+.portal-dashboard-page .dashboard-header > div,
+.portal-booking-page .dashboard-header > div {
   display: grid;
   gap: 10px;
 }
 
-.portal-dashboard-page .dashboard-header .lead:last-child {
+.portal-dashboard-page .dashboard-header .lead:last-child,
+.portal-booking-page .dashboard-header .lead:last-child {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   width: fit-content;
   padding: 10px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(242, 244, 247, 0.18);
+  background: rgba(228, 198, 176, 0.12);
+  border: 1px solid rgba(228, 198, 176, 0.28);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  color: #d7b39c;
 }
 
-.portal-dashboard-page [data-user-name] {
-  color: #ffffff;
+.portal-dashboard-page [data-user-name],
+.portal-booking-page [data-user-name] {
+  color: #f0d4bf;
   font-weight: 700;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.16);
+  text-shadow: 0 0 14px rgba(240, 212, 191, 0.16);
 }
 
-.portal-dashboard-page [data-signout] {
+.portal-dashboard-page [data-signout],
+.portal-booking-page [data-signout] {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(242, 244, 247, 0.28);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
+  background: linear-gradient(160deg, rgba(53, 101, 214, 0.96), rgba(31, 74, 168, 0.92));
+  border-color: rgba(145, 185, 255, 0.34);
+  box-shadow: 0 16px 30px rgba(20, 46, 108, 0.24);
 }
 
-.portal-dashboard-page [data-signout]:hover {
+.portal-dashboard-page [data-signout]:hover,
+.portal-booking-page [data-signout]:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.13);
-  border-color: rgba(255, 255, 247, 0.5);
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(160deg, rgba(69, 118, 231, 0.98), rgba(39, 87, 188, 0.94));
+  border-color: rgba(175, 204, 255, 0.44);
+  box-shadow: 0 20px 36px rgba(20, 46, 108, 0.28);
 }
 
-.portal-dashboard-page [data-signout]:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.82);
+.portal-dashboard-page [data-signout]:focus-visible,
+.portal-booking-page [data-signout]:focus-visible {
+  outline: 2px solid rgba(170, 205, 255, 0.88);
   outline-offset: 3px;
 }
 
@@ -3580,24 +3589,35 @@ body.booking-sheet-open {
 
 @media (max-width: 540px) {
   .header-inner {
-    grid-template-columns: 1fr;
-    grid-template-rows: repeat(3, auto);
-    justify-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    justify-items: stretch;
+    align-items: center;
+    gap: 10px 12px;
   }
 
-  .nav-toggle,
-  .header-actions,
-  .brand {
-    justify-self: center;
+  .nav-toggle {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    padding: 8px 10px;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
   }
 
   .header-actions {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    width: auto;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
   }
 
   .brand {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
     gap: 10px;
     text-align: center;
   }
@@ -3616,6 +3636,20 @@ body.booking-sheet-open {
 
   .header-actions {
     gap: 6px;
+  }
+
+  .portal-dashboard-page .dashboard-header,
+  .portal-booking-page .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .portal-dashboard-page [data-signout],
+  .portal-booking-page [data-signout] {
+    align-self: flex-start;
+    margin-top: 2px;
   }
 
   .portal-auth-page .container,

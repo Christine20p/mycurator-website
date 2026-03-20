@@ -2847,7 +2847,8 @@ body.booking-sheet-open {
   font-size: 0.74rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(11, 11, 12, 0.58);
+  color: rgba(11, 11, 12, 0.72);
+  font-weight: 700;
 }
 
 .booking-sheet-select input {
@@ -2872,8 +2873,9 @@ body.booking-sheet-open {
   gap: 14px;
   padding: 20px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.84);
-  border: 1px solid rgba(11, 11, 12, 0.08);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(11, 11, 12, 0.12);
+  box-shadow: 0 18px 36px rgba(11, 11, 12, 0.08);
 }
 
 .booking-summary-rows,
@@ -2890,11 +2892,13 @@ body.booking-sheet-open {
 }
 
 .booking-summary-row span {
-  color: rgba(11, 11, 12, 0.56);
+  color: rgba(11, 11, 12, 0.74);
+  font-weight: 600;
 }
 
 .booking-summary-row strong {
   text-align: right;
+  color: var(--ink);
 }
 
 .booking-summary-row--total {
@@ -2920,7 +2924,14 @@ body.booking-sheet-open {
 .booking-pricing-note,
 .booking-pricing-message {
   margin: 0;
-  color: rgba(11, 11, 12, 0.64);
+  color: rgba(11, 11, 12, 0.78);
+}
+
+.booking-pricing-message {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(11, 11, 12, 0.05);
+  border: 1px solid rgba(11, 11, 12, 0.08);
 }
 
 .booking-sheet-actions {

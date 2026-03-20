@@ -2829,7 +2829,8 @@ body.booking-sheet-open {
   z-index: 1;
   width: min(920px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: grid;
   gap: 18px;
   padding: 24px;
@@ -2899,11 +2900,13 @@ body.booking-sheet-open {
 
 .booking-sheet-select {
   display: grid;
+  min-width: 0;
   gap: 8px;
   padding: 16px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(11, 11, 12, 0.08);
+  overflow: hidden;
 }
 
 .booking-sheet-select span {
@@ -2915,7 +2918,10 @@ body.booking-sheet-open {
 }
 
 .booking-sheet-select input {
+  display: block;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border-radius: 14px;
   border: 1px solid rgba(11, 11, 12, 0.18);
   padding: 12px 14px;
@@ -3725,6 +3731,15 @@ body.booking-sheet-open {
   .booking-service-grid,
   .booking-sheet-grid {
     grid-template-columns: 1fr;
+  }
+
+  .booking-sheet-select {
+    padding: 14px;
+  }
+
+  .booking-sheet-select input {
+    font-size: 0.96rem;
+    padding: 11px 12px;
   }
 
   .booking-sheet {

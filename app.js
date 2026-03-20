@@ -1373,8 +1373,7 @@ if (!isFirebaseReady) {
     return Number.isFinite(index) ? slots[((index % slots.length) + slots.length) % slots.length] : "06:00";
   };
 
-  const BOOKING_TIME_STEP_MINUTES = 30;
-  const BOOKING_TIME_STEP_SECONDS = BOOKING_TIME_STEP_MINUTES * 60;
+  const BOOKING_TIME_SLOT_VALUES = ["07:00", "14:00"];
   const BOOKING_ALLOWED_TIME_RANGES = {
     0: { start: 9 * 60, end: 15 * 60 },
     1: { start: 7 * 60, end: 18 * 60 + 30 },
@@ -1409,17 +1408,6 @@ if (!isFirebaseReady) {
     return `${hours}:${mins}`;
   };
 
-  const roundUpToBookingStep = (date) => {
-    const rounded = new Date(date.getTime());
-    rounded.setSeconds(0, 0);
-    const minutes = rounded.getMinutes();
-    const remainder = minutes % BOOKING_TIME_STEP_MINUTES;
-    if (remainder !== 0) {
-      rounded.setMinutes(minutes + (BOOKING_TIME_STEP_MINUTES - remainder));
-    }
-    return rounded;
-  };
-
   const getBookingTimeRangeForDateValue = (value, now = new Date()) => {
     const bookingDate = parseBookingDateValue(value);
     if (!bookingDate) return null;
@@ -1431,7 +1419,8 @@ if (!isFirebaseReady) {
     const dayClose = new Date(bookingDate);
     dayClose.setHours(Math.floor(allowedRange.end / 60), allowedRange.end % 60, 0, 0);
 
-    const minimumDateTime = roundUpToBookingStep(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+    const minimumDateTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    minimumDateTime.setSeconds(0, 0);
     const windowStart = new Date(Math.max(dayOpen.getTime(), minimumDateTime.getTime()));
     if (windowStart.getTime() > dayClose.getTime()) {
       return null;
@@ -1464,46 +1453,46 @@ if (!isFirebaseReady) {
     return candidate;
   };
 
-  const normalizeBookingTimeValue = (value, range) => {
-    if (!range) return "";
-    const totalMinutes = parseTimeValueToMinutes(value);
-    if (totalMinutes === null) return "";
-    const rounded = Math.round(totalMinutes / BOOKING_TIME_STEP_MINUTES) * BOOKING_TIME_STEP_MINUTES;
-    const clamped = Math.min(Math.max(rounded, range.minMinutes), range.maxMinutes);
-    return formatTimeMinutes(clamped);
+  const getAllowedBookingSlotsForDateValue = (value, now = new Date()) => {
+    const range = getBookingTimeRangeForDateValue(value, now);
+    if (!range) return [];
+    return BOOKING_TIME_SLOT_VALUES.filter((slot) => {
+      const slotMinutes = parseTimeValueToMinutes(slot);
+      return slotMinutes !== null && slotMinutes >= range.minMinutes && slotMinutes <= range.maxMinutes;
+    });
   };
 
   const syncBookingTimeConstraints = () => {
     if (!bookingTimeInput) return null;
-    bookingTimeInput.step = String(BOOKING_TIME_STEP_SECONDS);
-    const range = getBookingTimeRangeForDateValue(bookingDateInput?.value || "");
-    if (!range) {
-      bookingTimeInput.min = "";
-      bookingTimeInput.max = "";
-      if (bookingTimeInput.value) {
-        bookingTimeInput.value = "";
-      }
-      return null;
+    const slots = getAllowedBookingSlotsForDateValue(bookingDateInput?.value || "");
+    const previousValue = bookingTimeInput.value;
+    bookingTimeInput.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = slots.length ? "Select Time" : "No time available";
+    bookingTimeInput.appendChild(placeholder);
+
+    slots.forEach((slot) => {
+      const option = document.createElement("option");
+      option.value = slot;
+      option.textContent = slot;
+      bookingTimeInput.appendChild(option);
+    });
+
+    bookingTimeInput.disabled = slots.length === 0;
+    if (slots.includes(previousValue)) {
+      bookingTimeInput.value = previousValue;
+    } else {
+      bookingTimeInput.value = "";
     }
 
-    bookingTimeInput.min = range.minValue;
-    bookingTimeInput.max = range.maxValue;
-
-    if (bookingTimeInput.value) {
-      const normalizedValue = normalizeBookingTimeValue(bookingTimeInput.value, range);
-      if (!normalizedValue || normalizedValue !== bookingTimeInput.value) {
-        bookingTimeInput.value = normalizedValue;
-      }
-    }
-
-    return range;
+    return slots;
   };
 
   const isBookingDateTimeValid = (dateValue, timeValue) => {
-    const range = getBookingTimeRangeForDateValue(dateValue);
-    if (!range || !timeValue) return false;
-    const normalizedValue = normalizeBookingTimeValue(timeValue, range);
-    return Boolean(normalizedValue) && normalizedValue === timeValue;
+    const slots = getAllowedBookingSlotsForDateValue(dateValue);
+    return Boolean(timeValue) && slots.includes(timeValue);
   };
 
   const normalizeBookingCategory = (value) => {
@@ -3085,17 +3074,9 @@ if (!isFirebaseReady) {
 
   if (bookingTimeInput) {
     bookingTimeInput.addEventListener("input", () => {
-      const range = syncBookingTimeConstraints();
-      if (range && bookingTimeInput.value) {
-        bookingTimeInput.value = normalizeBookingTimeValue(bookingTimeInput.value, range);
-      }
       renderBookingSummary();
     });
     bookingTimeInput.addEventListener("change", () => {
-      const range = syncBookingTimeConstraints();
-      if (range && bookingTimeInput.value) {
-        bookingTimeInput.value = normalizeBookingTimeValue(bookingTimeInput.value, range);
-      }
       renderBookingSummary();
     });
   }

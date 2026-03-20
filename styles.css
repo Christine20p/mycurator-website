@@ -2917,7 +2917,8 @@ body.booking-sheet-open {
   font-weight: 700;
 }
 
-.booking-sheet-select input {
+.booking-sheet-select input,
+.booking-sheet-select select {
   display: block;
   width: 100%;
   max-width: 100%;
@@ -2929,9 +2930,11 @@ body.booking-sheet-open {
   font-size: 1rem;
   background: #fff;
   color: var(--ink);
+  appearance: none;
 }
 
-.booking-sheet-select input:focus {
+.booking-sheet-select input:focus,
+.booking-sheet-select select:focus {
   outline: 2px solid rgba(211, 180, 106, 0.6);
   border-color: var(--gold);
   box-shadow: 0 0 0 4px rgba(211, 180, 106, 0.12);
@@ -3737,7 +3740,8 @@ body.booking-sheet-open {
     padding: 14px;
   }
 
-  .booking-sheet-select input {
+  .booking-sheet-select input,
+  .booking-sheet-select select {
     font-size: 0.96rem;
     padding: 11px 12px;
   }

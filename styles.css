@@ -2084,20 +2084,46 @@ body.nav-closing .site-footer {
   color: #d8dadd;
 }
 
+.portal-dashboard-page .dashboard-header > div {
+  display: grid;
+  gap: 10px;
+}
+
+.portal-dashboard-page .dashboard-header .lead:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(242, 244, 247, 0.18);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
 .portal-dashboard-page [data-user-name] {
-  color: #f2f4f7;
+  color: #ffffff;
   font-weight: 700;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.12);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.16);
 }
 
 .portal-dashboard-page [data-signout] {
-  color: #d8dadd;
-  border-color: rgba(216, 218, 221, 0.38);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(242, 244, 247, 0.28);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
 }
 
 .portal-dashboard-page [data-signout]:hover {
-  color: #f2f4f7;
-  border-color: rgba(242, 244, 247, 0.55);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 247, 0.5);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
+}
+
+.portal-dashboard-page [data-signout]:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.82);
+  outline-offset: 3px;
 }
 
 .portal-auth {

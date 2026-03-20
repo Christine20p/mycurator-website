@@ -2156,18 +2156,18 @@ body.nav-closing .site-footer {
 
 .portal-dashboard-page [data-signout],
 .portal-booking-page [data-signout] {
-  color: #ffffff;
-  background: linear-gradient(160deg, rgba(53, 101, 214, 0.96), rgba(31, 74, 168, 0.92));
-  border-color: rgba(145, 185, 255, 0.34);
-  box-shadow: 0 16px 30px rgba(20, 46, 108, 0.24);
+  color: #2f67d2;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(242, 244, 247, 0.28);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
 }
 
 .portal-dashboard-page [data-signout]:hover,
 .portal-booking-page [data-signout]:hover {
-  color: #ffffff;
-  background: linear-gradient(160deg, rgba(69, 118, 231, 0.98), rgba(39, 87, 188, 0.94));
-  border-color: rgba(175, 204, 255, 0.44);
-  box-shadow: 0 20px 36px rgba(20, 46, 108, 0.28);
+  color: #245ac4;
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 247, 0.5);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
 }
 
 .portal-dashboard-page [data-signout]:focus-visible,

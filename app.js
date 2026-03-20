@@ -1632,7 +1632,7 @@ if (!isFirebaseReady) {
         if (bookingPayNowTotalCents > 0) {
           const totalRow = document.createElement("div");
           totalRow.className = "booking-summary-row booking-summary-row--total";
-          totalRow.innerHTML = `<span>Ozow EFT Total</span><strong>${escapeHtml(
+          totalRow.innerHTML = `<span>Total Payable</span><strong>${escapeHtml(
             formatCurrency(bookingPayNowTotalCents)
           )}</strong>`;
           bookingPricingRows.appendChild(totalRow);

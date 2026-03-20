@@ -558,7 +558,6 @@ const settingsOtpVerifyButton = document.querySelector("[data-settings-otp-verif
 const settingsOtpResendButton = document.querySelector("[data-settings-otp-resend]");
 const settingsOtpCancelButton = document.querySelector("[data-settings-otp-cancel]");
 const settingsOtpFeedback = document.querySelector("[data-settings-otp-feedback]");
-const incidentForms = document.querySelectorAll("[data-incident-form]");
 const payNowButton = document.querySelector("[data-request-paynow]");
 const openPayNowButton = document.querySelector("[data-open-paynow]");
 const cardPayButton = document.querySelector("[data-request-card]");
@@ -2768,65 +2767,6 @@ if (!isFirebaseReady) {
       closeSettingsOtpPanel();
     });
   }
-
-  incidentForms.forEach((form) => {
-    if (form.dataset.bound === "true") return;
-    form.dataset.bound = "true";
-    const feedback = form.querySelector("[data-incident-feedback]");
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      if (!currentUser || !functions) {
-        setFeedback(feedback, "Sign in before submitting an incident.", true);
-        return;
-      }
-
-      const formData = new FormData(form);
-      const title = String(formData.get("incident_title") || "").trim();
-      const details = String(formData.get("incident_details") || "").trim();
-      const sourceInterface = String(form.dataset.incidentInterface || resolveRole(currentUserData)).trim() || "client";
-      const contextType = String(form.dataset.incidentContext || "general").trim() || "general";
-
-      if (!title) {
-        setFeedback(feedback, "Enter an incident title.", true);
-        return;
-      }
-      if (!details) {
-        setFeedback(feedback, "Enter incident details.", true);
-        return;
-      }
-
-      disableForm(form, true);
-      setFeedback(feedback, "");
-      try {
-        const payload = {
-          title,
-          details,
-          sourcePlatform: "web",
-          sourceInterface,
-          contextType,
-        };
-
-        if (contextType === "booking" && bookingSelectedPropertyId) {
-          payload.propertyId = bookingSelectedPropertyId;
-          payload.contextId = bookingSelectedPropertyId;
-        }
-
-        const result = await functions.httpsCallable("submitIncidentReport")(payload);
-        setFeedback(
-          feedback,
-          String(
-            result?.data?.message ||
-              "Your incident has been successfully reported. It will be reviewed and the necessary precautions will be taken."
-          )
-        );
-        form.reset();
-      } catch (error) {
-        setFeedback(feedback, error.message || "Unable to submit incident.", true);
-      } finally {
-        disableForm(form, false);
-      }
-    });
-  });
 
   const startPaymentRequest = async (gateway) => {
     if (!currentUser || !currentUserData) return;

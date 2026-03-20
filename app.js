@@ -531,6 +531,12 @@ const bookingPricingRows = document.querySelector("[data-booking-price-rows]");
 const bookingPricingNote = document.querySelector("[data-booking-pricing-note]");
 const bookingPricingMessage = document.querySelector("[data-booking-pricing-message]");
 const bookingSubmitButton = document.querySelector("[data-booking-submit]");
+const bookingNotice = document.querySelector("[data-booking-notice]");
+const bookingNoticePanel = document.querySelector("[data-booking-notice-panel]");
+const bookingNoticeTitle = document.querySelector("[data-booking-notice-title]");
+const bookingNoticeKicker = document.querySelector("[data-booking-notice-kicker]");
+const bookingNoticeMessage = document.querySelector("[data-booking-notice-message]");
+const bookingNoticeDismissButtons = document.querySelectorAll("[data-booking-notice-dismiss]");
 const loginFeedback = document.querySelector("[data-login-feedback]");
 const registerFeedback = document.querySelector("[data-register-feedback]");
 const otpFeedback = document.querySelector("[data-otp-feedback]");
@@ -716,6 +722,10 @@ if (bookingSheet && bookingSheet.parentElement !== document.body) {
   document.body.appendChild(bookingSheet);
 }
 
+if (bookingNotice && bookingNotice.parentElement !== document.body) {
+  document.body.appendChild(bookingNotice);
+}
+
 const showMessage = (message, isError = false) => {
   if (!portalMessage) return;
   portalMessage.textContent = message;
@@ -738,6 +748,60 @@ const setFeedback = (el, message, isError = false) => {
   el.classList.toggle("is-visible", hasMessage);
   el.classList.toggle("is-error", hasMessage && isError);
   el.classList.toggle("is-success", hasMessage && !isError);
+};
+
+const closeBookingNotice = () => {
+  if (!bookingNotice) return;
+  bookingNotice.classList.add("is-hidden");
+  bookingNotice.classList.remove("is-error", "is-success");
+  bookingNotice.setAttribute("aria-hidden", "true");
+};
+
+const resolveBookingNoticeMeta = (message, isError) => {
+  const normalized = String(message || "").toLowerCase();
+  if (isError) {
+    return {
+      kicker: "Booking issue",
+      title: normalized.includes("payment") ? "Payment Issue" : "Booking Issue",
+    };
+  }
+  if (normalized.includes("payment received") || normalized.includes("booking is confirmed")) {
+    return { kicker: "Booking confirmed", title: "Payment Received" };
+  }
+  if (normalized.includes("payment link")) {
+    return { kicker: "Payment ready", title: "Continue to Payment" };
+  }
+  if (normalized.includes("finalising your booking")) {
+    return { kicker: "Processing", title: "Booking Update" };
+  }
+  return { kicker: "Booking update", title: "Booking Update" };
+};
+
+const setBookingFeedback = (message, isError = false) => {
+  if (!bookingNotice || !bookingNoticeMessage || !bookingNoticeTitle || !bookingNoticeKicker) {
+    setFeedback(bookingFeedback, message, isError);
+    return;
+  }
+
+  if (!message) {
+    closeBookingNotice();
+    return;
+  }
+
+  const meta = resolveBookingNoticeMeta(message, isError);
+  bookingNoticeKicker.textContent = meta.kicker;
+  bookingNoticeTitle.textContent = meta.title;
+  bookingNoticeMessage.textContent = message;
+  bookingNotice.classList.remove("is-hidden");
+  bookingNotice.classList.toggle("is-error", Boolean(isError));
+  bookingNotice.classList.toggle("is-success", !isError);
+  bookingNotice.setAttribute("aria-hidden", "false");
+
+  if (bookingNoticePanel) {
+    window.requestAnimationFrame(() => {
+      bookingNoticePanel.focus({ preventScroll: true });
+    });
+  }
 };
 
 const hasAcceptedTerms = (checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked;
@@ -766,6 +830,10 @@ const syncPaymentConsentState = () => {
 paymentTermsCheckbox?.addEventListener("change", syncPaymentConsentState);
 bookingPaymentTermsCheckbox?.addEventListener("change", syncPaymentConsentState);
 syncPaymentConsentState();
+
+bookingNoticeDismissButtons.forEach((button) => {
+  button.addEventListener("click", closeBookingNotice);
+});
 
 if (loginPage && portalMessage) {
   const resetState = new URLSearchParams(window.location.search).get("reset");
@@ -1737,6 +1805,9 @@ if (!isFirebaseReady) {
     bookingSheet.classList.toggle("is-hidden", !open);
     bookingSheet.setAttribute("aria-hidden", open ? "false" : "true");
     document.body.classList.toggle("booking-sheet-open", open);
+    if (open) {
+      closeBookingNotice();
+    }
     if (bookingPaymentTermsCheckbox) {
       bookingPaymentTermsCheckbox.checked = false;
     }
@@ -2856,20 +2927,20 @@ if (!isFirebaseReady) {
   if (bookingOpenSheetButton) {
     bookingOpenSheetButton.addEventListener("click", () => {
       if (!getSelectedBookingProperty()) {
-        setFeedback(bookingFeedback, "Please select a property before continuing.", true);
+        setBookingFeedback("Please select a property before continuing.", true);
         return;
       }
       if (!bookingSelectedCategory) {
-        setFeedback(bookingFeedback, "Please choose a presentation lane first.", true);
+        setBookingFeedback("Please choose a presentation lane first.", true);
         return;
       }
       if (!bookingSelectedServices.length) {
-        setFeedback(bookingFeedback, "Please select at least one service before continuing.", true);
+        setBookingFeedback("Please select at least one service before continuing.", true);
         return;
       }
 
       setBookingMinimumDate();
-      setFeedback(bookingFeedback, "");
+      setBookingFeedback("");
       renderBookingSummary();
       setBookingSheetOpen(true);
     });
@@ -2882,6 +2953,10 @@ if (!isFirebaseReady) {
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && bookingNotice && !bookingNotice.classList.contains("is-hidden")) {
+      closeBookingNotice();
+      return;
+    }
     if (event.key === "Escape" && bookingSheet && !bookingSheet.classList.contains("is-hidden")) {
       setBookingSheetOpen(false);
     }
@@ -2890,7 +2965,7 @@ if (!isFirebaseReady) {
   if (bookingForm && db) {
     bookingForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      setFeedback(bookingFeedback, "");
+      setBookingFeedback("");
       if (!currentUser || !currentUserData) return;
       if (bookingSubmitting) return;
       if (bookingOpenPaymentButton) {
@@ -2903,29 +2978,28 @@ if (!isFirebaseReady) {
       const bookingTimeValue = String(bookingTimeInput?.value || "").trim();
 
       if (!selectedProperty) {
-        setFeedback(bookingFeedback, "Please select a property before continuing.", true);
+        setBookingFeedback("Please select a property before continuing.", true);
         return;
       }
       if (!bookingSelectedCategory) {
-        setFeedback(bookingFeedback, "Please choose a presentation lane before continuing.", true);
+        setBookingFeedback("Please choose a presentation lane before continuing.", true);
         return;
       }
       if (!bookingSelectedServices.length) {
-        setFeedback(bookingFeedback, "Please select at least one service.", true);
+        setBookingFeedback("Please select at least one service.", true);
         return;
       }
       if (!bookingDateValue || !bookingTimeValue) {
-        setFeedback(bookingFeedback, "Please choose a date and time before continuing.", true);
+        setBookingFeedback("Please choose a date and time before continuing.", true);
         return;
       }
       if (!hasAcceptedTerms(bookingPaymentTermsCheckbox)) {
-        setFeedback(bookingFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+        setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
         syncPaymentConsentState();
         return;
       }
       if (!selectedProperty.isBookable) {
-        setFeedback(
-          bookingFeedback,
+        setBookingFeedback(
           selectedProperty.isSold
             ? "This property is marked as sold. Services have been stopped for it."
             : "Services are paused for this property. Please contact support.",
@@ -2934,11 +3008,11 @@ if (!isFirebaseReady) {
         return;
       }
       if (!bookingPricingReady) {
-        setFeedback(bookingFeedback, bookingPricingMessageText || "Loading pricing. Please wait.", true);
+        setBookingFeedback(bookingPricingMessageText || "Loading pricing. Please wait.", true);
         return;
       }
       if (!bookingPricingLines.length && !bookingHasMonthlyServices) {
-        setFeedback(bookingFeedback, "Pricing is not available yet. Please wait for admin pricing.", true);
+        setBookingFeedback("Pricing is not available yet. Please wait for admin pricing.", true);
         return;
       }
 
@@ -2968,7 +3042,7 @@ if (!isFirebaseReady) {
         const result = response.data || {};
 
         if (result.status === "created") {
-          setFeedback(bookingFeedback, "Booking submitted. We'll confirm shortly.");
+          setBookingFeedback("Booking submitted. We'll confirm shortly.");
           resetBookingDraft();
           renderBookingCategories();
           renderBookingServices();
@@ -2982,7 +3056,7 @@ if (!isFirebaseReady) {
           throw new Error("We couldn't start the payment request.");
         }
 
-        setFeedback(bookingFeedback, "Preparing your payment link...");
+        setBookingFeedback("Preparing your payment link...");
         stopPayNowListener();
         payNowListener = db
           .collection("paynow_requests")
@@ -3000,14 +3074,14 @@ if (!isFirebaseReady) {
               bookingOpenPaymentButton.classList.remove("is-hidden");
               bookingOpenPaymentButton.onclick = () => {
                 if (!hasAcceptedTerms(bookingPaymentTermsCheckbox)) {
-                  setFeedback(bookingFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+                  setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
                   syncPaymentConsentState();
                   return;
                 }
                 window.open(redirectUrl, "_blank");
               };
               syncPaymentConsentState();
-              setFeedback(bookingFeedback, "Payment link is ready. Complete payment to confirm your booking.");
+              setBookingFeedback("Payment link is ready. Complete payment to confirm your booking.");
             }
 
             const bookingReady = status === "paid" || (paymentStatus === "paid" && bookingSyncStatus === "ready");
@@ -3018,7 +3092,7 @@ if (!isFirebaseReady) {
                 bookingOpenPaymentButton.classList.add("is-hidden");
                 bookingOpenPaymentButton.onclick = null;
               }
-              setFeedback(bookingFeedback, "Payment received. Your booking is confirmed.");
+              setBookingFeedback("Payment received. Your booking is confirmed.");
               resetBookingDraft();
               renderBookingCategories();
               renderBookingServices();
@@ -3031,8 +3105,7 @@ if (!isFirebaseReady) {
                 bookingOpenPaymentButton.classList.add("is-hidden");
                 bookingOpenPaymentButton.onclick = null;
               }
-              setFeedback(
-                bookingFeedback,
+              setBookingFeedback(
                 processingMessage || "Payment received. We are finalising your booking."
               );
             } else if (errorMessage || status === "failed" || status === "declined") {
@@ -3040,16 +3113,12 @@ if (!isFirebaseReady) {
                 bookingOpenPaymentButton.classList.add("is-hidden");
                 bookingOpenPaymentButton.onclick = null;
               }
-              setFeedback(
-                bookingFeedback,
-                errorMessage || "Payment was not completed. Please try again.",
-                true
-              );
+              setBookingFeedback(errorMessage || "Payment was not completed. Please try again.", true);
               stopPayNowListener();
             }
           });
       } catch (error) {
-        setFeedback(bookingFeedback, error.message || "Unable to submit booking.", true);
+        setBookingFeedback(error.message || "Unable to submit booking.", true);
       } finally {
         bookingSubmitting = false;
         if (bookingSubmitButton) {

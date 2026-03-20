@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-<link rel="stylesheet" href="styles.css?v=20260320d" />
+<link rel="stylesheet" href="styles.css?v=20260320e" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -221,7 +221,6 @@
                       <button class="btn primary" type="submit" form="portal-booking-form" data-booking-submit>Continue to Payment</button>
                       <button class="btn ghost is-hidden" type="button" data-booking-open-payment>Open Ozow EFT</button>
                     </div>
-                    <p class="form-feedback" data-booking-feedback role="status" aria-live="polite"></p>
                   </div>
                 </div>
               </form>
@@ -239,6 +238,15 @@
           </div>
         </div>
       </section>
+      <div class="booking-notice is-hidden" data-booking-notice aria-hidden="true">
+        <button class="booking-notice-backdrop" type="button" data-booking-notice-dismiss aria-label="Dismiss booking notice"></button>
+        <div class="booking-notice-panel" data-booking-notice-panel role="alertdialog" aria-modal="true" aria-labelledby="booking-notice-title" tabindex="-1">
+          <p class="booking-section-tag" data-booking-notice-kicker>Booking update</p>
+          <h4 id="booking-notice-title" data-booking-notice-title>Booking Update</h4>
+          <p class="booking-notice-message" data-booking-notice-message></p>
+          <button class="btn primary" type="button" data-booking-notice-dismiss>Dismiss</button>
+        </div>
+      </div>
 </main>
 
     <footer class="site-footer">
@@ -270,6 +278,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260320d"></script>
+    <script src="app.js?v=20260320e"></script>
   </body>
 </html>

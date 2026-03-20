@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-<link rel="stylesheet" href="styles.css?v=20260320c" />
+<link rel="stylesheet" href="styles.css?v=20260320d" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -82,6 +82,18 @@
                 <button class="btn ghost is-hidden" type="button" data-open-card>Open card payment</button>
                 <button class="btn ghost is-hidden" type="button" data-open-mandate>Open mandate link</button>
                 <button class="btn ghost is-hidden" type="button" data-request-mandate>Complete DebiCheck</button>
+              </div>
+              <div class="payment-terms-card">
+                <label class="field checkbox payment-terms-check">
+                  <input type="checkbox" data-payment-terms-checkbox />
+                  <span>
+                    I accept the <a href="payment-terms.html" target="_blank" rel="noopener">Payment Terms &amp; Conditions</a>
+                    and understand that all fees are non-refundable and no service will be carried out without payment.
+                  </span>
+                </label>
+                <p class="portal-note payment-terms-note">
+                  Payment is required before any inspection, booking confirmation, or service delivery can begin.
+                </p>
               </div>
               <form class="portal-form mandate-form is-hidden" data-mandate-form>
                 <p class="portal-note">
@@ -241,6 +253,7 @@
         
           <a href="community.html">Community</a>
         <a href="careers.html">Careers</a>
+          <a href="payment-terms.html">Payment Terms</a>
           <a href="privacy.html">Privacy</a>
           <a href="legal.html">Legal</a>
           <a href="popia.html">POPIA</a>
@@ -254,6 +267,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260320b"></script>
+    <script src="app.js?v=20260320d"></script>
   </body>
 </html>

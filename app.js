@@ -555,6 +555,8 @@ const settingsOtpFeedback = document.querySelector("[data-settings-otp-feedback]
 const payNowButton = document.querySelector("[data-request-paynow]");
 const openPayNowButton = document.querySelector("[data-open-paynow]");
 const cardPayButton = document.querySelector("[data-request-card]");
+const paymentTermsCheckbox = document.querySelector("[data-payment-terms-checkbox]");
+const bookingPaymentTermsCheckbox = document.querySelector("[data-booking-payment-terms-checkbox]");
 const PASSWORD_RESET_SETTINGS = {
   url: "https://mycurator.co.za/portal-login.html?reset=complete",
   handleCodeInApp: false,
@@ -661,6 +663,9 @@ let bookingPricingRequestId = 0;
 let bookingSubmitting = false;
 
 const CUSTOM_MANDATE_BANK_ID = "__other__";
+const PAYMENT_TERMS_VERSION = "2026-03-20";
+const PAYMENT_TERMS_REQUIRED_MESSAGE =
+  "Please accept the Payment Terms & Conditions before continuing.";
 const BOOKING_CATEGORY_SERVICES = {
   Residential: [
     "Standard Cleaning",
@@ -734,6 +739,33 @@ const setFeedback = (el, message, isError = false) => {
   el.classList.toggle("is-error", hasMessage && isError);
   el.classList.toggle("is-success", hasMessage && !isError);
 };
+
+const hasAcceptedTerms = (checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked;
+
+const syncPaymentConsentState = () => {
+  if (payNowButton) {
+    payNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
+  }
+  if (cardPayButton) {
+    cardPayButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
+  }
+  if (openPayNowButton) {
+    openPayNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
+  }
+  if (openCardButton) {
+    openCardButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
+  }
+  if (bookingSubmitButton) {
+    bookingSubmitButton.disabled = !hasAcceptedTerms(bookingPaymentTermsCheckbox);
+  }
+  if (bookingOpenPaymentButton) {
+    bookingOpenPaymentButton.disabled = !hasAcceptedTerms(bookingPaymentTermsCheckbox);
+  }
+};
+
+paymentTermsCheckbox?.addEventListener("change", syncPaymentConsentState);
+bookingPaymentTermsCheckbox?.addEventListener("change", syncPaymentConsentState);
+syncPaymentConsentState();
 
 if (loginPage && portalMessage) {
   const resetState = new URLSearchParams(window.location.search).get("reset");
@@ -1705,6 +1737,10 @@ if (!isFirebaseReady) {
     bookingSheet.classList.toggle("is-hidden", !open);
     bookingSheet.setAttribute("aria-hidden", open ? "false" : "true");
     document.body.classList.toggle("booking-sheet-open", open);
+    if (bookingPaymentTermsCheckbox) {
+      bookingPaymentTermsCheckbox.checked = false;
+    }
+    syncPaymentConsentState();
     if (open) {
       bookingSheet.scrollTop = 0;
       if (bookingSheetPanel) {
@@ -1990,7 +2026,14 @@ if (!isFirebaseReady) {
     if (openPayNowButton) {
       if (payNowUrl) {
         openPayNowButton.classList.remove("is-hidden");
-        openPayNowButton.onclick = () => window.open(payNowUrl, "_blank");
+        openPayNowButton.onclick = () => {
+          if (!hasAcceptedTerms(paymentTermsCheckbox)) {
+            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+            syncPaymentConsentState();
+            return;
+          }
+          window.open(payNowUrl, "_blank");
+        };
       } else {
         openPayNowButton.classList.add("is-hidden");
       }
@@ -2000,11 +2043,19 @@ if (!isFirebaseReady) {
     if (openCardButton) {
       if (cardPayUrl) {
         openCardButton.classList.remove("is-hidden");
-        openCardButton.onclick = () => window.open(cardPayUrl, "_blank");
+        openCardButton.onclick = () => {
+          if (!hasAcceptedTerms(paymentTermsCheckbox)) {
+            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+            syncPaymentConsentState();
+            return;
+          }
+          window.open(cardPayUrl, "_blank");
+        };
       } else {
         openCardButton.classList.add("is-hidden");
       }
     }
+    syncPaymentConsentState();
 
     if (openMandateButton) {
       if (mandateUrl) {
@@ -2500,6 +2551,11 @@ if (!isFirebaseReady) {
   const startPaymentRequest = async (gateway) => {
     if (!currentUser || !currentUserData) return;
     setFeedback(paymentFeedback, "");
+    if (!hasAcceptedTerms(paymentTermsCheckbox)) {
+      setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+      syncPaymentConsentState();
+      return;
+    }
     if (openPayNowButton) openPayNowButton.classList.add("is-hidden");
     if (openCardButton) openCardButton.classList.add("is-hidden");
     const outstanding = Number(currentUserData.outstandingBalanceCents || 0);
@@ -2531,6 +2587,9 @@ if (!isFirebaseReady) {
         type: reason,
         description,
         gateway: gateway || "ozow",
+        paymentTermsAccepted: true,
+        paymentTermsVersion: PAYMENT_TERMS_VERSION,
+        paymentTermsAcceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         requestedBy: currentUser.uid,
       });
@@ -2561,11 +2620,26 @@ if (!isFirebaseReady) {
             const resolvedGateway = String(data.gateway || gateway || "").toLowerCase();
             if (resolvedGateway === "peach" && openCardButton) {
               openCardButton.classList.remove("is-hidden");
-              openCardButton.onclick = () => window.open(data.redirectUrl, "_blank");
+              openCardButton.onclick = () => {
+                if (!hasAcceptedTerms(paymentTermsCheckbox)) {
+                  setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+                  syncPaymentConsentState();
+                  return;
+                }
+                window.open(data.redirectUrl, "_blank");
+              };
             } else if (openPayNowButton) {
               openPayNowButton.classList.remove("is-hidden");
-              openPayNowButton.onclick = () => window.open(data.redirectUrl, "_blank");
+              openPayNowButton.onclick = () => {
+                if (!hasAcceptedTerms(paymentTermsCheckbox)) {
+                  setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+                  syncPaymentConsentState();
+                  return;
+                }
+                window.open(data.redirectUrl, "_blank");
+              };
             }
+            syncPaymentConsentState();
             setFeedback(paymentFeedback, "Payment link is ready.");
           }
           if (data.status && ["paid", "declined", "failed"].includes(String(data.status).toLowerCase())) {
@@ -2844,6 +2918,11 @@ if (!isFirebaseReady) {
         setFeedback(bookingFeedback, "Please choose a date and time before continuing.", true);
         return;
       }
+      if (!hasAcceptedTerms(bookingPaymentTermsCheckbox)) {
+        setFeedback(bookingFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+        syncPaymentConsentState();
+        return;
+      }
       if (!selectedProperty.isBookable) {
         setFeedback(
           bookingFeedback,
@@ -2872,6 +2951,8 @@ if (!isFirebaseReady) {
         bookingDateValue,
         bookingTimeValue,
         services: bookingSelectedServices.slice(),
+        paymentTermsAccepted: true,
+        paymentTermsVersion: PAYMENT_TERMS_VERSION,
       };
 
       try {
@@ -2917,7 +2998,15 @@ if (!isFirebaseReady) {
 
             if (redirectUrl && bookingOpenPaymentButton) {
               bookingOpenPaymentButton.classList.remove("is-hidden");
-              bookingOpenPaymentButton.onclick = () => window.open(redirectUrl, "_blank");
+              bookingOpenPaymentButton.onclick = () => {
+                if (!hasAcceptedTerms(bookingPaymentTermsCheckbox)) {
+                  setFeedback(bookingFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+                  syncPaymentConsentState();
+                  return;
+                }
+                window.open(redirectUrl, "_blank");
+              };
+              syncPaymentConsentState();
               setFeedback(bookingFeedback, "Payment link is ready. Complete payment to confirm your booking.");
             }
 
@@ -2964,7 +3053,7 @@ if (!isFirebaseReady) {
       } finally {
         bookingSubmitting = false;
         if (bookingSubmitButton) {
-          bookingSubmitButton.disabled = false;
+          syncPaymentConsentState();
           bookingSubmitButton.textContent = "Continue to Payment";
         }
       }

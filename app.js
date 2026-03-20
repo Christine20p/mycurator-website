@@ -558,6 +558,7 @@ const settingsOtpVerifyButton = document.querySelector("[data-settings-otp-verif
 const settingsOtpResendButton = document.querySelector("[data-settings-otp-resend]");
 const settingsOtpCancelButton = document.querySelector("[data-settings-otp-cancel]");
 const settingsOtpFeedback = document.querySelector("[data-settings-otp-feedback]");
+const incidentForms = document.querySelectorAll("[data-incident-form]");
 const payNowButton = document.querySelector("[data-request-paynow]");
 const openPayNowButton = document.querySelector("[data-open-paynow]");
 const cardPayButton = document.querySelector("[data-request-card]");
@@ -624,12 +625,14 @@ const adminStatAgents = document.querySelector("[data-admin-stat-agents]");
 const adminStatWorkers = document.querySelector("[data-admin-stat-workers]");
 const adminStatBookings = document.querySelector("[data-admin-stat-bookings]");
 const adminStatMandates = document.querySelector("[data-admin-stat-mandates]");
+const adminStatIncidents = document.querySelector("[data-admin-stat-incidents]");
 const adminRecentBookings = document.querySelector("[data-admin-recent-bookings]");
 const adminClientsList = document.querySelector("[data-admin-clients]");
 const adminAgentsList = document.querySelector("[data-admin-agents]");
 const adminWorkersList = document.querySelector("[data-admin-workers]");
 const adminBookingsList = document.querySelector("[data-admin-bookings]");
 const adminMandatesList = document.querySelector("[data-admin-mandates]");
+const adminIncidentsList = document.querySelector("[data-admin-incidents]");
 const adminMandateExportButton = document.querySelector("[data-admin-export-mandates]");
 const adminMandateFeedback = document.querySelector("[data-admin-mandate-feedback]");
 const adminCommsForm = document.querySelector("[data-admin-comms-form]");
@@ -2766,6 +2769,59 @@ if (!isFirebaseReady) {
     });
   }
 
+  incidentForms.forEach((form) => {
+    if (form.dataset.bound === "true") return;
+    form.dataset.bound = "true";
+    const feedback = form.querySelector("[data-incident-feedback]");
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!currentUser || !functions) {
+        setFeedback(feedback, "Sign in before submitting an incident.", true);
+        return;
+      }
+
+      const formData = new FormData(form);
+      const title = String(formData.get("incident_title") || "").trim();
+      const details = String(formData.get("incident_details") || "").trim();
+      const sourceInterface = String(form.dataset.incidentInterface || resolveRole(currentUserData)).trim() || "client";
+      const contextType = String(form.dataset.incidentContext || "general").trim() || "general";
+
+      if (!title) {
+        setFeedback(feedback, "Enter an incident title.", true);
+        return;
+      }
+      if (!details) {
+        setFeedback(feedback, "Enter incident details.", true);
+        return;
+      }
+
+      disableForm(form, true);
+      setFeedback(feedback, "");
+      try {
+        const payload = {
+          title,
+          details,
+          sourcePlatform: "web",
+          sourceInterface,
+          contextType,
+        };
+
+        if (contextType === "booking" && bookingSelectedPropertyId) {
+          payload.propertyId = bookingSelectedPropertyId;
+          payload.contextId = bookingSelectedPropertyId;
+        }
+
+        const result = await functions.httpsCallable("submitIncidentReport")(payload);
+        setFeedback(feedback, String(result?.data?.message || "Incident submitted."));
+        form.reset();
+      } catch (error) {
+        setFeedback(feedback, error.message || "Unable to submit incident.", true);
+      } finally {
+        disableForm(form, false);
+      }
+    });
+  });
+
   const startPaymentRequest = async (gateway) => {
     if (!currentUser || !currentUserData) return;
     setFeedback(paymentFeedback, "");
@@ -3860,6 +3916,60 @@ if (!isFirebaseReady) {
             ],
           });
           adminMandatesList.appendChild(card);
+        });
+      }
+    }
+
+    let incidents = [];
+    try {
+      const incidentSnap = await db.collectionGroup("incidents").orderBy("createdAt", "desc").limit(50).get();
+      incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+    } catch (error) {
+      try {
+        const incidentSnap = await db.collectionGroup("incidents").orderBy("timestamp", "desc").limit(50).get();
+        incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+      } catch (fallbackError) {
+        try {
+          const incidentSnap = await db.collectionGroup("incidents").limit(50).get();
+          incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+        } catch (finalError) {
+          incidents = [];
+        }
+      }
+    }
+
+    incidents.sort((a, b) => {
+      const aDate = toDate(a.data.createdAt || a.data.timestamp) || new Date(0);
+      const bDate = toDate(b.data.createdAt || b.data.timestamp) || new Date(0);
+      return bDate - aDate;
+    });
+
+    if (adminStatIncidents) adminStatIncidents.textContent = `${incidents.length}`;
+
+    if (adminIncidentsList) {
+      adminIncidentsList.innerHTML = "";
+      if (!incidents.length) {
+        clearList(adminIncidentsList, "Incidents will appear here.");
+      } else {
+        incidents.forEach((incident) => {
+          const data = incident.data || {};
+          const title = String(data.title || "Incident").trim();
+          const details = String(data.details || data.description || "").trim();
+          const reporter = String(data.reporterName || data.clientCode || data.userId || "").trim();
+          const role = String(data.reportedByRole || data.sourceInterface || "").trim();
+          const type = String(data.incidentType || "").trim();
+          const createdAt = toDate(data.createdAt || data.timestamp);
+          const card = createRoleCard({
+            title,
+            meta: [
+              reporter ? `Reporter: ${reporter}` : "",
+              role ? `Interface: ${formatStatusLabel(role)}` : "",
+              type ? `Type: ${formatStatusLabel(type)}` : "",
+              details,
+              createdAt ? formatDateTime(createdAt) : "",
+            ],
+          });
+          adminIncidentsList.appendChild(card);
         });
       }
     }

@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-<link rel="stylesheet" href="styles.css?v=20260320f" />
+<link rel="stylesheet" href="styles.css?v=20260320n" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -69,6 +69,7 @@
             <button class="role-tab" type="button" data-role-tab="agents">Agents</button>
             <button class="role-tab" type="button" data-role-tab="bookings">Bookings</button>
             <button class="role-tab" type="button" data-role-tab="mandates">Mandates</button>
+            <button class="role-tab" type="button" data-role-tab="incidents">Incidents</button>
             <button class="role-tab" type="button" data-role-tab="comms">Comms</button>
             <button class="role-tab" type="button" data-role-tab="settings">Settings</button>
           </div>
@@ -99,6 +100,10 @@
                       <p>Mandates</p>
                       <strong data-admin-stat-mandates>0</strong>
                     </div>
+                    <div class="role-stat">
+                      <p>Incidents</p>
+                      <strong data-admin-stat-incidents>0</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -122,6 +127,23 @@
                     <a class="contact-phone" href="tel:0792941992">079 294 1992</a>
                     <a class="contact-whatsapp" href="https://wa.me/27792941992">WhatsApp: 079 294 1992</a>
                   </div>
+                </div>
+
+                <div class="dashboard-card help-card">
+                  <h3>Report an incident</h3>
+                  <p>Log an admin-side issue so it is tracked with the rest of the platform incidents.</p>
+                  <form class="portal-form incident-form" data-incident-form data-incident-interface="admin" data-incident-context="operations">
+                    <label class="field">Title
+                      <input type="text" name="incident_title" placeholder="Short incident title" required />
+                    </label>
+                    <label class="field">Details
+                      <textarea name="incident_details" rows="4" placeholder="Describe what happened" required></textarea>
+                    </label>
+                    <div class="form-actions">
+                      <button class="btn ghost" type="submit">Submit incident</button>
+                    </div>
+                    <p class="form-feedback" data-incident-feedback role="status" aria-live="polite"></p>
+                  </form>
                 </div>
               </div>
             </div>
@@ -190,6 +212,20 @@
                 <p class="form-feedback" data-admin-mandate-feedback role="status" aria-live="polite"></p>
                 <div class="role-list" data-admin-mandates>
                   <p class="role-empty">Mandate requests will appear here.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-panel" data-role-panel="incidents">
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Reported incidents</h3>
+                    <p>Issues reported from the client, worker, inspector, and real-estate interfaces.</p>
+                  </div>
+                </div>
+                <div class="role-list" data-admin-incidents>
+                  <p class="role-empty">Incidents will appear here.</p>
                 </div>
               </div>
             </div>
@@ -279,6 +315,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260317q"></script>
+    <script src="app.js?v=20260320n"></script>
   </body>
 </html>

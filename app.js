@@ -2834,58 +2834,20 @@ if (!isFirebaseReady) {
     }
     if (openPayNowButton) openPayNowButton.classList.add("is-hidden");
     if (openCardButton) openCardButton.classList.add("is-hidden");
-    const outstanding = Number(currentUserData.outstandingBalanceCents || 0);
-    const adminFeePaid = currentUserData.adminFeePaid === true;
-    const amountCents = outstanding > 0 ? outstanding : adminFeePaid ? 0 : currentUserData.adminFeeCents || 29999;
-    if (!amountCents) {
-      setFeedback(paymentFeedback, "No payment is required at this time.");
-      return;
-    }
-    const requestId =
-      (window.crypto && crypto.randomUUID && crypto.randomUUID()) ||
-      `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const reference =
-      String(currentUserData.payNowReference || currentUserData.clientCode || currentUser.uid).trim();
-    const reason = outstanding > 0 ? "outstanding_balance" : "admin_fee";
-    const description =
-      reason === "admin_fee"
-        ? "Property presentation assessment fee payment"
-        : "Outstanding balance payment";
 
     try {
-      await db.collection("paynow_requests").doc(requestId).set({
-        requestId,
-        userId: currentUser.uid,
-        clientCode: currentUserData.clientCode || reference,
-        reference,
-        amountCents,
-        status: "queued",
-        type: reason,
-        description,
+      const result = await functions.httpsCallable("startAccountPaymentRequest")({
         gateway: gateway || "ozow",
         paymentTermsAccepted: true,
         paymentTermsVersion: PAYMENT_TERMS_VERSION,
-        paymentTermsAcceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        requestedBy: currentUser.uid,
       });
+      const response = result && result.data ? result.data : {};
+      const requestId = String(response.requestId || "").trim();
+      if (!requestId) {
+        throw new Error("Unable to start payment.");
+      }
 
-      const userUpdates =
-        gateway === "peach"
-          ? {
-              cardPayStatus: "requested",
-              cardPayReference: reference,
-              cardPayRequestedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            }
-          : {
-              payNowStatus: "requested",
-              payNowReference: reference,
-              payNowRequestedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            };
-
-      await db.collection("users").doc(currentUser.uid).set(userUpdates, { merge: true });
-
-      setFeedback(paymentFeedback, "Preparing your payment link...");
+      setFeedback(paymentFeedback, response.message || "Preparing your payment link...");
       stopPayNowListener();
       payNowListener = db
         .collection("paynow_requests")

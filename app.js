@@ -632,6 +632,7 @@ const adminWorkersList = document.querySelector("[data-admin-workers]");
 const adminBookingsList = document.querySelector("[data-admin-bookings]");
 const adminMandatesList = document.querySelector("[data-admin-mandates]");
 const adminIncidentsList = document.querySelector("[data-admin-incidents]");
+const adminIncidentFeedback = document.querySelector("[data-admin-incident-feedback]");
 const adminMandateExportButton = document.querySelector("[data-admin-export-mandates]");
 const adminMandateFeedback = document.querySelector("[data-admin-mandate-feedback]");
 const adminCommsForm = document.querySelector("[data-admin-comms-form]");
@@ -656,6 +657,7 @@ let adminDataLoaded = false;
 let workerFiltersBound = false;
 let adminMandatesBound = false;
 let adminCommsBound = false;
+const adminIncidentReplying = new Set();
 let pendingSecurityChange = null;
 let bookingPropertiesListener = null;
 let bookingProperties = [];
@@ -674,6 +676,20 @@ const CUSTOM_MANDATE_BANK_ID = "__other__";
 const PAYMENT_TERMS_VERSION = "2026-03-20";
 const PAYMENT_TERMS_REQUIRED_MESSAGE =
   "Please accept the Payment Terms & Conditions before continuing.";
+const ADMIN_INCIDENT_QUICK_REPLIES = [
+  {
+    label: "Acknowledge",
+    message: "We have acknowledged the incident reported. We will investigate and take necessary action.",
+  },
+  {
+    label: "Under Review",
+    message: "Your report has been received and is under review.",
+  },
+  {
+    label: "Feedback Soon",
+    message: "Thank you for reporting this. We will provide feedback shortly.",
+  },
+];
 const BOOKING_CATEGORY_SERVICES = {
   Residential: [
     "Standard Cleaning",
@@ -907,6 +923,46 @@ const maskCellphoneForDisplay = (value) => {
   if (!digits) return "your cellphone on file";
   const lastFour = digits.slice(-4);
   return `your cellphone ending in ${lastFour}`;
+};
+
+const normalizeAdminBookingStatus = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/-/g, "_")
+    .replace(/\s+/g, "_");
+
+const shouldIncludeAdminBooking = (data = {}) => {
+  const pendingPaymentStates = new Set([
+    "pending",
+    "queued",
+    "ready",
+    "processing",
+    "payment_pending",
+    "payment_required",
+    "awaiting_payment",
+    "awaitingpayment",
+  ]);
+
+  const paymentStatus = normalizeAdminBookingStatus(data.paymentStatus);
+  const payNowStatus = normalizeAdminBookingStatus(data.payNowStatus);
+  const bookingStatus = normalizeAdminBookingStatus(data.bookingStatus || data.status);
+  const cleaningStatus = normalizeAdminBookingStatus(data.cleaningStatus);
+  const bookingSyncStatus = normalizeAdminBookingStatus(data.bookingSyncStatus);
+
+  if (pendingPaymentStates.has(paymentStatus) || pendingPaymentStates.has(payNowStatus)) {
+    return false;
+  }
+  if (bookingStatus === "payment_pending" || bookingStatus === "payment_required") {
+    return false;
+  }
+  if (cleaningStatus === "payment_pending") {
+    return false;
+  }
+  if (bookingSyncStatus === "pending" && paymentStatus !== "paid") {
+    return false;
+  }
+  return true;
 };
 
 const disableForm = (form, disabled) => {
@@ -3781,16 +3837,22 @@ if (!isFirebaseReady) {
     try {
       let query = db.collectionGroup("bookings").orderBy("timestamp", "desc").limit(30);
       let snap = await query.get();
-      bookings = snap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+      bookings = snap.docs
+        .map((doc) => ({ id: doc.id, data: doc.data() || {} }))
+        .filter((booking) => shouldIncludeAdminBooking(booking.data));
     } catch (error) {
       try {
         let query = db.collectionGroup("bookings").orderBy("createdAt", "desc").limit(30);
         let snap = await query.get();
-        bookings = snap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+        bookings = snap.docs
+          .map((doc) => ({ id: doc.id, data: doc.data() || {} }))
+          .filter((booking) => shouldIncludeAdminBooking(booking.data));
       } catch (err) {
         try {
           let snap = await db.collectionGroup("bookings").limit(30).get();
-          bookings = snap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+          bookings = snap.docs
+            .map((doc) => ({ id: doc.id, data: doc.data() || {} }))
+            .filter((booking) => shouldIncludeAdminBooking(booking.data));
         } catch (finalError) {
           showMessage("We couldn't load bookings. Please try again.");
         }
@@ -3869,15 +3931,15 @@ if (!isFirebaseReady) {
     let incidents = [];
     try {
       const incidentSnap = await db.collectionGroup("incidents").orderBy("createdAt", "desc").limit(50).get();
-      incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+      incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, path: doc.ref.path, data: doc.data() || {} }));
     } catch (error) {
       try {
         const incidentSnap = await db.collectionGroup("incidents").orderBy("timestamp", "desc").limit(50).get();
-        incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+        incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, path: doc.ref.path, data: doc.data() || {} }));
       } catch (fallbackError) {
         try {
           const incidentSnap = await db.collectionGroup("incidents").limit(50).get();
-          incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+          incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, path: doc.ref.path, data: doc.data() || {} }));
         } catch (finalError) {
           incidents = [];
         }
@@ -3904,7 +3966,11 @@ if (!isFirebaseReady) {
           const reporter = String(data.reporterName || data.clientCode || data.userId || "").trim();
           const role = String(data.reportedByRole || data.sourceInterface || "").trim();
           const type = String(data.incidentType || "").trim();
+          const status = String(data.status || "open").trim() || "open";
           const createdAt = toDate(data.createdAt || data.timestamp);
+          const respondedAt = toDate(data.adminResponseAt);
+          const latestReply = String(data.adminResponseMessage || "").trim();
+          const repliedBy = String(data.adminResponseBy || "").trim();
           const card = createRoleCard({
             title,
             meta: [
@@ -3914,7 +3980,75 @@ if (!isFirebaseReady) {
               details,
               createdAt ? formatDateTime(createdAt) : "",
             ],
+            badge: formatStatusLabel(status),
           });
+
+          if (latestReply) {
+            const responsePanel = document.createElement("div");
+            responsePanel.className = "role-card-response";
+
+            const responseLabel = document.createElement("p");
+            responseLabel.className = "role-card-response-label";
+            responseLabel.textContent = "Latest admin response";
+            responsePanel.appendChild(responseLabel);
+
+            const responseMessage = document.createElement("p");
+            responseMessage.className = "role-card-response-message";
+            responseMessage.textContent = latestReply;
+            responsePanel.appendChild(responseMessage);
+
+            const responseMeta = [repliedBy ? `By ${repliedBy}` : "", respondedAt ? formatDateTime(respondedAt) : ""]
+              .filter(Boolean)
+              .join(" · ");
+            if (responseMeta) {
+              const responseMetaEl = document.createElement("p");
+              responseMetaEl.className = "role-card-response-meta";
+              responseMetaEl.textContent = responseMeta;
+              responsePanel.appendChild(responseMetaEl);
+            }
+
+            card.appendChild(responsePanel);
+          }
+
+          const actions = document.createElement("div");
+          actions.className = "role-card-actions";
+          const isReplying = adminIncidentReplying.has(incident.path || incident.id);
+
+          ADMIN_INCIDENT_QUICK_REPLIES.forEach((reply) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "role-quick-reply";
+            button.textContent = reply.label;
+            button.disabled = !functions || isReplying;
+            button.addEventListener("click", async () => {
+              if (!functions) return;
+              const replyKey = incident.path || incident.id;
+              if (adminIncidentReplying.has(replyKey)) return;
+              adminIncidentReplying.add(replyKey);
+              actions.querySelectorAll(".role-quick-reply").forEach((actionButton) => {
+                actionButton.disabled = true;
+              });
+              button.textContent = "Sending...";
+              setFeedback(adminIncidentFeedback, "");
+              adminDataLoaded = false;
+              try {
+                const result = await functions.httpsCallable("respondToIncidentReport")({
+                  incidentPath: incident.path,
+                  incidentId: incident.id,
+                  replyMessage: reply.message,
+                });
+                setFeedback(adminIncidentFeedback, String(result?.data?.message || "Incident response sent."));
+                await initAdminDashboard();
+              } catch (error) {
+                setFeedback(adminIncidentFeedback, error.message || "Unable to send incident response.", true);
+              } finally {
+                adminIncidentReplying.delete(replyKey);
+              }
+            });
+            actions.appendChild(button);
+          });
+
+          card.appendChild(actions);
           adminIncidentsList.appendChild(card);
         });
       }

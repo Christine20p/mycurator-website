@@ -2397,6 +2397,39 @@ body.nav-closing .site-footer {
   font-size: 0.85rem;
 }
 
+.role-card-response {
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(11, 11, 12, 0.08);
+  display: grid;
+  gap: 6px;
+}
+
+.role-card-response-label,
+.role-card-response-message,
+.role-card-response-meta {
+  margin: 0;
+}
+
+.role-card-response-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(11, 11, 12, 0.48);
+}
+
+.role-card-response-message {
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.role-card-response-meta {
+  color: rgba(11, 11, 12, 0.56);
+  font-size: 0.78rem;
+}
+
 .role-badge {
   margin-top: 6px;
   align-self: flex-start;
@@ -2413,6 +2446,39 @@ body.nav-closing .site-footer {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.role-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.role-quick-reply {
+  border: 1px solid rgba(15, 76, 75, 0.22);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--deep-teal);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.role-quick-reply:hover,
+.role-quick-reply:focus-visible {
+  background: rgba(15, 76, 75, 0.12);
+  border-color: rgba(15, 76, 75, 0.34);
+  transform: translateY(-1px);
+}
+
+.role-quick-reply:disabled {
+  opacity: 0.56;
+  cursor: wait;
+  transform: none;
 }
 
 .role-filters {

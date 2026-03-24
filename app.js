@@ -871,6 +871,56 @@ paymentTermsCheckbox?.addEventListener("change", syncPaymentConsentState);
 bookingPaymentTermsCheckbox?.addEventListener("change", syncPaymentConsentState);
 syncPaymentConsentState();
 
+let pendingExternalRedirectUrl = "";
+let pendingExternalRedirectTimer = null;
+
+const continueInCurrentWindow = (
+  url,
+  { button, consentCheckbox, onConsentMissing, onReady } = {}
+) => {
+  const target = String(url || "").trim();
+  if (!target) return false;
+
+  const navigate = () => {
+    if (consentCheckbox && !hasAcceptedTerms(consentCheckbox)) {
+      if (typeof onConsentMissing === "function") {
+        onConsentMissing();
+      }
+      syncPaymentConsentState();
+      return false;
+    }
+    window.location.assign(target);
+    return true;
+  };
+
+  if (button) {
+    button.classList.remove("is-hidden");
+    button.onclick = () => {
+      navigate();
+    };
+  }
+
+  if (typeof onReady === "function") {
+    onReady();
+  }
+
+  if (pendingExternalRedirectUrl === target) {
+    return true;
+  }
+
+  pendingExternalRedirectUrl = target;
+  if (pendingExternalRedirectTimer) {
+    window.clearTimeout(pendingExternalRedirectTimer);
+  }
+
+  // Let the updated fallback button and status render before leaving the page.
+  pendingExternalRedirectTimer = window.setTimeout(() => {
+    navigate();
+  }, 120);
+
+  return true;
+};
+
 bookingNoticeDismissButtons.forEach((button) => {
   button.addEventListener("click", closeBookingNotice);
 });
@@ -2301,17 +2351,16 @@ if (!isFirebaseReady) {
     const payNowUrl = String(data.payNowUrl || "");
     if (openPayNowButton) {
       if (payNowUrl) {
-        openPayNowButton.classList.remove("is-hidden");
-        openPayNowButton.onclick = () => {
-          if (!hasAcceptedTerms(paymentTermsCheckbox)) {
+        continueInCurrentWindow(payNowUrl, {
+          button: openPayNowButton,
+          consentCheckbox: paymentTermsCheckbox,
+          onConsentMissing: () => {
             setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-            syncPaymentConsentState();
-            return;
-          }
-          window.open(payNowUrl, "_blank");
-        };
+          },
+        });
       } else {
         openPayNowButton.classList.add("is-hidden");
+        openPayNowButton.onclick = null;
       }
     }
 
@@ -2867,18 +2916,21 @@ if (!isFirebaseReady) {
                 window.open(data.redirectUrl, "_blank");
               };
             } else if (openPayNowButton) {
-              openPayNowButton.classList.remove("is-hidden");
-              openPayNowButton.onclick = () => {
-                if (!hasAcceptedTerms(paymentTermsCheckbox)) {
+              continueInCurrentWindow(data.redirectUrl, {
+                button: openPayNowButton,
+                consentCheckbox: paymentTermsCheckbox,
+                onConsentMissing: () => {
                   setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-                  syncPaymentConsentState();
-                  return;
-                }
-                window.open(data.redirectUrl, "_blank");
-              };
+                },
+                onReady: () => {
+                  setFeedback(
+                    paymentFeedback,
+                    "Redirecting you to Ozow. If it does not continue, tap Continue to payment."
+                  );
+                },
+              });
             }
             syncPaymentConsentState();
-            setFeedback(paymentFeedback, "Payment link is ready.");
           }
           if (data.status && ["paid", "declined", "failed"].includes(String(data.status).toLowerCase())) {
             stopPayNowListener();
@@ -3257,18 +3309,18 @@ if (!isFirebaseReady) {
             const processingMessage = String(data.processingMessage || "").trim();
             const errorMessage = String(data.errorMessage || "").trim();
 
-            if (redirectUrl && bookingOpenPaymentButton) {
-              bookingOpenPaymentButton.classList.remove("is-hidden");
-              bookingOpenPaymentButton.onclick = () => {
-                if (!hasAcceptedTerms(bookingPaymentTermsCheckbox)) {
+            if (redirectUrl) {
+              continueInCurrentWindow(redirectUrl, {
+                button: bookingOpenPaymentButton,
+                consentCheckbox: bookingPaymentTermsCheckbox,
+                onConsentMissing: () => {
                   setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-                  syncPaymentConsentState();
-                  return;
-                }
-                window.open(redirectUrl, "_blank");
-              };
+                },
+                onReady: () => {
+                  setBookingFeedback("Redirecting you to Ozow. If it does not continue, tap Continue to payment.");
+                },
+              });
               syncPaymentConsentState();
-              setBookingFeedback("Payment link is ready. Complete payment to confirm your booking.");
             }
 
             const bookingReady = paymentStatus === "paid" && bookingSyncStatus === "ready";

@@ -1673,7 +1673,7 @@ if (!isFirebaseReady) {
     bookingPropertiesListener = null;
   };
 
-  const resetBookingPricingState = (message = "Select a residence and services to view your tailored pricing.") => {
+  const resetBookingPricingState = (message = "Select a property and services to view your tailored pricing.") => {
     bookingPricingLines = [];
     bookingPayNowTotalCents = 0;
     bookingHasMonthlyServices = false;
@@ -1718,7 +1718,7 @@ if (!isFirebaseReady) {
   const renderBookingHeroState = () => {
     const selectedProperty = getSelectedBookingProperty();
     if (bookingCurrentPropertyLabel) {
-      bookingCurrentPropertyLabel.textContent = selectedProperty?.name || "Select a residence";
+      bookingCurrentPropertyLabel.textContent = selectedProperty?.name || "Choose a property";
     }
     if (bookingCurrentScopeLabel) {
       bookingCurrentScopeLabel.textContent = bookingSelectedServices.length
@@ -1738,7 +1738,7 @@ if (!isFirebaseReady) {
       bookingSelectionNote.textContent =
         selectedProperty && bookingSelectedServices.length
           ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} services ready`
-          : "Select a residence and your preferred services to continue.";
+          : "Select a property and your preferred services to continue.";
     }
   };
 
@@ -1760,7 +1760,7 @@ if (!isFirebaseReady) {
       bookingPropertyEmpty.classList.toggle("is-hidden", sorted.length > 0);
       bookingPropertyEmpty.textContent = sorted.length
         ? ""
-        : "Your saved residences will appear here once they are available in your profile.";
+        : "Your saved properties will appear here once they are available in your profile.";
     }
 
     sorted.forEach((property) => {
@@ -1900,11 +1900,11 @@ if (!isFirebaseReady) {
     }
     if (bookingSummaryProperty) {
       bookingSummaryProperty.textContent =
-        selectedProperty?.name || "Select a residence";
+        selectedProperty?.name || "Choose a property";
     }
     if (bookingSummaryPropertyPill) {
       bookingSummaryPropertyPill.textContent =
-        selectedProperty?.name || "Residence selection";
+        selectedProperty?.name || "Property selection";
     }
     if (bookingSummaryServicesCount) {
       bookingSummaryServicesCount.textContent = bookingSelectedServices.length
@@ -1969,7 +1969,7 @@ if (!isFirebaseReady) {
 
     const selectedProperty = getSelectedBookingProperty();
     if (!selectedProperty) {
-      resetBookingPricingState("Select a residence to view your tailored pricing.");
+      resetBookingPricingState("Select a property to view your tailored pricing.");
       renderBookingSummary();
       return;
     }
@@ -3279,7 +3279,7 @@ if (!isFirebaseReady) {
       resetBookingPricingState(
         bookingSelectedCategory
           ? "Select your preferred services to view your tailored pricing."
-          : "Select a residence and your preferred services to view your tailored pricing."
+          : "Select a property and your preferred services to view your tailored pricing."
       );
       renderBookingSummary();
     });
@@ -3310,7 +3310,7 @@ if (!isFirebaseReady) {
   if (bookingOpenSheetButton) {
     bookingOpenSheetButton.addEventListener("click", () => {
       if (!getSelectedBookingProperty()) {
-        setBookingFeedback("Please select a residence before continuing.", true);
+        setBookingFeedback("Please select a property before continuing.", true);
         return;
       }
       if (!bookingSelectedCategory) {
@@ -3361,7 +3361,7 @@ if (!isFirebaseReady) {
       const bookingTimeValue = String(bookingTimeInput?.value || "").trim();
 
       if (!selectedProperty) {
-        setBookingFeedback("Please select a residence before continuing.", true);
+        setBookingFeedback("Please select a property before continuing.", true);
         return;
       }
       if (!bookingSelectedCategory) {
@@ -3394,8 +3394,8 @@ if (!isFirebaseReady) {
       if (!selectedProperty.isBookable) {
         setBookingFeedback(
           selectedProperty.isSold
-            ? "This residence is no longer active in your portfolio."
-            : "This residence is not currently available for presentation services. Please contact Curator Concierge.",
+            ? "This property is no longer active in your portfolio."
+            : "This property is not currently available for presentation services. Please contact Curator Concierge.",
           true
         );
         return;

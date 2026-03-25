@@ -540,6 +540,15 @@ const bookingNoticeDismissButtons = document.querySelectorAll("[data-booking-not
 const loginFeedback = document.querySelector("[data-login-feedback]");
 const registerFeedback = document.querySelector("[data-register-feedback]");
 const otpFeedback = document.querySelector("[data-otp-feedback]");
+const registerDocumentTypeField = registerForm?.querySelector("select[name='document_type']");
+const registerDocumentNumberField = registerForm?.querySelector("input[name='document_number']");
+const registerDocumentCountryField = registerForm?.querySelector("input[name='document_country']");
+const registerDocumentCountryWrapper = registerForm?.querySelector("[data-document-country-field]");
+const registerDocumentNumberWrapper = registerForm?.querySelector("[data-document-number-field]");
+const registerDocumentNumberLabel = registerForm?.querySelector("[data-document-number-label]");
+const registerDocumentDobWrapper = registerForm?.querySelector("[data-document-dob-field]");
+const registerDocumentFeedback = registerForm?.querySelector("[data-document-feedback]");
+const registerSubmitButton = registerForm?.querySelector("button[type='submit']");
 const statusTitle = document.querySelector("[data-status-title]");
 const statusMessage = document.querySelector("[data-status-message]");
 const outstandingBadge = document.querySelector("[data-outstanding]");
@@ -2590,32 +2599,114 @@ if (!isFirebaseReady) {
     }
   };
 
-  const isValidSouthAfricanID = (id) => {
-    if (!/^[0-9]{13}$/.test(id)) return false;
-    let sum = 0;
-    for (let i = 0; i < id.length; i += 1) {
-      const digit = Number(id[i]);
-      if (Number.isNaN(digit)) return false;
-      if (i % 2 === 0) {
-        sum += digit;
-      } else {
-        const doubled = digit * 2;
-        sum += doubled > 9 ? doubled - 9 : doubled;
-      }
+  const SA_ID_ERROR_MESSAGE = "Enter a valid 13-digit South African ID number";
+  const PASSPORT_ERROR_MESSAGE = "Enter a valid passport number";
+  const MISSING_DOCUMENT_TYPE_MESSAGE = "Select ID or Passport to continue";
+
+  const normalizePassportNumber = (value) =>
+    String(value || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "");
+
+  const parseSouthAfricanIdBirthDate = (id) => {
+    const normalized = String(id || "").trim();
+    if (!/^\d{13}$/.test(normalized)) return null;
+    const yy = Number.parseInt(normalized.slice(0, 2), 10);
+    const mm = Number.parseInt(normalized.slice(2, 4), 10);
+    const dd = Number.parseInt(normalized.slice(4, 6), 10);
+    if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) {
+      return null;
     }
-    return sum % 10 === 0;
+    const currentYear = new Date().getFullYear() % 100;
+    const fullYear = yy <= currentYear ? 2000 + yy : 1900 + yy;
+    const date = new Date(fullYear, mm - 1, dd);
+    if (
+      Number.isNaN(date.getTime()) ||
+      date.getFullYear() !== fullYear ||
+      date.getMonth() !== mm - 1 ||
+      date.getDate() !== dd
+    ) {
+      return null;
+    }
+    return date;
   };
 
-  const dateOfBirthFromSouthAfricanID = (id) => {
-    if (!/^[0-9]{6}/.test(id)) return "";
-    const yy = Number(id.slice(0, 2));
-    const mm = Number(id.slice(2, 4));
-    const dd = Number(id.slice(4, 6));
-    if (!yy || !mm || !dd) return "";
-    const currentYear = new Date().getFullYear() % 100;
-    const year = yy <= currentYear ? 2000 + yy : 1900 + yy;
-    const date = new Date(year, mm - 1, dd);
-    if (Number.isNaN(date.getTime())) return "";
+  const isValidSouthAfricanIdChecksum = (id) => {
+    const normalized = String(id || "").trim();
+    if (!/^\d{13}$/.test(normalized)) return false;
+    let oddSum = 0;
+    for (let index = 0; index < 12; index += 2) {
+      oddSum += Number.parseInt(normalized[index], 10);
+    }
+    let evenDigits = "";
+    for (let index = 1; index < 12; index += 2) {
+      evenDigits += normalized[index];
+    }
+    const doubled = String(Number.parseInt(evenDigits, 10) * 2);
+    const evenSum = doubled.split("").reduce((sum, digit) => sum + Number.parseInt(digit, 10), 0);
+    const checksum = (10 - ((oddSum + evenSum) % 10)) % 10;
+    return checksum === Number.parseInt(normalized[12], 10);
+  };
+
+  const validateSouthAfricanID = (id) => {
+    const normalizedValue = String(id || "").trim();
+    if (!/^\d{13}$/.test(normalizedValue)) {
+      return {
+        isValid: false,
+        normalizedValue,
+        dateOfBirth: null,
+        citizenshipDigit: null,
+        errorMessage: SA_ID_ERROR_MESSAGE,
+      };
+    }
+    const dateOfBirth = parseSouthAfricanIdBirthDate(normalizedValue);
+    if (!dateOfBirth) {
+      return {
+        isValid: false,
+        normalizedValue,
+        dateOfBirth: null,
+        citizenshipDigit: null,
+        errorMessage: SA_ID_ERROR_MESSAGE,
+      };
+    }
+    const citizenshipDigit = Number.parseInt(normalizedValue[10], 10);
+    if (![0, 1].includes(citizenshipDigit) || !isValidSouthAfricanIdChecksum(normalizedValue)) {
+      return {
+        isValid: false,
+        normalizedValue,
+        dateOfBirth: null,
+        citizenshipDigit: null,
+        errorMessage: SA_ID_ERROR_MESSAGE,
+      };
+    }
+    return {
+      isValid: true,
+      normalizedValue,
+      dateOfBirth,
+      citizenshipDigit,
+      errorMessage: "",
+    };
+  };
+
+  const validatePassportNumber = (passport) => {
+    const normalizedValue = normalizePassportNumber(passport);
+    if (normalizedValue.length < 6 || normalizedValue.length > 20 || !/^[A-Z0-9]+$/.test(normalizedValue)) {
+      return {
+        isValid: false,
+        normalizedValue,
+        errorMessage: PASSPORT_ERROR_MESSAGE,
+      };
+    }
+    return {
+      isValid: true,
+      normalizedValue,
+      errorMessage: "",
+    };
+  };
+
+  const formatIdentityDate = (date) => {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
     return date.toLocaleDateString("en-ZA", {
       day: "2-digit",
       month: "short",
@@ -2623,16 +2714,140 @@ if (!isFirebaseReady) {
     });
   };
 
-  if (registerForm) {
-    const idField = registerForm.querySelector("input[name='id_number']");
-    const dobField = registerForm.querySelector("input[name='dob']");
-    if (idField && dobField) {
-      idField.addEventListener("input", () => {
-        const value = idField.value.replace(/\D/g, "");
-        idField.value = value;
-        dobField.value = dateOfBirthFromSouthAfricanID(value);
-      });
+  const getRegisterIdentityState = () => {
+    const documentType = String(registerDocumentTypeField?.value || "").trim();
+    const documentNumber = String(registerDocumentNumberField?.value || "").trim();
+    const documentCountry = String(registerDocumentCountryField?.value || "").trim();
+
+    if (!documentType) {
+      return {
+        documentType: "",
+        documentNumber,
+        documentCountry,
+        isValid: false,
+        status: "empty",
+        message: MISSING_DOCUMENT_TYPE_MESSAGE,
+        dateOfBirth: "",
+      };
     }
+
+    if (documentType === "sa_id") {
+      const result = validateSouthAfricanID(documentNumber);
+      return {
+        documentType,
+        documentNumber: result.normalizedValue,
+        documentCountry: "South Africa",
+        isValid: result.isValid,
+        status: result.normalizedValue ? (result.isValid ? "valid_format" : "invalid") : "empty",
+        message: result.isValid ? "" : result.errorMessage,
+        dateOfBirth: formatIdentityDate(result.dateOfBirth),
+      };
+    }
+
+    const result = validatePassportNumber(documentNumber);
+    const hasCountry = Boolean(documentCountry);
+    return {
+      documentType,
+      documentNumber: result.normalizedValue,
+      documentCountry,
+      isValid: result.isValid && hasCountry,
+      status: documentNumber ? ((result.isValid && hasCountry) ? "valid_format" : "invalid") : "empty",
+      message: !result.isValid ? result.errorMessage : (hasCountry ? "" : "Enter your nationality / country"),
+      dateOfBirth: "",
+    };
+  };
+
+  const syncRegisterIdentityUi = () => {
+    if (!registerForm) return;
+    const state = getRegisterIdentityState();
+    const isPassport = state.documentType === "passport";
+    const isSouthAfricanId = state.documentType === "sa_id";
+
+    if (registerDocumentNumberLabel) {
+      registerDocumentNumberLabel.textContent = isPassport ? "Passport Number" : "South African ID Number";
+    }
+    if (registerDocumentNumberField) {
+      registerDocumentNumberField.placeholder = isPassport ? "Passport Number" : "South African ID";
+      registerDocumentNumberField.value = state.documentNumber;
+      registerDocumentNumberField.inputMode = isSouthAfricanId ? "numeric" : "text";
+    }
+    if (registerDocumentCountryWrapper) {
+      registerDocumentCountryWrapper.classList.toggle("is-hidden", !isPassport);
+    }
+    if (registerDocumentCountryField) {
+      registerDocumentCountryField.required = isPassport;
+      if (!isPassport) {
+        registerDocumentCountryField.value = "";
+      }
+    }
+    if (registerDocumentDobWrapper) {
+      registerDocumentDobWrapper.classList.toggle("is-hidden", !isSouthAfricanId);
+    }
+    const dobField = registerForm.querySelector("input[name='dob']");
+    if (dobField) {
+      dobField.value = state.dateOfBirth;
+    }
+    if (registerDocumentFeedback) {
+      const shouldShowMessage = state.documentType ? (!state.isValid && (state.documentNumber || isPassport)) : false;
+      registerDocumentFeedback.textContent = shouldShowMessage ? state.message : "";
+      registerDocumentFeedback.classList.toggle("is-error", shouldShowMessage);
+      registerDocumentFeedback.classList.toggle("is-success", false);
+    }
+    syncRegisterSubmitState();
+  };
+
+  const syncRegisterSubmitState = () => {
+    if (!(registerForm && registerSubmitButton instanceof HTMLButtonElement)) return;
+    const formData = new FormData(registerForm);
+    const addressDetails = registerAddressController?.collect() || {};
+    const termsAccepted = Boolean(registerForm.querySelector("input[type='checkbox']")?.checked);
+    const identityState = getRegisterIdentityState();
+    const isComplete =
+      String(formData.get("title") || "").trim() &&
+      String(formData.get("full_name") || "").trim() &&
+      String(formData.get("surname") || "").trim() &&
+      identityState.documentType &&
+      identityState.isValid &&
+      String(formData.get("cellphone") || "").trim() &&
+      isStructuredAddressComplete(addressDetails) &&
+      String(formData.get("agent_code") || "").trim() &&
+      String(formData.get("email") || "").trim() &&
+      String(formData.get("password") || "").trim() &&
+      String(formData.get("confirm_password") || "").trim() &&
+      String(formData.get("password") || "") === String(formData.get("confirm_password") || "") &&
+      termsAccepted;
+
+    registerSubmitButton.disabled = !Boolean(isComplete);
+  };
+
+  if (registerForm) {
+    [
+      registerDocumentTypeField,
+      registerDocumentNumberField,
+      registerDocumentCountryField,
+    ].forEach((field) => {
+      field?.addEventListener("change", syncRegisterIdentityUi);
+    });
+
+    [
+      registerDocumentTypeField,
+      registerDocumentNumberField,
+      registerDocumentCountryField,
+      registerForm.querySelector("input[name='full_name']"),
+      registerForm.querySelector("input[name='surname']"),
+      registerForm.querySelector("input[name='cellphone']"),
+      registerForm.querySelector("input[name='agent_code']"),
+      registerForm.querySelector("input[name='email']"),
+      registerForm.querySelector("input[name='password']"),
+      registerForm.querySelector("input[name='confirm_password']"),
+      registerForm.querySelector("select[name='title']"),
+      registerForm.querySelector("input[type='checkbox']"),
+    ].forEach((field) => {
+      field?.addEventListener("input", syncRegisterSubmitState);
+      field?.addEventListener("change", syncRegisterSubmitState);
+    });
+
+    syncRegisterIdentityUi();
   }
 
   if (loginForm && auth) {
@@ -2684,8 +2899,7 @@ if (!isFirebaseReady) {
       const title = String(formData.get("title") || "").trim();
       const fullName = String(formData.get("full_name") || "").trim();
       const surname = String(formData.get("surname") || "").trim();
-      const idNumber = String(formData.get("id_number") || "").trim();
-      const dob = String(formData.get("dob") || "").trim();
+      const identityState = getRegisterIdentityState();
       const cellphone = String(formData.get("cellphone") || "").trim();
       const addressDetails = registerAddressController?.collect() || {};
       const address = String(addressDetails.formattedAddress || formData.get("address") || "").trim();
@@ -2698,7 +2912,7 @@ if (!isFirebaseReady) {
         !title ||
         !fullName ||
         !surname ||
-        !idNumber ||
+        !identityState.documentType ||
         !cellphone ||
         !address ||
         !isStructuredAddressComplete(addressDetails) ||
@@ -2711,8 +2925,8 @@ if (!isFirebaseReady) {
         return;
       }
 
-      if (!isValidSouthAfricanID(idNumber)) {
-        setFeedback(registerFeedback, "Please enter a valid South African ID number.", true);
+      if (!identityState.isValid) {
+        setFeedback(registerFeedback, identityState.message || MISSING_DOCUMENT_TYPE_MESSAGE, true);
         return;
       }
 
@@ -2732,13 +2946,14 @@ if (!isFirebaseReady) {
           title,
           fullName,
           surname,
-          idNumber,
-          dob,
           cellphone,
           address,
           addressDetails,
           realEstateCode,
           email,
+          documentType: identityState.documentType,
+          documentNumber: identityState.documentNumber,
+          documentCountry: identityState.documentType === "sa_id" ? "South Africa" : identityState.documentCountry,
         });
         profileReady = true;
 
@@ -2780,6 +2995,7 @@ if (!isFirebaseReady) {
       } finally {
         registrationProfilePending = false;
         disableForm(registerForm, false);
+        syncRegisterIdentityUi();
       }
     });
   }

@@ -112,12 +112,23 @@
                   <label class="field">Surname
                     <input type="text" name="surname" placeholder="Surname" required />
                   </label>
-                  <label class="field">ID Number
-                    <input type="text" name="id_number" placeholder="South African ID" required />
+                  <label class="field">Document Type
+                    <select name="document_type" required>
+                      <option value="" selected>Select ID or Passport</option>
+                      <option value="sa_id">South African ID</option>
+                      <option value="passport">Passport</option>
+                    </select>
                   </label>
-                  <label class="field">Date of Birth (Auto)
+                  <label class="field" data-document-number-field><span data-document-number-label>South African ID Number</span>
+                    <input type="text" name="document_number" placeholder="South African ID" required />
+                  </label>
+                  <label class="field is-hidden" data-document-country-field><span>Nationality / Country</span>
+                    <input type="text" name="document_country" placeholder="Nationality / Country" />
+                  </label>
+                  <label class="field" data-document-dob-field><span>Date of Birth (Auto)</span>
                     <input type="text" name="dob" placeholder="Auto-filled from ID" disabled />
                   </label>
+                  <p class="form-feedback form-span-2" data-document-feedback role="status" aria-live="polite"></p>
                   <label class="field">Cellphone
                     <input type="tel" name="cellphone" placeholder="079 294 1992" required />
                   </label>
@@ -222,6 +233,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260325e"></script>
+    <script src="app.js?v=20260325f"></script>
   </body>
 </html>

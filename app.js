@@ -744,18 +744,20 @@ if (bookingNotice && bookingNotice.parentElement !== document.body) {
   document.body.appendChild(bookingNotice);
 }
 
-const showMessage = (message, isError = false) => {
+const showMessage = (message, isError = false, options = {}) => {
   if (!portalMessage) return;
   portalMessage.textContent = message;
   portalMessage.classList.toggle("is-error", Boolean(message) && isError);
   portalMessage.classList.toggle("is-success", Boolean(message) && !isError);
+  portalMessage.classList.toggle("is-quiet-success", Boolean(message) && !isError && options.quietSuccess === true);
+  portalMessage.classList.toggle("is-no-wrap", Boolean(message) && options.noWrap === true);
   portalMessage.classList.add("is-visible");
 };
 
 const clearMessage = () => {
   if (!portalMessage) return;
   portalMessage.textContent = "";
-  portalMessage.classList.remove("is-error", "is-success");
+  portalMessage.classList.remove("is-error", "is-success", "is-quiet-success", "is-no-wrap");
   portalMessage.classList.remove("is-visible");
 };
 
@@ -2546,7 +2548,10 @@ if (!isFirebaseReady) {
 
     if (activationPage && canProceed && !hasRedirectedToBooking) {
       hasRedirectedToBooking = true;
-      showMessage("Activation complete. Redirecting to booking request...");
+      showMessage("Activation complete. Redirecting to booking request...", false, {
+        quietSuccess: true,
+        noWrap: true,
+      });
       setTimeout(() => {
         window.location.href = "portal-booking.html";
       }, 1600);

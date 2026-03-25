@@ -2098,6 +2098,21 @@ body.nav-closing .site-footer {
   border-color: rgba(29, 107, 82, 0.2);
 }
 
+.portal-message.is-quiet-success {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--bone);
+  box-shadow: none;
+}
+
+.portal-message.is-no-wrap {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .portal-auth-page .container,
 .portal-dashboard-page .container,
 .portal-booking-page .container,

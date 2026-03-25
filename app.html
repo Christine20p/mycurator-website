@@ -55,8 +55,8 @@
           <div class="dashboard-header">
             <div>
               <p class="eyebrow reveal">Client dashboard</p>
-              <h1 class="reveal">Activation status</h1>
-              <p class="lead reveal">Complete the onboarding and billing steps in order to unlock bookings.</p>
+              <h1 class="reveal">Service readiness</h1>
+              <p class="lead reveal">Complete each curated step in sequence to unlock your presentation services.</p>
               <p class="lead reveal">Welcome, <span data-user-name>Client</span>.</p>
             </div>
             <button class="btn ghost" type="button" data-signout>Sign out</button>
@@ -64,9 +64,9 @@
           <p class="portal-message" data-portal-message></p>
           <div class="dashboard-grid">
             <div class="dashboard-card activation-card">
-              <h3>Activation status</h3>
-              <p class="status-title" data-status-title>Loading your profile...</p>
-              <p class="status-message" data-status-message>We are fetching your account status.</p>
+              <h3>Service readiness</h3>
+              <p class="status-title" data-status-title>Preparing your dashboard...</p>
+              <p class="status-message" data-status-message>A moment while we arrange your next step.</p>
               <div class="status-amount" data-outstanding></div>
               <ul class="activation-steps">
                 <li><span>Property Presentation Assessment Fee</span><span data-step="assessmentFee">Pending</span></li>
@@ -77,12 +77,12 @@
                 <li><span>Activation</span><span data-step="activation">Pending</span></li>
               </ul>
               <div class="form-actions">
-                <button class="btn primary" type="button" data-request-paynow>Request payment link</button>
+                <button class="btn primary" type="button" data-request-paynow>Request secure payment link</button>
                 <button class="btn ghost" type="button" data-request-card>Pay by card</button>
-                <button class="btn ghost is-hidden" type="button" data-open-paynow>Continue to payment</button>
-                <button class="btn ghost is-hidden" type="button" data-open-card>Open card payment</button>
-                <button class="btn ghost is-hidden" type="button" data-open-mandate>Open mandate link</button>
-                <button class="btn ghost is-hidden" type="button" data-request-mandate>Set up mandate</button>
+                <button class="btn ghost is-hidden" type="button" data-open-paynow>Continue with secure payment</button>
+                <button class="btn ghost is-hidden" type="button" data-open-card>Continue with card payment</button>
+                <button class="btn ghost is-hidden" type="button" data-open-mandate>Continue with mandate</button>
+                <button class="btn ghost is-hidden" type="button" data-request-mandate>Arrange mandate</button>
               </div>
               <div class="payment-terms-card">
                 <label class="field checkbox payment-terms-check">
@@ -225,8 +225,8 @@
             </div>
 
             <div class="dashboard-card help-card">
-              <h3>Need help with portal setup?</h3>
-              <p>Our team can assist with activation, payments, or account verification.</p>
+              <h3>Need concierge assistance?</h3>
+              <p>Our concierge team can assist with access, payments, and account care.</p>
               <div class="contact-links">
                 <a class="contact-email" href="mailto:bookings@mycurator.co.za">bookings@mycurator.co.za</a>
                 <a class="contact-phone" href="tel:0792941992">079 294 1992</a>
@@ -268,6 +268,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260321b"></script>
+    <script src="app.js?v=20260325a"></script>
   </body>
 </html>

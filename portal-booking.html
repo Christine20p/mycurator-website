@@ -55,8 +55,8 @@
           <div class="dashboard-header">
             <div>
               <p class="eyebrow reveal">Booking request</p>
-              <h1 class="reveal">Submit a presentation booking</h1>
-              <p class="lead reveal">Bookings are available after activation is complete.</p>
+              <h1 class="reveal">Arrange a presentation visit</h1>
+              <p class="lead reveal">Once your profile is fully approved, you can arrange visits here with ease.</p>
               <p class="lead reveal">Welcome, <span data-user-name>Client</span>.</p>
             </div>
             <button class="btn ghost" type="button" data-signout>Sign out</button>
@@ -72,11 +72,11 @@
                 <div class="booking-hero-pills">
                   <div class="booking-hero-pill">
                     <span>Current property</span>
-                    <strong data-booking-current-property>Select property</strong>
+                    <strong data-booking-current-property>Select a residence</strong>
                   </div>
                   <div class="booking-hero-pill">
                     <span>Presentation scope</span>
-                    <strong data-booking-current-scope>Services pending</strong>
+                    <strong data-booking-current-scope>Curated selections to follow</strong>
                   </div>
                 </div>
               </div>
@@ -85,11 +85,11 @@
                 <div class="booking-section-copy">
                   <p class="booking-section-tag">Weekly Cadence</p>
                   <h3>Reserved service window</h3>
-                  <p>Your recurring presentation slot stays visible here so the weekly rhythm is clear without repeating the whole booking state.</p>
+                  <p>Your recurring presentation slot remains visible here so your weekly rhythm is always clear at a glance.</p>
                 </div>
                 <div class="booking-cadence-pills">
-                  <span data-booking-service-day>Assigning weekly day</span>
-                  <span data-booking-service-time>06:00</span>
+                  <span data-booking-service-day>Reserved day to follow</span>
+                  <span data-booking-service-time>Reserved time to follow</span>
                 </div>
               </div>
 
@@ -97,11 +97,11 @@
                 <section class="booking-flow-card">
                   <div class="booking-section-copy">
                     <p class="booking-section-tag">Property</p>
-                    <h3>Choose the presentation address</h3>
-                    <p>Select one of your saved properties. The website now uses the same property loading sequence as iOS instead of manual address entry.</p>
+                    <h3>Select your residence</h3>
+                    <p>Choose from your saved properties to continue with your presentation request.</p>
                   </div>
                   <div class="booking-property-grid" data-booking-property-grid></div>
-                  <p class="portal-note booking-empty-note" data-booking-property-empty>Loading your properties...</p>
+                  <p class="portal-note booking-empty-note" data-booking-property-empty>Preparing your saved residences...</p>
                 </section>
 
                 <section class="booking-flow-card">
@@ -151,8 +151,8 @@
                 </section>
 
                 <div class="booking-submit-bar">
-                  <button class="btn primary booking-primary-cta" type="button" data-booking-open-sheet>Book Presentation</button>
-                  <p class="portal-note booking-selection-note" data-booking-selection-note>Select a property and at least one service to continue.</p>
+                  <button class="btn primary booking-primary-cta" type="button" data-booking-open-sheet>Reserve presentation visit</button>
+                  <p class="portal-note booking-selection-note" data-booking-selection-note>Select a residence and your preferred services to continue.</p>
                 </div>
 
                 <div class="booking-sheet is-hidden" data-booking-sheet aria-hidden="true">
@@ -167,7 +167,7 @@
                     </div>
 
                     <div class="booking-sheet-pills">
-                      <span class="booking-meta-pill" data-booking-summary-property-pill>Property pending</span>
+                      <span class="booking-meta-pill" data-booking-summary-property-pill>Residence selection</span>
                       <span class="booking-meta-pill" data-booking-summary-services-count>No services selected</span>
                     </div>
 
@@ -192,10 +192,10 @@
                         </div>
                       </div>
                       <div class="booking-summary-rows">
-                        <div class="booking-summary-row"><span>Date</span><strong data-booking-summary-date>Pending selection</strong></div>
-                        <div class="booking-summary-row"><span>Time</span><strong data-booking-summary-time>Pending selection</strong></div>
-                        <div class="booking-summary-row"><span>Category</span><strong data-booking-summary-category>Choose a presentation lane</strong></div>
-                        <div class="booking-summary-row"><span>Property</span><strong data-booking-summary-property>Choose a property</strong></div>
+                        <div class="booking-summary-row"><span>Date</span><strong data-booking-summary-date>To be selected</strong></div>
+                        <div class="booking-summary-row"><span>Time</span><strong data-booking-summary-time>To be selected</strong></div>
+                        <div class="booking-summary-row"><span>Category</span><strong data-booking-summary-category>Select a presentation style</strong></div>
+                        <div class="booking-summary-row"><span>Property</span><strong data-booking-summary-property>Select a residence</strong></div>
                       </div>
                       <div class="booking-summary-services" data-booking-summary-services></div>
                       <div class="booking-pricing-block" data-booking-pricing-block>
@@ -220,8 +220,8 @@
                     </div>
 
                     <div class="booking-sheet-actions">
-                      <button class="btn primary" type="submit" form="portal-booking-form" data-booking-submit>Continue to Payment</button>
-                      <button class="btn ghost is-hidden" type="button" data-booking-open-payment>Continue to payment</button>
+                      <button class="btn primary" type="submit" form="portal-booking-form" data-booking-submit>Continue to secure payment</button>
+                      <button class="btn ghost is-hidden" type="button" data-booking-open-payment>Continue with secure payment</button>
                     </div>
                   </div>
                 </div>
@@ -229,8 +229,8 @@
             </div>
 
             <div class="dashboard-card help-card">
-              <h3>Need help with portal setup?</h3>
-              <p>Our team can assist with activation, payments, or account verification.</p>
+              <h3>Need concierge assistance?</h3>
+              <p>Our concierge team can assist with access, payments, and account care.</p>
               <div class="contact-links">
                 <a class="contact-email" href="mailto:bookings@mycurator.co.za">bookings@mycurator.co.za</a>
                 <a class="contact-phone" href="tel:0792941992">079 294 1992</a>
@@ -281,6 +281,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260321b"></script>
+    <script src="app.js?v=20260325a"></script>
   </body>
 </html>

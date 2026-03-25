@@ -675,7 +675,7 @@ let bookingSubmitting = false;
 const CUSTOM_MANDATE_BANK_ID = "__other__";
 const PAYMENT_TERMS_VERSION = "2026-03-20";
 const PAYMENT_TERMS_REQUIRED_MESSAGE =
-  "Please accept the Payment Terms & Conditions before continuing.";
+  "Please accept the Payment Terms & Conditions to continue.";
 const ADMIN_INCIDENT_QUICK_REPLIES = [
   {
     label: "Acknowledge",
@@ -776,7 +776,7 @@ const closeBookingNotice = () => {
 };
 
 const BOOKING_CONFIRMATION_MESSAGE =
-  "Thank you for booking with Curator Property Presentation Co. Your curator is getting ready, and we’ll ensure your space is cleaned to perfection ♡";
+  "Thank you for choosing Curator Property Presentation Co. Your visit has been received and is now being prepared with care.";
 
 const BOOKING_INVALID_TIME_MESSAGE = `Please choose a date and time at least 24 hours from now.
 
@@ -1264,8 +1264,8 @@ const downloadBase64File = (base64, fileName, mimeType) => {
 };
 
 const setLoadingState = () => {
-  if (statusTitle) statusTitle.textContent = "Loading your profile...";
-  if (statusMessage) statusMessage.textContent = "We are fetching your account status.";
+  if (statusTitle) statusTitle.textContent = "Preparing your dashboard...";
+  if (statusMessage) statusMessage.textContent = "A moment while we arrange your next step.";
 };
 
 const setupRoleTabs = () => {
@@ -1515,7 +1515,7 @@ if (!isFirebaseReady) {
     if (direct) return direct;
     const index = Number(currentUserData?.serviceDayIndex);
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    return Number.isFinite(index) ? days[((index % days.length) + days.length) % days.length] : "Assigning weekly day";
+    return Number.isFinite(index) ? days[((index % days.length) + days.length) % days.length] : "Reserved day to follow";
   };
 
   const bookingSlotLabel = (value) => {
@@ -1523,7 +1523,7 @@ if (!isFirebaseReady) {
     if (direct) return direct;
     const index = Number(currentUserData?.serviceSlotIndex);
     const slots = ["06:00", "11:00"];
-    return Number.isFinite(index) ? slots[((index % slots.length) + slots.length) % slots.length] : "06:00";
+    return Number.isFinite(index) ? slots[((index % slots.length) + slots.length) % slots.length] : "Reserved time to follow";
   };
 
   const BOOKING_TIME_SLOT_VALUES = ["07:00", "14:00"];
@@ -1673,7 +1673,7 @@ if (!isFirebaseReady) {
     bookingPropertiesListener = null;
   };
 
-  const resetBookingPricingState = (message = "Select a property and services to see pricing.") => {
+  const resetBookingPricingState = (message = "Select a residence and services to view your tailored pricing.") => {
     bookingPricingLines = [];
     bookingPayNowTotalCents = 0;
     bookingHasMonthlyServices = false;
@@ -1706,7 +1706,7 @@ if (!isFirebaseReady) {
     return {
       id: doc.id,
       name: String(data.name || (doc.id === "home" ? "Home Address" : "Property")).trim() || "Property",
-      address: address || "Address pending",
+      address: address || "Address details to follow",
       addressDetails,
       isSold,
       servicesEnabled,
@@ -1718,12 +1718,12 @@ if (!isFirebaseReady) {
   const renderBookingHeroState = () => {
     const selectedProperty = getSelectedBookingProperty();
     if (bookingCurrentPropertyLabel) {
-      bookingCurrentPropertyLabel.textContent = selectedProperty?.name || "Select property";
+      bookingCurrentPropertyLabel.textContent = selectedProperty?.name || "Select a residence";
     }
     if (bookingCurrentScopeLabel) {
       bookingCurrentScopeLabel.textContent = bookingSelectedServices.length
         ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} services`
-        : "Services pending";
+        : "Curated selections to follow";
     }
     if (bookingOpenSheetButton) {
       bookingOpenSheetButton.disabled = !bookingSelectionsReady();
@@ -1738,7 +1738,7 @@ if (!isFirebaseReady) {
       bookingSelectionNote.textContent =
         selectedProperty && bookingSelectedServices.length
           ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} services ready`
-          : "Select a property and at least one service to continue.";
+          : "Select a residence and your preferred services to continue.";
     }
   };
 
@@ -1760,7 +1760,7 @@ if (!isFirebaseReady) {
       bookingPropertyEmpty.classList.toggle("is-hidden", sorted.length > 0);
       bookingPropertyEmpty.textContent = sorted.length
         ? ""
-        : "No saved properties were found. Add a property in the app first, then return here to book.";
+        : "Your saved residences will appear here once they are available in your profile.";
     }
 
     sorted.forEach((property) => {
@@ -1775,13 +1775,13 @@ if (!isFirebaseReady) {
         button.disabled = true;
       }
 
-      let statusLabel = "Ready";
+      let statusLabel = "Available";
       if (property.isSold) {
-        statusLabel = "Sold";
+        statusLabel = "Concluded";
       } else if (normalizedStatus(currentUserData?.activationStatus) !== "active") {
-        statusLabel = "Locked";
+        statusLabel = "After activation";
       } else if (!property.servicesEnabled || !property.billingActive) {
-        statusLabel = "Unavailable";
+        statusLabel = "Temporarily unavailable";
       }
 
       button.innerHTML = `
@@ -1896,20 +1896,20 @@ if (!isFirebaseReady) {
     }
     if (bookingSummaryCategory) {
       bookingSummaryCategory.textContent =
-        bookingSelectedCategory || "Choose a presentation lane";
+        bookingSelectedCategory || "Select a presentation style";
     }
     if (bookingSummaryProperty) {
       bookingSummaryProperty.textContent =
-        selectedProperty?.name || "Choose a property";
+        selectedProperty?.name || "Select a residence";
     }
     if (bookingSummaryPropertyPill) {
       bookingSummaryPropertyPill.textContent =
-        selectedProperty?.name || "Property pending";
+        selectedProperty?.name || "Residence selection";
     }
     if (bookingSummaryServicesCount) {
       bookingSummaryServicesCount.textContent = bookingSelectedServices.length
         ? `${bookingSelectedServices.length} services`
-        : "No services selected";
+        : "Select your services";
     }
     if (bookingSummaryServices) {
       bookingSummaryServices.innerHTML = bookingSelectedServices.length
@@ -1969,13 +1969,13 @@ if (!isFirebaseReady) {
 
     const selectedProperty = getSelectedBookingProperty();
     if (!selectedProperty) {
-      resetBookingPricingState("Select a property to see pricing.");
+      resetBookingPricingState("Select a residence to view your tailored pricing.");
       renderBookingSummary();
       return;
     }
 
     if (!bookingSelectedServices.length) {
-      resetBookingPricingState("Select services to see pricing.");
+      resetBookingPricingState("Select your preferred services to view your tailored pricing.");
       renderBookingSummary();
       return;
     }
@@ -1983,7 +1983,7 @@ if (!isFirebaseReady) {
     const requestId = bookingPricingRequestId + 1;
     bookingPricingRequestId = requestId;
     bookingPricingReady = false;
-    bookingPricingMessageText = "Loading pricing...";
+    bookingPricingMessageText = "Preparing your tailored pricing...";
     bookingPricingLines = [];
     bookingPayNowTotalCents = 0;
     bookingHasMonthlyServices = false;
@@ -2310,8 +2310,29 @@ if (!isFirebaseReady) {
   };
 
   const readableStepStatus = (value) => {
-    const normalized = normalizedStatus(value).replace(/_/g, " ");
-    return normalized ? normalized.replace(/\b\w/g, (match) => match.toUpperCase()) : "Pending";
+    const normalized = normalizedStatus(value);
+    const labels = {
+      active: "Active",
+      approved: "Confirmed",
+      awaiting_start_date: "Scheduled",
+      cancelled: "Closed",
+      completed: "Completed",
+      failed: "Requires attention",
+      fallback_payment_pending: "Payment requested",
+      not_required: "Not required",
+      not_started: "Awaiting",
+      onboarding: "In preparation",
+      paid: "Paid",
+      paused: "Paused",
+      payment_failed: "Payment required",
+      pending: "In progress",
+      ready: "Ready",
+      retry_required: "Requires attention",
+      unpaid: "Awaiting payment",
+    };
+    if (labels[normalized]) return labels[normalized];
+    const fallback = normalized.replace(/_/g, " ");
+    return fallback ? fallback.replace(/\b\w/g, (match) => match.toUpperCase()) : "In preparation";
   };
 
   const updateStep = (key, value) => {
@@ -2374,60 +2395,60 @@ if (!isFirebaseReady) {
           : payNowPaymentUrl;
     const paymentButtonLabel =
       currentPaymentType === "assessment_fee"
-        ? "Pay property presentation assessment fee"
+        ? "Settle assessment fee"
         : currentPaymentType === "fallback"
-          ? "Pay outstanding amount"
-          : "Pay now";
+          ? "Settle outstanding balance"
+          : "Settle initial amount";
 
-    let title = "Access Granted";
-    let message = "Your account is active. You can submit bookings below.";
+    let title = "Your service profile is ready";
+    let message = "Your account is active and ready for bookings.";
 
     if (assessmentFeeStatus !== "paid") {
-      title = "Property Presentation Assessment Fee Required";
-      message = `Please pay the once-off assessment fee of ${formatCurrency(
+      title = "Assessment fee";
+      message = `Kindly settle the once-off assessment fee of ${formatCurrency(
         data.adminFeeCents || 29999
-      )}.`;
+      )} to begin your Curator presentation journey.`;
     } else if (inspectionStatus !== "completed") {
-      title = "Inspection Pending";
-      message = "Inspection starts only after the assessment fee is paid. We'll notify you once it is completed.";
+      title = "Inspection in preparation";
+      message = "Your inspection is being arranged. We will let you know as soon as it has been completed.";
     } else if (priceOfferStatus !== "ready") {
-      title = "Price Offer Pending";
-      message = "Your monthly price will appear here once the inspection is completed and pricing is ready.";
+      title = "Tailored pricing in preparation";
+      message = "Your tailored monthly fee will appear here once your inspection review is complete.";
     } else if (mandateRetryRequired) {
-      title = "Mandate Needs Attention";
+      title = "Mandate requires attention";
       message =
-        mandateReason || "Your DebiCheck mandate needs attention. Please review your details and resubmit.";
+        mandateReason || "Your mandate needs a final review. Please check your details and continue once more.";
     } else if (mandatePending) {
-      title = "Mandate In Progress";
+      title = "Mandate in progress";
       message =
         mandateReason ||
         (mandateUrl
-          ? "Your DebiCheck request is ready. Open the mandate link to continue."
-          : "Your DebiCheck request is being processed.");
+          ? "Your mandate invitation is ready. Continue to complete the approval."
+          : "Your mandate is being prepared for approval.");
     } else if (!mandateApproved) {
-      title = "Mandate Required";
-      message = `Your inspection is complete. Monthly price: ${formatCurrency(priceOfferedAmount)}. Complete your mandate to continue.`;
+      title = "Mandate invitation";
+      message = `Your inspection is complete. Your tailored monthly fee is ${formatCurrency(priceOfferedAmount)}. Please complete your mandate to continue.`;
     } else if (payNowRequired && payNowStatus === "failed") {
-      title = "Pay Now Failed";
-      message = `Your initial Pay Now amount of ${formatCurrency(Number(data.payNowAmount || 0))} still needs to be settled before activation.`;
+      title = "Initial payment outstanding";
+      message = `Your initial amount of ${formatCurrency(Number(data.payNowAmount || 0))} is still outstanding before activation can be completed.`;
     } else if (payNowRequired && payNowStatus !== "paid") {
-      title = "Pay Now Required";
-      message = `Pay ${formatCurrency(Number(data.payNowAmount || 0))} to complete onboarding.`;
+      title = "Initial payment";
+      message = `Settle ${formatCurrency(Number(data.payNowAmount || 0))} to complete your onboarding.`;
     } else if (activationStatus === "awaiting_start_date") {
-      title = "Awaiting Start Date";
+      title = "Scheduled start";
       message = data.serviceStartDate
-        ? `Your onboarding is complete. Service access starts on ${data.serviceStartDate}.`
-        : "Your onboarding is complete. Service access starts on the 1st of next month.";
+        ? `Everything is in place. Your services begin on ${data.serviceStartDate}.`
+        : "Everything is in place. Your services begin on the first day of next month.";
     } else if (activationStatus === "payment_failed" || activationStatus === "fallback_payment_pending") {
-      title = "Fallback Payment Required";
+      title = "Outstanding balance";
       message = hasOutstanding
-        ? `Your monthly debit failed. Pay the outstanding amount of ${formatCurrency(outstandingBalance)} to reactivate services.`
-        : "Your monthly debit failed. Request the Ozow fallback payment link to reactivate services.";
+        ? `A recent monthly debit was not completed. Please settle ${formatCurrency(outstandingBalance)} to restore services.`
+        : "A recent monthly debit was not completed. Request a secure payment link to restore services.";
     } else if (activationStatus === "paused") {
-      title = "Service Paused";
+      title = "Service on hold";
       message = hasOutstanding
-        ? `Your account is paused until the outstanding amount of ${formatCurrency(outstandingBalance)} is paid.`
-        : "Your account is paused until payment is resolved.";
+        ? `Your account is on hold until the outstanding balance of ${formatCurrency(outstandingBalance)} is settled.`
+        : "Your account is on hold until payment is resolved.";
     }
 
     if (statusTitle) statusTitle.textContent = title;
@@ -2435,7 +2456,7 @@ if (!isFirebaseReady) {
 
     if (outstandingBadge) {
       if (hasOutstanding) {
-        outstandingBadge.textContent = `Outstanding: ${formatCurrency(outstandingBalance)}`;
+        outstandingBadge.textContent = `Amount due: ${formatCurrency(outstandingBalance)}`;
         outstandingBadge.classList.add("is-visible");
       } else {
         outstandingBadge.textContent = "";
@@ -3001,10 +3022,10 @@ if (!isFirebaseReady) {
       const response = result && result.data ? result.data : {};
       const requestId = String(response.requestId || "").trim();
       if (!requestId) {
-        throw new Error("Unable to start payment.");
+        throw new Error("We could not prepare your secure payment just now.");
       }
 
-      setFeedback(paymentFeedback, response.message || "Preparing your payment link...");
+      setFeedback(paymentFeedback, response.message || "Preparing your secure payment link...");
       stopPayNowListener();
       payNowListener = db
         .collection("paynow_requests")
@@ -3033,7 +3054,7 @@ if (!isFirebaseReady) {
                 onReady: () => {
                   setFeedback(
                     paymentFeedback,
-                    "Redirecting you to Ozow. If it does not continue, tap Continue to payment."
+                    "Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment."
                   );
                 },
               });
@@ -3045,7 +3066,7 @@ if (!isFirebaseReady) {
           }
         });
     } catch (error) {
-      setFeedback(paymentFeedback, error.message || "Unable to start payment.", true);
+      setFeedback(paymentFeedback, error.message || "We could not prepare your secure payment just now.", true);
     }
   };
 
@@ -3129,7 +3150,7 @@ if (!isFirebaseReady) {
       setFeedback(paymentFeedback, "");
       const mandateAmountCents = Number(currentUserData.priceOfferedAmount || currentUserData.mandateAmountCents || 0);
       if (!mandateAmountCents) {
-        setFeedback(paymentFeedback, "A monthly price is not available yet.", true);
+        setFeedback(paymentFeedback, "Your tailored monthly fee is not ready just yet.", true);
         return;
       }
 
@@ -3154,11 +3175,11 @@ if (!isFirebaseReady) {
       const trackingIndicator = 10;
 
       if (!debtorPhoneNumber) {
-        setFeedback(paymentFeedback, "Add a valid cellphone number before submitting a TT1 Real Time mandate.", true);
+        setFeedback(paymentFeedback, "Please add the cellphone number linked to this account before continuing.", true);
         return;
       }
       if (!startDate || startDate < minimumStartDate) {
-        setFeedback(paymentFeedback, "TT1 Real Time mandates require a first collection date at least 2 days in the future.", true);
+        setFeedback(paymentFeedback, "Please choose a first collection date at least two days from today.", true);
         return;
       }
 
@@ -3192,8 +3213,8 @@ if (!isFirebaseReady) {
           paymentFeedback,
           result.message ||
             (result.status === "submission_failed"
-              ? "Mandate request saved, but NuPay submission failed."
-              : "DebiCheck request captured.")
+              ? "We saved your mandate details, but could not complete the bank handover. Please try again."
+              : "Your mandate details have been received.")
         );
         if (result.mandateUrl && openMandateButton) {
           openMandateButton.classList.remove("is-hidden");
@@ -3203,7 +3224,7 @@ if (!isFirebaseReady) {
         mandateForm.reset();
         prefillMandateForm(currentUserData);
       } catch (error) {
-        setFeedback(paymentFeedback, error.message || "Unable to request mandate.", true);
+        setFeedback(paymentFeedback, error.message || "We could not prepare your mandate just now.", true);
       }
     });
 
@@ -3216,7 +3237,7 @@ if (!isFirebaseReady) {
       setFeedback(paymentFeedback, "");
       const mandateAmountCents = Number(currentUserData.priceOfferedAmount || currentUserData.mandateAmountCents || 0);
       if (!mandateAmountCents) {
-        setFeedback(paymentFeedback, "A monthly price is not available yet.");
+        setFeedback(paymentFeedback, "Your tailored monthly fee is not ready just yet.");
         return;
       }
       prefillMandateForm(currentUserData);
@@ -3256,7 +3277,9 @@ if (!isFirebaseReady) {
       renderBookingServices();
       renderBookingHeroState();
       resetBookingPricingState(
-        bookingSelectedCategory ? "Select services to see pricing." : "Select a property and services to see pricing."
+        bookingSelectedCategory
+          ? "Select your preferred services to view your tailored pricing."
+          : "Select a residence and your preferred services to view your tailored pricing."
       );
       renderBookingSummary();
     });
@@ -3287,11 +3310,11 @@ if (!isFirebaseReady) {
   if (bookingOpenSheetButton) {
     bookingOpenSheetButton.addEventListener("click", () => {
       if (!getSelectedBookingProperty()) {
-        setBookingFeedback("Please select a property before continuing.", true);
+        setBookingFeedback("Please select a residence before continuing.", true);
         return;
       }
       if (!bookingSelectedCategory) {
-        setBookingFeedback("Please choose a presentation lane first.", true);
+        setBookingFeedback("Please select a presentation style first.", true);
         return;
       }
       if (!bookingSelectedServices.length) {
@@ -3338,11 +3361,11 @@ if (!isFirebaseReady) {
       const bookingTimeValue = String(bookingTimeInput?.value || "").trim();
 
       if (!selectedProperty) {
-        setBookingFeedback("Please select a property before continuing.", true);
+        setBookingFeedback("Please select a residence before continuing.", true);
         return;
       }
       if (!bookingSelectedCategory) {
-        setBookingFeedback("Please choose a presentation lane before continuing.", true);
+        setBookingFeedback("Please select a presentation style before continuing.", true);
         return;
       }
       if (!bookingSelectedServices.length) {
@@ -3371,18 +3394,18 @@ if (!isFirebaseReady) {
       if (!selectedProperty.isBookable) {
         setBookingFeedback(
           selectedProperty.isSold
-            ? "This property is marked as sold. Services have been stopped for it."
-            : "Services are paused for this property. Please contact support.",
+            ? "This residence is no longer active in your portfolio."
+            : "This residence is not currently available for presentation services. Please contact Curator Concierge.",
           true
         );
         return;
       }
       if (!bookingPricingReady) {
-        setBookingFeedback(bookingPricingMessageText || "Loading pricing. Please wait.", true);
+        setBookingFeedback(bookingPricingMessageText || "Preparing your tailored pricing. Please wait a moment.", true);
         return;
       }
       if (!bookingPricingLines.length && !bookingHasMonthlyServices) {
-        setBookingFeedback("Pricing is not available yet. Please wait for admin pricing.", true);
+        setBookingFeedback("Your tailored pricing is not ready just yet. Please check back shortly.", true);
         return;
       }
 
@@ -3403,7 +3426,7 @@ if (!isFirebaseReady) {
         bookingSubmitting = true;
         if (bookingSubmitButton) {
           bookingSubmitButton.disabled = true;
-          bookingSubmitButton.textContent = "Preparing payment...";
+          bookingSubmitButton.textContent = "Preparing secure payment...";
         }
         const response = await functions.httpsCallable("submitBookingRequest")({
           gateway: "ozow",
@@ -3423,10 +3446,10 @@ if (!isFirebaseReady) {
         }
 
         if (result.status !== "payment_required" || !result.requestId) {
-          throw new Error("We couldn't start the payment request.");
+          throw new Error("We could not prepare your secure payment just now.");
         }
 
-        setBookingFeedback("Preparing your payment link...");
+        setBookingFeedback("Preparing your secure payment link...");
         stopPayNowListener();
         payNowListener = db
           .collection("paynow_requests")
@@ -3448,7 +3471,7 @@ if (!isFirebaseReady) {
                   setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
                 },
                 onReady: () => {
-                  setBookingFeedback("Redirecting you to Ozow. If it does not continue, tap Continue to payment.");
+                  setBookingFeedback("Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment.");
                 },
               });
               syncPaymentConsentState();
@@ -3489,12 +3512,12 @@ if (!isFirebaseReady) {
             }
           });
       } catch (error) {
-        setBookingFeedback(error.message || "Unable to submit booking.", true);
+        setBookingFeedback(error.message || "We could not place your booking just now.", true);
       } finally {
         bookingSubmitting = false;
         if (bookingSubmitButton) {
           syncPaymentConsentState();
-          bookingSubmitButton.textContent = "Continue to Payment";
+          bookingSubmitButton.textContent = "Continue to secure payment";
         }
       }
     });

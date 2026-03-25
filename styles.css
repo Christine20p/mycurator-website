@@ -2033,6 +2033,13 @@ body.nav-closing .site-footer {
   border: 1px solid rgba(29, 107, 82, 0.18);
 }
 
+.payment-feedback-banner {
+  width: 100%;
+  margin-top: 6px;
+  padding: 16px 18px;
+  line-height: 1.65;
+}
+
 .portal-note {
   margin: 0;
   font-size: 0.85rem;
@@ -2605,6 +2612,18 @@ body.nav-closing .site-footer {
   display: grid;
   gap: 14px;
   align-content: start;
+}
+
+.settings-card {
+  grid-area: settings;
+}
+
+.activation-card {
+  grid-area: activation;
+}
+
+.concierge-card {
+  grid-area: concierge;
 }
 
 .booking-dashboard-grid {
@@ -4016,6 +4035,28 @@ body.booking-sheet-open {
   .footer-links {
     gap: 8px;
     letter-spacing: 0.12em;
+  }
+}
+
+@media (min-width: 981px) {
+  .activation-dashboard-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    grid-template-areas:
+      "settings settings"
+      "activation concierge";
+    gap: 18px;
+  }
+
+  .activation-dashboard-grid .settings-card {
+    padding: 22px;
+  }
+
+  .activation-dashboard-grid .activation-card {
+    min-width: 0;
+  }
+
+  .activation-dashboard-grid .payment-feedback-banner.is-visible {
+    min-height: 72px;
   }
 }
 

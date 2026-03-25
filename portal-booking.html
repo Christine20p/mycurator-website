@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-    <link rel="stylesheet" href="styles.css?v=20260320n" />
+    <link rel="stylesheet" href="styles.css?v=20260325b" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -75,8 +75,8 @@
                     <strong data-booking-current-property>Choose a property</strong>
                   </div>
                   <div class="booking-hero-pill">
-                    <span>Presentation scope</span>
-                    <strong data-booking-current-scope>Curated selections to follow</strong>
+                    <span>Visit details</span>
+                    <strong data-booking-current-scope>Presentation details to follow</strong>
                   </div>
                 </div>
               </div>
@@ -106,36 +106,37 @@
 
                 <section class="booking-flow-card">
                   <div class="booking-section-copy">
-                    <p class="booking-section-tag">Categories</p>
-                    <h3>Choose the presentation lane</h3>
+                    <p class="booking-section-tag">Property Type</p>
+                    <h3>Select the type of property</h3>
+                    <p>Choose the property type so Curator can present the right options for this visit.</p>
                   </div>
                   <div class="booking-category-grid">
                     <button class="booking-category-card" type="button" data-booking-category-card data-category="Residential" data-pointer-tone="light">
                       <img src="assets/services-residential.webp" alt="Residential presentation" />
                       <div class="booking-category-copy">
                         <strong>Residential</strong>
-                        <span>12 services</span>
+                        <span>12 options</span>
                       </div>
                     </button>
                     <button class="booking-category-card" type="button" data-booking-category-card data-category="Office" data-pointer-tone="light">
                       <img src="assets/services-office.jpeg" alt="Office presentation" />
                       <div class="booking-category-copy">
                         <strong>Office</strong>
-                        <span>12 services</span>
+                        <span>12 options</span>
                       </div>
                     </button>
                     <button class="booking-category-card" type="button" data-booking-category-card data-category="Commercial" data-pointer-tone="light">
                       <img src="assets/services-commercial.jpg" alt="Commercial presentation" />
                       <div class="booking-category-copy">
                         <strong>Commercial</strong>
-                        <span>12 services</span>
+                        <span>12 options</span>
                       </div>
                     </button>
                     <button class="booking-category-card" type="button" data-booking-category-card data-category="Vacant Land" data-pointer-tone="light">
                       <img src="assets/services-vacant-land.jpg" alt="Vacant land presentation" />
                       <div class="booking-category-copy">
                         <strong>Vacant Land</strong>
-                        <span>3 services</span>
+                        <span>3 options</span>
                       </div>
                     </button>
                   </div>
@@ -143,16 +144,16 @@
 
                 <section class="booking-flow-card is-hidden" data-booking-services-panel>
                   <div class="booking-section-copy">
-                    <p class="booking-section-tag">Services</p>
-                    <h3 data-booking-services-title>Presentation selections</h3>
-                    <p>Select the services that define the presentation standard for this booking.</p>
+                    <p class="booking-section-tag">Presentation Details</p>
+                    <h3 data-booking-services-title>Choose your presentation details</h3>
+                    <p>Select the presentation details you would like included for this visit.</p>
                   </div>
                   <div class="booking-service-grid" data-booking-service-grid></div>
                 </section>
 
                 <div class="booking-submit-bar">
                   <button class="btn primary booking-primary-cta" type="button" data-booking-open-sheet>Reserve presentation visit</button>
-                  <p class="portal-note booking-selection-note" data-booking-selection-note>Select a property and your preferred services to continue.</p>
+                  <p class="portal-note booking-selection-note" data-booking-selection-note>Select a property and your presentation details to continue.</p>
                 </div>
 
                 <div class="booking-sheet is-hidden" data-booking-sheet aria-hidden="true">
@@ -168,7 +169,7 @@
 
                     <div class="booking-sheet-pills">
                       <span class="booking-meta-pill" data-booking-summary-property-pill>Property selection</span>
-                      <span class="booking-meta-pill" data-booking-summary-services-count>No services selected</span>
+                      <span class="booking-meta-pill" data-booking-summary-services-count>Choose your details</span>
                     </div>
 
                     <div class="booking-sheet-grid">
@@ -194,7 +195,7 @@
                       <div class="booking-summary-rows">
                         <div class="booking-summary-row"><span>Date</span><strong data-booking-summary-date>To be selected</strong></div>
                         <div class="booking-summary-row"><span>Time</span><strong data-booking-summary-time>To be selected</strong></div>
-                        <div class="booking-summary-row"><span>Category</span><strong data-booking-summary-category>Select a presentation style</strong></div>
+                        <div class="booking-summary-row"><span>Property Type</span><strong data-booking-summary-category>Select a property type</strong></div>
                         <div class="booking-summary-row"><span>Property</span><strong data-booking-summary-property>Choose a property</strong></div>
                       </div>
                       <div class="booking-summary-services" data-booking-summary-services></div>
@@ -281,6 +282,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260325b"></script>
+    <script src="app.js?v=20260325c"></script>
   </body>
 </html>

@@ -1673,7 +1673,7 @@ if (!isFirebaseReady) {
     bookingPropertiesListener = null;
   };
 
-  const resetBookingPricingState = (message = "Select a property and services to view your tailored pricing.") => {
+  const resetBookingPricingState = (message = "Select a property and presentation details to view your tailored pricing.") => {
     bookingPricingLines = [];
     bookingPayNowTotalCents = 0;
     bookingHasMonthlyServices = false;
@@ -1722,8 +1722,8 @@ if (!isFirebaseReady) {
     }
     if (bookingCurrentScopeLabel) {
       bookingCurrentScopeLabel.textContent = bookingSelectedServices.length
-        ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} services`
-        : "Curated selections to follow";
+        ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} details selected`
+        : "Presentation details to follow";
     }
     if (bookingOpenSheetButton) {
       bookingOpenSheetButton.disabled = !bookingSelectionsReady();
@@ -1737,8 +1737,8 @@ if (!isFirebaseReady) {
     if (bookingSelectionNote) {
       bookingSelectionNote.textContent =
         selectedProperty && bookingSelectedServices.length
-          ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} services ready`
-          : "Select a property and your preferred services to continue.";
+          ? `${bookingSelectedCategory || "Presentation"} • ${bookingSelectedServices.length} details selected`
+          : "Select a property and your presentation details to continue.";
     }
   };
 
@@ -1812,7 +1812,7 @@ if (!isFirebaseReady) {
       card.setAttribute("aria-pressed", String(isSelected));
       const count = card.querySelector(".booking-category-copy span");
       if (count) {
-        count.textContent = `${getBookingServicesForCategory(category).length} services`;
+        count.textContent = `${getBookingServicesForCategory(category).length} options`;
       }
     });
   };
@@ -1828,7 +1828,7 @@ if (!isFirebaseReady) {
     }
 
     if (bookingServicesTitle) {
-      bookingServicesTitle.textContent = `${bookingSelectedCategory} selections`;
+      bookingServicesTitle.textContent = `${bookingSelectedCategory} presentation details`;
     }
 
     bookingServiceGrid.innerHTML = "";
@@ -1896,7 +1896,7 @@ if (!isFirebaseReady) {
     }
     if (bookingSummaryCategory) {
       bookingSummaryCategory.textContent =
-        bookingSelectedCategory || "Select a presentation style";
+        bookingSelectedCategory || "Select a property type";
     }
     if (bookingSummaryProperty) {
       bookingSummaryProperty.textContent =
@@ -1908,8 +1908,8 @@ if (!isFirebaseReady) {
     }
     if (bookingSummaryServicesCount) {
       bookingSummaryServicesCount.textContent = bookingSelectedServices.length
-        ? `${bookingSelectedServices.length} services`
-        : "Select your services";
+        ? `${bookingSelectedServices.length} details selected`
+        : "Choose presentation details";
     }
     if (bookingSummaryServices) {
       bookingSummaryServices.innerHTML = bookingSelectedServices.length
@@ -1975,7 +1975,7 @@ if (!isFirebaseReady) {
     }
 
     if (!bookingSelectedServices.length) {
-      resetBookingPricingState("Select your preferred services to view your tailored pricing.");
+      resetBookingPricingState("Select your presentation details to view your tailored pricing.");
       renderBookingSummary();
       return;
     }
@@ -3278,8 +3278,8 @@ if (!isFirebaseReady) {
       renderBookingHeroState();
       resetBookingPricingState(
         bookingSelectedCategory
-          ? "Select your preferred services to view your tailored pricing."
-          : "Select a property and your preferred services to view your tailored pricing."
+          ? "Select your presentation details to view your tailored pricing."
+          : "Select a property and your presentation details to view your tailored pricing."
       );
       renderBookingSummary();
     });
@@ -3314,11 +3314,11 @@ if (!isFirebaseReady) {
         return;
       }
       if (!bookingSelectedCategory) {
-        setBookingFeedback("Please select a presentation style first.", true);
+        setBookingFeedback("Please select the property type first.", true);
         return;
       }
       if (!bookingSelectedServices.length) {
-        setBookingFeedback("Please select at least one service before continuing.", true);
+        setBookingFeedback("Please select at least one presentation detail before continuing.", true);
         return;
       }
 
@@ -3365,11 +3365,11 @@ if (!isFirebaseReady) {
         return;
       }
       if (!bookingSelectedCategory) {
-        setBookingFeedback("Please select a presentation style before continuing.", true);
+        setBookingFeedback("Please select the property type before continuing.", true);
         return;
       }
       if (!bookingSelectedServices.length) {
-        setBookingFeedback("Please select at least one service.", true);
+        setBookingFeedback("Please select at least one presentation detail.", true);
         return;
       }
       if (!bookingDateValue || !bookingTimeValue) {

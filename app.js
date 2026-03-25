@@ -1458,10 +1458,9 @@ if (!isFirebaseReady) {
     return `${year}-${month}-${day}`;
   };
 
-  const minimumRealtimeMandateStartDate = () => {
+  const minimumMandateStartDate = () => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 2);
     return toIsoDateValue(date);
   };
 
@@ -1508,7 +1507,7 @@ if (!isFirebaseReady) {
     const safeDay = Math.min(Math.max(Number(collectionDay || 1), 1), monthEnd);
     target.setDate(safeDay);
     const candidate = toIsoDateValue(target);
-    const minimum = minimumRealtimeMandateStartDate();
+    const minimum = minimumMandateStartDate();
     return candidate < minimum ? minimum : candidate;
   };
 
@@ -2245,7 +2244,7 @@ if (!isFirebaseReady) {
       "10"
     );
     if (startDateField) {
-      const minimum = minimumRealtimeMandateStartDate();
+      const minimum = minimumMandateStartDate();
       startDateField.min = minimum;
       if (startDateField.value && startDateField.value < minimum) {
         startDateField.value = minimum;
@@ -2311,6 +2310,29 @@ if (!isFirebaseReady) {
     return "not_started";
   };
 
+  const hasVerifiedMandateApproval = (data) => {
+    const statusCode = String(data?.mandateStatusCode || data?.statusCode || "").trim();
+    if (statusCode === "900000" || statusCode === "910000") return true;
+    if (data?.mandateAcceptedAt) return true;
+    return Boolean(
+      String(
+        data?.mandateUrl ||
+        data?.mandatePdfLink ||
+        data?.mandateProviderReference ||
+        data?.providerReference ||
+        ""
+      ).trim()
+    );
+  };
+
+  const resolvedMandateFlowStatus = (value, data) => {
+    const status = mandateFlowStatus(value);
+    if (status === "approved" && !hasVerifiedMandateApproval(data)) {
+      return "retry_required";
+    }
+    return status;
+  };
+
   const readableStepStatus = (value) => {
     const normalized = normalizedStatus(value);
     const labels = {
@@ -2364,7 +2386,7 @@ if (!isFirebaseReady) {
         : inspectionStatus === "completed" && priceOfferedAmount > 0
           ? "ready"
           : "not_ready";
-    const mandateStatus = mandateFlowStatus(data.mandateStatus);
+    const mandateStatus = resolvedMandateFlowStatus(data.mandateStatus, data);
     const payNowStatus = normalizedStatus(data.payNowStatus || (Number(data.payNowAmount || 0) > 0 ? "pending" : "not_required")) || "pending";
     const activationStatus = normalizedStatus(data.activationStatus || (data.servicesEnabled === true ? "active" : "onboarding")) || "onboarding";
     const fallbackPaymentStatus = normalizedStatus(data.fallbackPaymentStatus || "");
@@ -3138,7 +3160,7 @@ if (!isFirebaseReady) {
     }
 
     if (startDateField && collectionDayField) {
-      startDateField.min = minimumRealtimeMandateStartDate();
+      startDateField.min = minimumMandateStartDate();
       startDateField.addEventListener("change", () => {
         if (!startDateField.value) return;
         const date = new Date(`${startDateField.value}T00:00:00`);
@@ -3174,7 +3196,7 @@ if (!isFirebaseReady) {
       ).trim();
       const debtorPhoneNumber = normalizeInternationalPhone(currentUserData.cellphone || currentUser?.phoneNumber || "");
       const startDate = String(formData.get("start_date") || "").trim();
-      const minimumStartDate = minimumRealtimeMandateStartDate();
+      const minimumStartDate = minimumMandateStartDate();
       const requestedCollectionDay = Number(formData.get("collection_day") || 1);
       const collectionDay = requestedCollectionDay === 99 ? 99 : Math.min(30, Math.max(1, requestedCollectionDay || 1));
       const trackingIndicator = 10;
@@ -3184,7 +3206,7 @@ if (!isFirebaseReady) {
         return;
       }
       if (!startDate || startDate < minimumStartDate) {
-        setFeedback(paymentFeedback, "Please choose a first collection date at least two days from today.", true);
+        setFeedback(paymentFeedback, "Please choose a first collection date that is today or later.", true);
         return;
       }
 
@@ -3209,8 +3231,8 @@ if (!isFirebaseReady) {
           ...(String(currentUserData.mandateType || "debiCheck").trim().toLowerCase().replace(/[\s_-]+/g, "") === "emandate"
             ? {}
             : {
-                authenticationType: "REAL TIME",
-                debtorAuthenticationRequired: "0230",
+                authenticationType: "DELAYED",
+                debtorAuthenticationRequired: "0227",
               }),
         });
         const result = response.data || {};

@@ -138,10 +138,9 @@
                   </label>
                   <label class="field">Account type
                     <select name="debtor_account_type" required>
-                      <option value="1">Current / Cheque</option>
-                      <option value="2">Savings</option>
-                      <option value="3">Transmission</option>
-                      <option value="4">Bond</option>
+                      <option value="01">Current / Cheque</option>
+                      <option value="02">Savings</option>
+                      <option value="03">Transmission</option>
                     </select>
                   </label>
                   <label class="field">ID type
@@ -157,7 +156,7 @@
                     <input type="date" name="start_date" required />
                   </label>
                   <label class="field">Collection day
-                    <input type="number" name="collection_day" min="1" max="31" placeholder="1-31" required />
+                    <input type="number" name="collection_day" min="1" max="30" placeholder="1-30" required />
                   </label>
                   <label class="field">Tracking days
                     <input type="number" name="tracking_days" min="10" max="10" value="10" readonly />

@@ -1456,13 +1456,58 @@ if (!isFirebaseReady) {
     return `${year}-${month}-${day}`;
   };
 
+  const minimumRealtimeMandateStartDate = () => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + 2);
+    return toIsoDateValue(date);
+  };
+
+  const normalizedMandateAccountType = (value) => {
+    const normalized = String(value || "").trim();
+    if (normalized === "1" || normalized === "01") return "01";
+    if (normalized === "2" || normalized === "02") return "02";
+    if (normalized === "3" || normalized === "03") return "03";
+    return "";
+  };
+
+  const normalizeInternationalPhone = (value) => {
+    const trimmed = String(value || "").trim();
+    if (!trimmed) return "";
+
+    let candidate = trimmed.replace(/[^\d+]/g, "");
+    if (candidate.startsWith("00")) {
+      candidate = `+${candidate.slice(2)}`;
+    }
+
+    if (candidate.startsWith("+")) {
+      candidate = `+${candidate.slice(1).replace(/\D/g, "")}`;
+    } else {
+      const digits = candidate.replace(/\D/g, "");
+      if (!digits) return "";
+      if (digits.startsWith("0") && digits.length === 10) {
+        candidate = `+27${digits.slice(1)}`;
+      } else if (digits.startsWith("27") && digits.length >= 11) {
+        candidate = `+${digits}`;
+      } else if (digits.length >= 8 && digits.length <= 15) {
+        candidate = `+${digits}`;
+      } else {
+        return "";
+      }
+    }
+
+    return /^\+\d{8,15}$/.test(candidate) ? candidate : "";
+  };
+
   const buildDefaultMandateStartDate = (collectionDay) => {
     const today = new Date();
     const target = new Date(today.getFullYear(), today.getMonth() + 1, 1);
     const monthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 0).getDate();
     const safeDay = Math.min(Math.max(Number(collectionDay || 1), 1), monthEnd);
     target.setDate(safeDay);
-    return toIsoDateValue(target);
+    const candidate = toIsoDateValue(target);
+    const minimum = minimumRealtimeMandateStartDate();
+    return candidate < minimum ? minimum : candidate;
   };
 
   const bookingDayName = (value) => {
@@ -2154,6 +2199,7 @@ if (!isFirebaseReady) {
     const bankSelect = mandateForm.querySelector("select[name='debtor_bank_id']");
     const customBankIdField = mandateForm.querySelector("input[name='custom_bank_id']");
     const customBankNameField = mandateForm.querySelector("input[name='custom_bank_name']");
+    const startDateField = mandateForm.querySelector("input[name='start_date']");
     const storedBankId = String(data.mandateDebtorBankId || "").trim();
     const storedBankName = String(data.mandateDebtorBankName || "").trim();
     const hasPresetBank = Boolean(
@@ -2178,7 +2224,7 @@ if (!isFirebaseReady) {
       customBankNameField.value = storedBankName;
     }
     setMandateFieldIfEmpty("input[name='debtor_branch_number']", data.mandateBranchNumber || "");
-    setMandateFieldIfEmpty("select[name='debtor_account_type']", data.mandateAccountType || "1");
+    setMandateFieldIfEmpty("select[name='debtor_account_type']", normalizedMandateAccountType(data.mandateAccountType) || "01");
     setMandateFieldIfEmpty("select[name='debtor_id_type']", data.mandateIdType || "2");
     setMandateFieldIfEmpty("input[name='debtor_id']", data.IdNumber || "");
     setMandateFieldIfEmpty(
@@ -2193,6 +2239,13 @@ if (!isFirebaseReady) {
       "input[name='tracking_days']",
       "10"
     );
+    if (startDateField) {
+      const minimum = minimumRealtimeMandateStartDate();
+      startDateField.min = minimum;
+      if (startDateField.value && startDateField.value < minimum) {
+        startDateField.value = minimum;
+      }
+    }
     syncCustomMandateBankFields();
   };
 
@@ -2998,12 +3051,13 @@ if (!isFirebaseReady) {
 
     if (collectionDayField) {
       collectionDayField.addEventListener("input", () => {
-        const value = Math.min(31, Math.max(1, Number(collectionDayField.value || 1)));
+        const value = Math.min(30, Math.max(1, Number(collectionDayField.value || 1)));
         collectionDayField.value = String(Number.isNaN(value) ? 1 : value);
       });
     }
 
     if (startDateField && collectionDayField) {
+      startDateField.min = minimumRealtimeMandateStartDate();
       startDateField.addEventListener("change", () => {
         if (!startDateField.value) return;
         const date = new Date(`${startDateField.value}T00:00:00`);
@@ -3037,6 +3091,21 @@ if (!isFirebaseReady) {
       const debtorBankName = String(
         (isCustomBank ? formData.get("custom_bank_name") : selectedBankName) || ""
       ).trim();
+      const debtorPhoneNumber = normalizeInternationalPhone(currentUserData.cellphone || currentUser?.phoneNumber || "");
+      const startDate = String(formData.get("start_date") || "").trim();
+      const minimumStartDate = minimumRealtimeMandateStartDate();
+      const requestedCollectionDay = Number(formData.get("collection_day") || 1);
+      const collectionDay = requestedCollectionDay === 99 ? 99 : Math.min(30, Math.max(1, requestedCollectionDay || 1));
+      const trackingIndicator = 10;
+
+      if (!debtorPhoneNumber) {
+        setFeedback(paymentFeedback, "Add a valid cellphone number before submitting a TT1 Real Time mandate.", true);
+        return;
+      }
+      if (!startDate || startDate < minimumStartDate) {
+        setFeedback(paymentFeedback, "TT1 Real Time mandates require a first collection date at least 2 days in the future.", true);
+        return;
+      }
 
       try {
         const response = await functions.httpsCallable("createMandateRequest")({
@@ -3049,12 +3118,19 @@ if (!isFirebaseReady) {
           debtorBankName,
           debtorBranchNumber: String(formData.get("debtor_branch_number") || "").trim(),
           debtorAccountNumber: String(formData.get("debtor_account_number") || "").trim(),
-          debtorAccountType: String(formData.get("debtor_account_type") || "").trim(),
+          debtorAccountType: normalizedMandateAccountType(formData.get("debtor_account_type")) || "01",
+          debtorPhoneNumber,
           debtorIdType: String(formData.get("debtor_id_type") || "").trim(),
           debtorId: String(formData.get("debtor_id") || "").trim(),
-          startDate: String(formData.get("start_date") || "").trim(),
-          collectionDay: Number(formData.get("collection_day") || 1),
-          trackingIndicator: 10,
+          startDate,
+          collectionDay,
+          trackingIndicator,
+          ...(String(currentUserData.mandateType || "debiCheck").trim().toLowerCase().replace(/[\s_-]+/g, "") === "emandate"
+            ? {}
+            : {
+                authenticationType: "REAL TIME",
+                debtorAuthenticationRequired: "0230",
+              }),
         });
         const result = response.data || {};
         setFeedback(

@@ -1338,6 +1338,22 @@ const buildInitials = (value) =>
     .map((part) => `${part.charAt(0).toUpperCase()}.`)
     .join(" ");
 
+const buildCompactInitials = (value) =>
+  String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+
+const formatAccountHolderName = (data, fallback = "") => {
+  const initials = buildCompactInitials(data?.fullName || data?.name || "");
+  const surname = String(data?.surname || "").trim();
+  const preferred = [initials, surname].filter(Boolean).join(" ").trim();
+  if (preferred) return preferred;
+  return String(data?.fullName || data?.name || fallback || "").trim();
+};
+
 const formatWelcomeName = (data, fallback, defaultLabel = "User") => {
   const title = String(data?.title || "").trim();
   const initials = buildInitials(data?.fullName || data?.name || "");
@@ -2225,7 +2241,7 @@ if (!isFirebaseReady) {
       mandateReferenceLabel.textContent = reference || "Pending";
     }
 
-    setMandateFieldIfEmpty("input[name='debtor_name']", data.fullName || "");
+    setMandateFieldIfEmpty("input[name='debtor_name']", formatAccountHolderName(data, data.fullName || ""));
     setMandateFieldIfEmpty(
       "select[name='debtor_bank_id']",
       storedBankId ? (hasPresetBank ? storedBankId : CUSTOM_MANDATE_BANK_ID) : ""

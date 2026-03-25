@@ -56,7 +56,7 @@
             <div>
               <p class="eyebrow reveal">Client dashboard</p>
               <h1 class="reveal">Activation status</h1>
-              <p class="lead reveal">Complete the assessment and mandate steps to unlock bookings.</p>
+              <p class="lead reveal">Complete the onboarding and billing steps in order to unlock bookings.</p>
               <p class="lead reveal">Welcome, <span data-user-name>Client</span>.</p>
             </div>
             <button class="btn ghost" type="button" data-signout>Sign out</button>
@@ -69,19 +69,20 @@
               <p class="status-message" data-status-message>We are fetching your account status.</p>
               <div class="status-amount" data-outstanding></div>
               <ul class="activation-steps">
-                <li><span>Property Presentation Assessment Fee</span><span data-step="adminFee">Pending</span></li>
+                <li><span>Property Presentation Assessment Fee</span><span data-step="assessmentFee">Pending</span></li>
                 <li><span>Inspection</span><span data-step="inspection">Pending</span></li>
-                <li><span>Price Offer</span><span data-step="offer">Pending</span></li>
+                <li><span>Price Offer</span><span data-step="priceOffer">Pending</span></li>
                 <li><span>Mandate</span><span data-step="mandate">Pending</span></li>
+                <li><span>Pay Now</span><span data-step="payNow">Pending</span></li>
                 <li><span>Activation</span><span data-step="activation">Pending</span></li>
               </ul>
               <div class="form-actions">
-                <button class="btn primary" type="button" data-request-paynow>Request Pay Now link</button>
+                <button class="btn primary" type="button" data-request-paynow>Request payment link</button>
                 <button class="btn ghost" type="button" data-request-card>Pay by card</button>
                 <button class="btn ghost is-hidden" type="button" data-open-paynow>Continue to payment</button>
                 <button class="btn ghost is-hidden" type="button" data-open-card>Open card payment</button>
                 <button class="btn ghost is-hidden" type="button" data-open-mandate>Open mandate link</button>
-                <button class="btn ghost is-hidden" type="button" data-request-mandate>Complete DebiCheck</button>
+                <button class="btn ghost is-hidden" type="button" data-request-mandate>Set up mandate</button>
               </div>
               <div class="payment-terms-card">
                 <label class="field checkbox payment-terms-check">

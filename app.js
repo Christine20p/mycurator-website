@@ -1701,6 +1701,7 @@ if (!isFirebaseReady) {
     const servicesEnabled = data.servicesEnabled !== false;
     const billingActive = data.billingActive !== false;
     const isSold = data.isSold === true;
+    const accountActive = normalizedStatus(currentUserData?.activationStatus) === "active";
 
     return {
       id: doc.id,
@@ -1710,7 +1711,7 @@ if (!isFirebaseReady) {
       isSold,
       servicesEnabled,
       billingActive,
-      isBookable: !isSold && servicesEnabled && billingActive,
+      isBookable: accountActive && !isSold && servicesEnabled && billingActive,
     };
   };
 
@@ -1777,6 +1778,8 @@ if (!isFirebaseReady) {
       let statusLabel = "Ready";
       if (property.isSold) {
         statusLabel = "Sold";
+      } else if (normalizedStatus(currentUserData?.activationStatus) !== "active") {
+        statusLabel = "Locked";
       } else if (!property.servicesEnabled || !property.billingActive) {
         statusLabel = "Unavailable";
       }
@@ -2195,7 +2198,7 @@ if (!isFirebaseReady) {
   const prefillMandateForm = (data) => {
     if (!mandateForm || !data) return;
     const reference = String(data.mandateReference || data.clientCode || currentUser?.uid || "").trim();
-    const amountCents = Number(data.mandateAmountCents || 0);
+    const amountCents = Number(data.priceOfferedAmount || data.mandateAmountCents || 0);
     const bankSelect = mandateForm.querySelector("select[name='debtor_bank_id']");
     const customBankIdField = mandateForm.querySelector("input[name='custom_bank_id']");
     const customBankNameField = mandateForm.querySelector("input[name='custom_bank_name']");
@@ -2292,6 +2295,25 @@ if (!isFirebaseReady) {
       .trim()
       .toLowerCase();
 
+  const mandateFlowStatus = (value) => {
+    const normalized = normalizedStatus(value);
+    if (["approved", "active", "accepted", "signed", "future"].includes(normalized)) return "approved";
+    if (["pending", "requested", "queued", "submitted", "exported", "pending_signature", "pending_authorisation", "pending_authorization", "processing"].includes(normalized)) {
+      return "pending";
+    }
+    if (["retry_required", "submission_failed", "rejected", "declined", "cancelled", "expired", "inactive", "suspended"].includes(normalized)) {
+      return "retry_required";
+    }
+    if (normalized === "failed") return "failed";
+    if (normalized === "not_started") return "not_started";
+    return "not_started";
+  };
+
+  const readableStepStatus = (value) => {
+    const normalized = normalizedStatus(value).replace(/_/g, " ");
+    return normalized ? normalized.replace(/\b\w/g, (match) => match.toUpperCase()) : "Pending";
+  };
+
   const updateStep = (key, value) => {
     stepElements.forEach((el) => {
       if (el.dataset.step === key) {
@@ -2308,75 +2330,104 @@ if (!isFirebaseReady) {
     }
     updateAccountSettingsSummary(data);
 
-    const adminFeePaid = data.adminFeePaid === true;
-    const inspectionDone = ["completed", "complete", "done"].includes(
-      normalizedStatus(data.inspectionStatus)
-    );
-    const outstandingBalance = Number(data.outstandingBalanceCents || 0);
+    const assessmentFeeStatus =
+      normalizedStatus(data.assessmentFeeStatus) || (data.adminFeePaid === true ? "paid" : "unpaid");
+    const inspectionStatus =
+      normalizedStatus(data.inspectionStatus) === "completed" ? "completed" : "pending";
+    const priceOfferedAmount = Number(data.priceOfferedAmount || data.mandateAmountCents || 0);
+    const priceOfferStatus =
+      normalizedStatus(data.priceOfferStatus) === "ready" && priceOfferedAmount > 0
+        ? "ready"
+        : inspectionStatus === "completed" && priceOfferedAmount > 0
+          ? "ready"
+          : "not_ready";
+    const mandateStatus = mandateFlowStatus(data.mandateStatus);
+    const payNowStatus = normalizedStatus(data.payNowStatus || (Number(data.payNowAmount || 0) > 0 ? "pending" : "not_required")) || "pending";
+    const activationStatus = normalizedStatus(data.activationStatus || (data.servicesEnabled === true ? "active" : "onboarding")) || "onboarding";
+    const fallbackPaymentStatus = normalizedStatus(data.fallbackPaymentStatus || "");
+    const outstandingBalance = Number(data.outstandingAmount || data.outstandingBalanceCents || 0);
     const hasOutstanding = outstandingBalance > 0;
-    const mandateOfferStatus = normalizedStatus(data.mandateOfferStatus);
-    const mandateStatus = normalizedStatus(data.mandateStatus);
-    const mandateActive = ["active", "accepted", "signed", "future"].includes(mandateStatus);
-    const mandateInFlight = [
-      "requested",
-      "queued",
-      "submitted",
-      "exported",
-      "pending_signature",
-      "pending_authorisation",
-      "pending_authorization",
-      "processing",
-    ].includes(mandateStatus);
-    const mandateFailed = [
-      "submission_failed",
-      "rejected",
-      "cancelled",
-      "expired",
-      "inactive",
-      "suspended",
-    ].includes(mandateStatus);
-    const hasMandateOffer =
-      mandateOfferStatus === "offered" && Number(data.mandateAmountCents || 0) > 0;
-    const servicesEnabled = data.servicesEnabled === true;
     const mandateReason = String(data.mandateReason || "").trim();
     const mandateUrl = String(data.mandateUrl || "").trim();
+    const assessmentFeePaymentUrl = String(data.assessmentFeePaymentUrl || "").trim();
+    const payNowPaymentUrl = String(data.payNowPaymentUrl || "").trim();
+    const fallbackPaymentUrl = String(data.fallbackPaymentUrl || "").trim();
+
+    const mandateApproved = mandateStatus === "approved";
+    const mandatePending = mandateStatus === "pending";
+    const mandateRetryRequired = mandateStatus === "retry_required" || mandateStatus === "failed";
+    const hasPriceOffer = priceOfferStatus === "ready";
+    const payNowRequired = payNowStatus !== "not_required";
+    const currentPaymentType =
+      assessmentFeeStatus !== "paid"
+        ? "assessment_fee"
+        : ["payment_failed", "fallback_payment_pending", "paused"].includes(activationStatus) || (fallbackPaymentStatus === "pending" && hasOutstanding)
+          ? "fallback"
+          : mandateApproved && payNowRequired && payNowStatus !== "paid"
+            ? "pay_now"
+            : "";
+    const currentPaymentUrl =
+      currentPaymentType === "assessment_fee"
+        ? assessmentFeePaymentUrl
+        : currentPaymentType === "fallback"
+          ? fallbackPaymentUrl
+          : payNowPaymentUrl;
+    const paymentButtonLabel =
+      currentPaymentType === "assessment_fee"
+        ? "Pay property presentation assessment fee"
+        : currentPaymentType === "fallback"
+          ? "Pay outstanding amount"
+          : "Pay now";
 
     let title = "Access Granted";
     let message = "Your account is active. You can submit bookings below.";
 
-    if (hasOutstanding) {
-      title = "Outstanding Balance";
-      message = `Please pay the outstanding amount of ${formatCurrency(outstandingBalance)} before continuing.`;
-    } else if (!adminFeePaid) {
+    if (assessmentFeeStatus !== "paid") {
       title = "Property Presentation Assessment Fee Required";
       message = `Please pay the once-off assessment fee of ${formatCurrency(
         data.adminFeeCents || 29999
       )}.`;
-    } else if (!inspectionDone) {
+    } else if (inspectionStatus !== "completed") {
       title = "Inspection Pending";
-      message = "We will schedule your inspection and notify you once pricing is ready.";
-    } else if (mandateFailed) {
+      message = "Inspection starts only after the assessment fee is paid. We'll notify you once it is completed.";
+    } else if (priceOfferStatus !== "ready") {
+      title = "Price Offer Pending";
+      message = "Your monthly price will appear here once the inspection is completed and pricing is ready.";
+    } else if (mandateRetryRequired) {
       title = "Mandate Needs Attention";
       message =
         mandateReason || "Your DebiCheck mandate needs attention. Please review your details and resubmit.";
-    } else if (hasMandateOffer && !mandateActive && !mandateInFlight) {
-      title = "Monthly Price Awaiting Approval";
-      message = `Your inspection is complete. A monthly price of ${formatCurrency(
-        data.mandateAmountCents || 0
-      )} is ready for acceptance.`;
-    } else if (mandateInFlight) {
+    } else if (mandatePending) {
       title = "Mandate In Progress";
       message =
         mandateReason ||
         (mandateUrl
           ? "Your DebiCheck request is ready. Open the mandate link to continue."
           : "Your DebiCheck request is being processed.");
-    } else if (!mandateActive) {
+    } else if (!mandateApproved) {
       title = "Mandate Required";
-      message = "Please complete your mandate before services can start.";
-    } else if (!servicesEnabled) {
-      title = "Activation Pending";
-      message = "Your mandate is confirmed. Services will activate shortly.";
+      message = `Your inspection is complete. Monthly price: ${formatCurrency(priceOfferedAmount)}. Complete your mandate to continue.`;
+    } else if (payNowRequired && payNowStatus === "failed") {
+      title = "Pay Now Failed";
+      message = `Your initial Pay Now amount of ${formatCurrency(Number(data.payNowAmount || 0))} still needs to be settled before activation.`;
+    } else if (payNowRequired && payNowStatus !== "paid") {
+      title = "Pay Now Required";
+      message = `Pay ${formatCurrency(Number(data.payNowAmount || 0))} to complete onboarding.`;
+    } else if (activationStatus === "awaiting_start_date") {
+      title = "Awaiting Start Date";
+      message = data.serviceStartDate
+        ? `Your onboarding is complete. Service access starts on ${data.serviceStartDate}.`
+        : "Your onboarding is complete. Service access starts on the 1st of next month.";
+    } else if (activationStatus === "payment_failed" || activationStatus === "fallback_payment_pending") {
+      title = "Fallback Payment Required";
+      message = hasOutstanding
+        ? `Your monthly debit failed. Pay the outstanding amount of ${formatCurrency(outstandingBalance)} to reactivate services.`
+        : "Your monthly debit failed. Request the Ozow fallback payment link to reactivate services.";
+    } else if (activationStatus === "paused") {
+      title = "Service Paused";
+      message = hasOutstanding
+        ? `Your account is paused until the outstanding amount of ${formatCurrency(outstandingBalance)} is paid.`
+        : "Your account is paused until payment is resolved.";
     }
 
     if (statusTitle) statusTitle.textContent = title;
@@ -2392,19 +2443,24 @@ if (!isFirebaseReady) {
       }
     }
 
-    updateStep("adminFee", adminFeePaid ? "Paid" : "Payment required");
-    updateStep("inspection", inspectionDone ? "Completed" : "Pending");
-    updateStep("offer", hasMandateOffer || mandateInFlight || mandateActive ? "Sent" : "Awaiting pricing");
-    updateStep(
-      "mandate",
-      mandateActive ? "Active" : mandateFailed ? "Retry required" : mandateInFlight ? "In progress" : "Not started"
-    );
-    updateStep("activation", servicesEnabled ? "Active" : "Pending");
+    updateStep("assessmentFee", assessmentFeeStatus === "paid" ? "Paid" : "Unpaid");
+    updateStep("inspection", inspectionStatus === "completed" ? "Completed" : "Pending");
+    updateStep("priceOffer", priceOfferStatus === "ready" ? `Ready • ${formatCurrency(priceOfferedAmount)}` : "Not Ready");
+    updateStep("mandate", readableStepStatus(mandateStatus));
+    updateStep("payNow", readableStepStatus(payNowStatus));
+    updateStep("activation", readableStepStatus(activationStatus));
 
-    const payNowUrl = String(data.payNowUrl || "");
+    if (payNowButton) {
+      payNowButton.textContent = paymentButtonLabel;
+      payNowButton.classList.toggle("is-hidden", !currentPaymentType);
+    }
+    if (cardPayButton) {
+      cardPayButton.classList.toggle("is-hidden", !currentPaymentType);
+    }
+
     if (openPayNowButton) {
-      if (payNowUrl) {
-        continueInCurrentWindow(payNowUrl, {
+      if (currentPaymentUrl) {
+        continueInCurrentWindow(currentPaymentUrl, {
           button: openPayNowButton,
           consentCheckbox: paymentTermsCheckbox,
           onConsentMissing: () => {
@@ -2445,7 +2501,7 @@ if (!isFirebaseReady) {
     }
 
     if (mandateButton) {
-      if (hasMandateOffer && !mandateActive && !mandateInFlight) {
+      if (hasPriceOffer && !mandateApproved && !mandatePending) {
         mandateButton.classList.remove("is-hidden");
         prefillMandateForm(data);
       } else {
@@ -2454,8 +2510,7 @@ if (!isFirebaseReady) {
       }
     }
 
-    const canProceed =
-      adminFeePaid && servicesEnabled && !hasOutstanding && inspectionDone && mandateActive;
+    const canProceed = activationStatus === "active";
 
     if (bookingPage) {
       renderBookingHeroState();
@@ -2479,7 +2534,7 @@ if (!isFirebaseReady) {
     if (bookingForm) {
       disableForm(bookingForm, !canProceed);
       if (bookingPage && !canProceed && !hasRedirectedToBooking) {
-        showMessage("Complete activation before submitting a booking request.");
+        showMessage("Complete onboarding and activation before submitting a booking request.");
         setTimeout(() => {
           window.location.href = "app.html";
         }, 1600);
@@ -3072,7 +3127,7 @@ if (!isFirebaseReady) {
       if (!currentUser || !currentUserData) return;
 
       setFeedback(paymentFeedback, "");
-      const mandateAmountCents = Number(currentUserData.mandateAmountCents || 0);
+      const mandateAmountCents = Number(currentUserData.priceOfferedAmount || currentUserData.mandateAmountCents || 0);
       if (!mandateAmountCents) {
         setFeedback(paymentFeedback, "A monthly price is not available yet.", true);
         return;
@@ -3159,7 +3214,7 @@ if (!isFirebaseReady) {
     mandateButton.addEventListener("click", () => {
       if (!currentUser || !currentUserData) return;
       setFeedback(paymentFeedback, "");
-      const mandateAmountCents = Number(currentUserData.mandateAmountCents || 0);
+      const mandateAmountCents = Number(currentUserData.priceOfferedAmount || currentUserData.mandateAmountCents || 0);
       if (!mandateAmountCents) {
         setFeedback(paymentFeedback, "A monthly price is not available yet.");
         return;

@@ -107,10 +107,10 @@
                     </select>
                   </label>
                   <label class="field">Full Name
-                    <input type="text" name="full_name" placeholder="Full Name" required />
+                    <input type="text" name="full_name" placeholder="Full Name" autocapitalize="words" required />
                   </label>
                   <label class="field">Surname
-                    <input type="text" name="surname" placeholder="Surname" required />
+                    <input type="text" name="surname" placeholder="Surname" autocapitalize="words" required />
                   </label>
                   <label class="field">Document Type
                     <select name="document_type" required>
@@ -130,7 +130,7 @@
                   </label>
                   <p class="form-feedback form-span-2" data-document-feedback role="status" aria-live="polite"></p>
                   <label class="field">Cellphone
-                    <input type="tel" name="cellphone" placeholder="079 294 1992" required />
+                    <input type="tel" name="cellphone" placeholder="079 294 1992" inputmode="numeric" required />
                   </label>
                   <div class="field address-fieldset form-span-2" data-address-fieldset="register">
                     <span>Address</span>
@@ -141,19 +141,19 @@
                         <input type="text" name="apartment_number" placeholder="Apartment / Unit" />
                       </label>
                       <label class="field">House number
-                        <input type="text" name="house_number" placeholder="House number" required />
+                        <input type="text" name="house_number" placeholder="House number" inputmode="numeric" required />
                       </label>
                       <label class="field form-span-2">Street / Route
-                        <input type="text" name="route" placeholder="Street / Route" required />
+                        <input type="text" name="route" placeholder="Street / Route" autocapitalize="words" required />
                       </label>
                       <label class="field">Suburb
-                        <input type="text" name="suburb" placeholder="Suburb" />
+                        <input type="text" name="suburb" placeholder="Suburb" autocapitalize="words" />
                       </label>
                       <label class="field">Town / City
-                        <input type="text" name="town" placeholder="Town / City" required />
+                        <input type="text" name="town" placeholder="Town / City" autocapitalize="words" required />
                       </label>
                       <label class="field">Province
-                        <input type="text" name="province" placeholder="Province" required />
+                        <input type="text" name="province" placeholder="Province" autocapitalize="words" required />
                       </label>
                       <label class="field">Postal code
                         <input type="text" name="postal_code" placeholder="Postal code" inputmode="numeric" />
@@ -168,7 +168,7 @@
                     <input type="text" name="agent_code" placeholder="Agent code" required />
                   </label>
                   <label class="field">Email
-                    <input type="email" name="email" placeholder="name@email.com" required />
+                    <input type="email" name="email" placeholder="name@email.com" inputmode="email" autocapitalize="none" required />
                   </label>
                   <label class="field">Create password
                     <input type="password" name="password" placeholder="Create password" required />
@@ -233,6 +233,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260325f"></script>
+    <script src="app.js?v=20260326a"></script>
   </body>
 </html>

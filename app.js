@@ -1198,6 +1198,21 @@ const createPlacesAddressController = (fieldset) => {
     .filter(Boolean)
     .forEach((input) => {
       input.addEventListener("input", () => {
+        if (input === houseInput) {
+          houseInput.value = houseInput.value.replace(/\D/g, "").slice(0, 10);
+        }
+        if (input === routeInput) {
+          routeInput.value = normalizeCapitalizedWords(routeInput.value);
+        }
+        if (input === suburbInput) {
+          suburbInput.value = normalizeCapitalizedWords(suburbInput.value);
+        }
+        if (input === townInput) {
+          townInput.value = normalizeCapitalizedWords(townInput.value);
+        }
+        if (input === provinceInput) {
+          provinceInput.value = normalizeCapitalizedWords(provinceInput.value);
+        }
         if (input === postalCodeInput) {
           postalCodeInput.value = postalCodeInput.value.replace(/\D/g, "").slice(0, 6);
         }
@@ -1370,6 +1385,18 @@ const formatStatusLabel = (status) => {
     .replace(/[_-]+/g, " ")
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const normalizeCapitalizedWords = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/(^|\s)([A-Za-zÀ-ÿ])/g, (match, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
+
+const normalizeSurnameText = (value) => {
+  const normalized = String(value || "").toLowerCase().replace(/\s+/g, " ").trimStart();
+  if (!normalized) return normalized;
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 const isFirebaseReady =
@@ -2837,6 +2864,31 @@ if (!isFirebaseReady) {
   };
 
   if (registerForm) {
+    const registerFullNameField = registerForm.querySelector("input[name='full_name']");
+    const registerSurnameField = registerForm.querySelector("input[name='surname']");
+    const registerCellphoneField = registerForm.querySelector("input[name='cellphone']");
+    const registerEmailField = registerForm.querySelector("input[name='email']");
+
+    registerFullNameField?.addEventListener("input", () => {
+      registerFullNameField.value = normalizeCapitalizedWords(registerFullNameField.value).trimStart();
+      syncRegisterSubmitState();
+    });
+
+    registerSurnameField?.addEventListener("input", () => {
+      registerSurnameField.value = normalizeSurnameText(registerSurnameField.value);
+      syncRegisterSubmitState();
+    });
+
+    registerCellphoneField?.addEventListener("input", () => {
+      registerCellphoneField.value = registerCellphoneField.value.replace(/\D/g, "").slice(0, 10);
+      syncRegisterSubmitState();
+    });
+
+    registerEmailField?.addEventListener("input", () => {
+      registerEmailField.value = registerEmailField.value.toLowerCase().replace(/\s+/g, "");
+      syncRegisterSubmitState();
+    });
+
     [
       registerDocumentTypeField,
       registerDocumentNumberField,

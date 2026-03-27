@@ -989,11 +989,17 @@ const renderPresentationTierSelector = (data) => {
             Number(payload.presentationTierAssessmentFeeCents || PRESENTATION_TIERS[tierId]?.assessmentFeeCents || 0) || 0,
           assessmentFeeStatus: "unpaid",
           adminFeePaid: false,
+          assessmentFeePaymentRequestId: "",
+          assessmentFeePaymentUrl: "",
+          currentPaymentRequestId: "",
+          currentPaymentType: "",
+          payNowGateway: "ozow",
         };
         setFeedback(
           presentationTierFeedback,
           `${currentUserData.presentationTierName || PRESENTATION_TIERS[tierId]?.name || "Collection"} selected.`
         );
+        stopPayNowListener();
         updateDashboard(currentUserData);
       } catch (error) {
         setFeedback(

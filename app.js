@@ -1124,14 +1124,8 @@ const syncPaymentConsentState = () => {
   if (payNowButton) {
     payNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox) || assessmentTierMissing;
   }
-  if (cardPayButton) {
-    cardPayButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox) || assessmentTierMissing;
-  }
   if (openPayNowButton) {
     openPayNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
-  }
-  if (openCardButton) {
-    openCardButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
   }
   if (bookingSubmitButton) {
     bookingSubmitButton.disabled = !hasAcceptedTerms(bookingPaymentTermsCheckbox);
@@ -2818,9 +2812,6 @@ if (!isFirebaseReady) {
       payNowButton.textContent = paymentButtonLabel;
       payNowButton.classList.toggle("is-hidden", !currentPaymentType);
     }
-    if (cardPayButton) {
-      cardPayButton.classList.toggle("is-hidden", !currentPaymentType);
-    }
 
     if (openPayNowButton) {
       if (currentPaymentUrl) {
@@ -2834,23 +2825,6 @@ if (!isFirebaseReady) {
       } else {
         openPayNowButton.classList.add("is-hidden");
         openPayNowButton.onclick = null;
-      }
-    }
-
-    const cardPayUrl = String(data.cardPayUrl || "");
-    if (openCardButton) {
-      if (cardPayUrl) {
-        openCardButton.classList.remove("is-hidden");
-        openCardButton.onclick = () => {
-          if (!hasAcceptedTerms(paymentTermsCheckbox)) {
-            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-            syncPaymentConsentState();
-            return;
-          }
-          window.open(cardPayUrl, "_blank");
-        };
-      } else {
-        openCardButton.classList.add("is-hidden");
       }
     }
     syncPaymentConsentState();
@@ -3597,7 +3571,6 @@ if (!isFirebaseReady) {
       return;
     }
     if (openPayNowButton) openPayNowButton.classList.add("is-hidden");
-    if (openCardButton) openCardButton.classList.add("is-hidden");
 
     try {
       const result = await functions.httpsCallable("startAccountPaymentRequest")({
@@ -3619,18 +3592,7 @@ if (!isFirebaseReady) {
         .onSnapshot((doc) => {
           const data = doc.data() || {};
           if (data.redirectUrl) {
-            const resolvedGateway = String(data.gateway || gateway || "").toLowerCase();
-            if (resolvedGateway === "peach" && openCardButton) {
-              openCardButton.classList.remove("is-hidden");
-              openCardButton.onclick = () => {
-                if (!hasAcceptedTerms(paymentTermsCheckbox)) {
-                  setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-                  syncPaymentConsentState();
-                  return;
-                }
-                window.open(data.redirectUrl, "_blank");
-              };
-            } else if (openPayNowButton) {
+            if (openPayNowButton) {
               continueInCurrentWindow(data.redirectUrl, {
                 button: openPayNowButton,
                 consentCheckbox: paymentTermsCheckbox,
@@ -3658,10 +3620,6 @@ if (!isFirebaseReady) {
 
   if (payNowButton) {
     payNowButton.addEventListener("click", () => startPaymentRequest("ozow"));
-  }
-
-  if (cardPayButton) {
-    cardPayButton.addEventListener("click", () => startPaymentRequest("peach"));
   }
 
   if (mandateForm) {

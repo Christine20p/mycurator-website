@@ -782,24 +782,28 @@ const PRESENTATION_TIERS = {
     id: "core",
     name: "Core",
     assessmentFeeCents: 29999,
+    positioningLine: "Maintains general presentation",
     recurringSummary: ["Weekly Essential Cleaning"],
   },
   refined: {
     id: "refined",
     name: "Refined",
     assessmentFeeCents: 79999,
+    positioningLine: "Maintains stable condition",
     recurringSummary: ["Weekly Essential Cleaning", "Weekly Turf Management"],
   },
   gallery: {
     id: "gallery",
     name: "Gallery",
     assessmentFeeCents: 149999,
+    positioningLine: "Prepared for active listing and viewings",
     recurringSummary: ["Weekly Essential Cleaning", "Weekly Odour Elimination", "Weekly Turf Management"],
   },
   signature: {
     id: "signature",
     name: "Signature",
     assessmentFeeCents: 219999,
+    positioningLine: "Positioned to maximise buyer perception",
     recurringSummary: [
       "Monthly Deep Cleaning",
       "Weekly Essential Cleaning",
@@ -949,6 +953,7 @@ const renderPresentationTierSelector = (data) => {
           ${selectingPresentationTier ? "disabled" : ""}
         >
           <span class="tier-option-name">${escapeHtml(option.name)}</span>
+          <span class="tier-option-positioning">"${escapeHtml(option.positioningLine || "")}"</span>
           <strong class="tier-option-price">${escapeHtml(formatCurrency(option.assessmentFeeCents))}</strong>
           <span class="tier-option-note">Assessment fee</span>
         </button>
@@ -1022,6 +1027,7 @@ const renderPresentationTierSelector = (data) => {
       <div class="tier-summary-head">
         <span class="tier-summary-kicker">Selected Collection</span>
         <strong>${escapeHtml(tier.name)}</strong>
+        <p>${escapeHtml(tier.positioningLine || "")}</p>
         <span>${escapeHtml(formatCurrency(tier.assessmentFeeCents))} assessment fee</span>
       </div>
       <div class="tier-summary-list">
@@ -2736,7 +2742,7 @@ if (!isFirebaseReady) {
         message = "Choose Core, Refined, Gallery, or Signature before arranging the assessment fee payment.";
       } else {
         title = `${selectedTier.name} assessment fee`;
-        message = `${selectedTier.name} includes ${selectedTier.recurringSummary.join(", ")}. Kindly settle the once-off assessment fee of ${formatCurrency(
+        message = `${selectedTier.name} ${selectedTier.positioningLine.toLowerCase()}. Includes ${selectedTier.recurringSummary.join(", ")}. Kindly settle the once-off assessment fee of ${formatCurrency(
           selectedTier.assessmentFeeCents
         )} to begin your Curator presentation journey.`;
       }

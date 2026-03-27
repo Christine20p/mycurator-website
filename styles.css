@@ -2155,6 +2155,12 @@ body.nav-closing .site-footer {
   color: rgba(79, 56, 41, 0.72);
 }
 
+.tier-option-positioning {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: rgba(52, 35, 25, 0.88);
+}
+
 .tier-option-price {
   font-size: 1.12rem;
   color: #342319;
@@ -2189,6 +2195,13 @@ body.nav-closing .site-footer {
 .tier-summary-head strong {
   font-size: 1rem;
   color: #342319;
+}
+
+.tier-summary-head p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(52, 35, 25, 0.88);
 }
 
 .tier-summary-head span:last-child {

@@ -266,6 +266,188 @@
                 <p>Platform preferences are overseen by the Curator operations team.</p>
                 <p class="portal-note">For any refinements, please contact Curator support.</p>
               </div>
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Create worker</h3>
+                    <p>Create approved worker accounts with roles, service windows, and zone coverage.</p>
+                  </div>
+                </div>
+                <form class="portal-form" data-admin-worker-create-form>
+                  <div class="form-grid">
+                    <label class="field">Full name
+                      <input type="text" name="fullName" placeholder="Worker full name" required />
+                    </label>
+                    <label class="field">Cellphone
+                      <input type="tel" name="phone" placeholder="07..." />
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Email
+                      <input type="email" name="email" placeholder="worker@mycurator.co.za" required />
+                    </label>
+                    <label class="field">Temporary password
+                      <input type="text" name="temporaryPassword" placeholder="Temporary password" />
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Apartment / Unit
+                      <input type="text" name="apartmentOrUnit" />
+                    </label>
+                    <label class="field">House number
+                      <input type="text" name="houseNumber" />
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Street / Route
+                      <input type="text" name="streetOrRoute" />
+                    </label>
+                    <label class="field">Suburb
+                      <input type="text" name="suburb" />
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Town / City
+                      <input type="text" name="townOrCity" />
+                    </label>
+                    <label class="field">Province
+                      <input type="text" name="province" />
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Postal code
+                      <input type="text" name="postalCode" />
+                    </label>
+                    <label class="field">Eligible zones
+                      <input type="text" name="eligibleZones" placeholder="Zone A, Zone B" />
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Roles
+                      <select name="assignedRoles" multiple size="7">
+                        <option value="cleaner">Cleaner</option>
+                        <option value="stager">Stager</option>
+                        <option value="pest_control_specialist">Pest Control Specialist</option>
+                        <option value="painter">Painter</option>
+                        <option value="pool_technician">Pool Technician</option>
+                        <option value="gardener">Gardener</option>
+                        <option value="general_outdoor_worker">General Outdoor Worker</option>
+                      </select>
+                    </label>
+                    <label class="field">Available days
+                      <select name="availableDays" multiple size="7">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Available time slots
+                      <select name="availableTimeSlots" multiple size="2">
+                        <option value="06:00">06:00</option>
+                        <option value="11:00">11:00</option>
+                      </select>
+                    </label>
+                    <div class="form-grid">
+                      <label class="field">Max daily bookings
+                        <input type="number" name="maxDailyBookings" min="1" value="2" />
+                      </label>
+                      <label class="field">Max daily minutes
+                        <input type="number" name="maxDailyMinutes" min="60" step="30" value="480" />
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field"><input type="checkbox" name="isApproved" checked /> Approved for assignment</label>
+                    <label class="field"><input type="checkbox" name="active" checked /> Worker account active</label>
+                  </div>
+                  <div class="form-actions">
+                    <button class="btn primary" type="submit">Create worker</button>
+                  </div>
+                  <p class="form-feedback" data-admin-worker-create-feedback role="status" aria-live="polite"></p>
+                </form>
+              </div>
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Worker access</h3>
+                    <p>Update active state or issue a new temporary password for an existing worker.</p>
+                  </div>
+                </div>
+                <form class="portal-form" data-admin-worker-access-form>
+                  <div class="form-grid">
+                    <label class="field">Worker ID
+                      <input type="text" name="workerId" placeholder="Firebase worker UID" required />
+                    </label>
+                    <label class="field"><input type="checkbox" name="active" checked /> Worker account active</label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">New temporary password
+                      <input type="text" name="temporaryPassword" placeholder="Leave blank to auto-generate" />
+                    </label>
+                  </div>
+                  <div class="form-actions">
+                    <button class="btn primary" type="submit" name="action" value="status">Save access state</button>
+                    <button class="btn ghost" type="submit" name="action" value="reset">Reset password</button>
+                  </div>
+                  <p class="form-feedback" data-admin-worker-access-feedback role="status" aria-live="polite"></p>
+                </form>
+              </div>
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Recurring weekly service</h3>
+                    <p>Create a backend-managed weekly maintenance service for a property.</p>
+                  </div>
+                </div>
+                <form class="portal-form" data-admin-recurring-service-form>
+                  <div class="form-grid">
+                    <label class="field">Client ID
+                      <input type="text" name="clientId" placeholder="Client UID" />
+                    </label>
+                    <label class="field">Property ID
+                      <input type="text" name="propertyId" placeholder="Property ID" required />
+                    </label>
+                  </div>
+                  <label class="field">Selected services
+                    <input type="text" name="selectedServices" placeholder="Standard Cleaning, Deep Cleaning" required />
+                  </label>
+                  <div class="form-actions">
+                    <button class="btn primary" type="submit">Create recurring service</button>
+                  </div>
+                  <p class="form-feedback" data-admin-recurring-service-feedback role="status" aria-live="polite"></p>
+                </form>
+              </div>
+              <div class="dashboard-card">
+                <div class="role-panel-header">
+                  <div>
+                    <h3>Manual booking assignment</h3>
+                    <p>Override a booking with a valid worker team. Cloud validation still applies.</p>
+                  </div>
+                </div>
+                <form class="portal-form" data-admin-booking-assign-form>
+                  <div class="form-grid">
+                    <label class="field">Client ID
+                      <input type="text" name="userId" placeholder="Booking owner UID" required />
+                    </label>
+                    <label class="field">Booking ID
+                      <input type="text" name="bookingId" placeholder="Booking document ID" required />
+                    </label>
+                  </div>
+                  <label class="field">Worker IDs
+                    <input type="text" name="workerIds" placeholder="workerA, workerB" required />
+                  </label>
+                  <div class="form-actions">
+                    <button class="btn primary" type="submit">Assign booking</button>
+                  </div>
+                  <p class="form-feedback" data-admin-booking-assign-feedback role="status" aria-live="polite"></p>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -301,5 +483,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
     <script src="app.js?v=20260325e"></script>
+    <script src="assignment-admin.js?v=20260327a"></script>
   </body>
 </html>

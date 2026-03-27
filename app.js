@@ -744,9 +744,37 @@ const SERVICE_NAME_BY_TOKEN = Object.entries(SERVICE_NAME_ALIASES).reduce((accum
   accumulator[normalizeComparableToken(key)] = value;
   return accumulator;
 }, {});
+const SERVICE_SUBMISSION_NAME_ALIASES = {
+  "Essential Cleaning": "Standard Cleaning",
+  "Deep Cleaning": "Deep Cleaning",
+  "Property Staging": "Staging Furniture",
+  "Pest Management": "Pest Control",
+  "Odour Elimination": "Odour Control",
+  "Interior Repainting": "Repainting",
+  "Pool Care": "Pool Cleaning",
+  "Turf Management": "Lawn Mowing",
+  "Landscape Grooming": "Plant Trimming",
+  "Turf Rejuvenation": "Lawn Colour Shading",
+  "Interior Restoration": "Interior Wear & Tears Repair",
+  "Pavement Cleaning": "Pavement Cleaning",
+  "Plant Uprooting": "Plant Uprooting",
+  "Site Excavation": "Site Excavation",
+  "Weed Removal": "Weed Removal",
+};
+const SERVICE_SUBMISSION_NAME_BY_TOKEN = Object.entries(SERVICE_SUBMISSION_NAME_ALIASES).reduce(
+  (accumulator, [key, value]) => {
+    accumulator[normalizeComparableToken(key)] = value;
+    return accumulator;
+  },
+  {}
+);
 const displayServiceName = (value) => {
   const token = normalizeComparableToken(value);
   return SERVICE_NAME_BY_TOKEN[token] || String(value || "").trim();
+};
+const submissionServiceName = (value) => {
+  const displayName = displayServiceName(value);
+  return SERVICE_SUBMISSION_NAME_BY_TOKEN[normalizeComparableToken(displayName)] || displayName;
 };
 const normalizeServiceLookupKey = (value) => normalizeComparableToken(displayServiceName(value));
 const PRESENTATION_TIERS = {
@@ -3965,7 +3993,7 @@ if (!isFirebaseReady) {
         category: bookingSelectedCategory,
         bookingDateValue,
         bookingTimeValue,
-        services: bookingSelectedServices.slice(),
+        services: bookingSelectedServices.map((service) => submissionServiceName(service)),
         paymentTermsAccepted: true,
         paymentTermsVersion: PAYMENT_TERMS_VERSION,
       };

@@ -2080,6 +2080,137 @@ body.nav-closing .site-footer {
   color: rgba(11, 11, 12, 0.72);
 }
 
+.tier-selection-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(177, 138, 104, 0.1), rgba(79, 56, 41, 0.04));
+  border: 1px solid rgba(122, 94, 71, 0.16);
+}
+
+.tier-selection-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.tier-selection-copy h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.tier-selection-copy p:last-child {
+  margin: 0;
+  color: rgba(11, 11, 12, 0.66);
+}
+
+.tier-selection-tag {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.7);
+}
+
+.tier-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tier-option {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(122, 94, 71, 0.14);
+  background: rgba(255, 250, 245, 0.82);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.tier-option:hover {
+  transform: translateY(-1px);
+  border-color: rgba(122, 94, 71, 0.28);
+  box-shadow: 0 14px 30px rgba(122, 94, 71, 0.08);
+}
+
+.tier-option.is-selected {
+  border-color: rgba(79, 56, 41, 0.42);
+  background: rgba(122, 94, 71, 0.12);
+  box-shadow: 0 18px 32px rgba(122, 94, 71, 0.12);
+}
+
+.tier-option:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+.tier-option-name {
+  font-size: 0.84rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.72);
+}
+
+.tier-option-price {
+  font-size: 1.12rem;
+  color: #342319;
+}
+
+.tier-option-note {
+  font-size: 0.78rem;
+  color: rgba(11, 11, 12, 0.56);
+}
+
+.tier-summary-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(122, 94, 71, 0.12);
+}
+
+.tier-summary-head {
+  display: grid;
+  gap: 3px;
+}
+
+.tier-summary-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.64);
+}
+
+.tier-summary-head strong {
+  font-size: 1rem;
+  color: #342319;
+}
+
+.tier-summary-head span:last-child {
+  color: rgba(11, 11, 12, 0.6);
+}
+
+.tier-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tier-summary-list span {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: rgba(79, 56, 41, 0.08);
+  color: #4f3829;
+  font-size: 0.78rem;
+}
+
 .form-actions .btn[disabled],
 .booking-sheet-actions .btn[disabled] {
   opacity: 0.58;
@@ -4057,6 +4188,10 @@ body.booking-sheet-open {
 
   .activation-dashboard-grid .payment-feedback-banner.is-visible {
     min-height: 72px;
+  }
+
+  .activation-dashboard-grid .tier-selection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

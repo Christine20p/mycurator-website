@@ -570,6 +570,10 @@ const settingsOtpFeedback = document.querySelector("[data-settings-otp-feedback]
 const payNowButton = document.querySelector("[data-request-paynow]");
 const openPayNowButton = document.querySelector("[data-open-paynow]");
 const cardPayButton = document.querySelector("[data-request-card]");
+const presentationTierPanel = document.querySelector("[data-presentation-tier-panel]");
+const presentationTierGrid = document.querySelector("[data-presentation-tier-grid]");
+const presentationTierSummary = document.querySelector("[data-presentation-tier-summary]");
+const presentationTierFeedback = document.querySelector("[data-presentation-tier-feedback]");
 const paymentTermsCheckbox = document.querySelector("[data-payment-terms-checkbox]");
 const bookingPaymentTermsCheckbox = document.querySelector("[data-booking-payment-terms-checkbox]");
 const PASSWORD_RESET_SETTINGS = {
@@ -680,6 +684,7 @@ let bookingPricingReady = false;
 let bookingPricingMessageText = "";
 let bookingPricingRequestId = 0;
 let bookingSubmitting = false;
+let selectingPresentationTier = false;
 
 const CUSTOM_MANDATE_BANK_ID = "__other__";
 const PAYMENT_TERMS_VERSION = "2026-03-20";
@@ -699,47 +704,150 @@ const ADMIN_INCIDENT_QUICK_REPLIES = [
     message: "Thank you for reporting this. We will provide feedback shortly.",
   },
 ];
+const normalizeComparableToken = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const SERVICE_NAME_ALIASES = {
+  "Standard Cleaning": "Essential Cleaning",
+  "Essential Cleaning": "Essential Cleaning",
+  "Deep Cleaning": "Deep Cleaning",
+  "Staging Furniture": "Property Staging",
+  "Property Staging": "Property Staging",
+  "Pest Control": "Pest Management",
+  "Pest Management": "Pest Management",
+  "Odour Control": "Odour Elimination",
+  "Odour Elimination": "Odour Elimination",
+  "Repainting": "Interior Repainting",
+  "Interior Repainting": "Interior Repainting",
+  "Pool Cleaning": "Pool Care",
+  "Pool Care": "Pool Care",
+  "Lawn Mowing": "Turf Management",
+  "Turf Management": "Turf Management",
+  "Plant Trimming": "Landscape Grooming",
+  "Landscape Grooming": "Landscape Grooming",
+  "Lawn Colour Shading": "Turf Rejuvenation",
+  "Turf Rejuvenation": "Turf Rejuvenation",
+  "Interior Wear & Tears Repair": "Interior Restoration",
+  "Interior Restoration": "Interior Restoration",
+  "Pavement Cleaning": "Pavement Cleaning",
+  "Plant Uprooting": "Plant Uprooting",
+  "Site Excavation": "Site Excavation",
+  "Weed Removal": "Weed Removal",
+};
+const SERVICE_NAME_BY_TOKEN = Object.entries(SERVICE_NAME_ALIASES).reduce((accumulator, [key, value]) => {
+  accumulator[normalizeComparableToken(key)] = value;
+  return accumulator;
+}, {});
+const displayServiceName = (value) => {
+  const token = normalizeComparableToken(value);
+  return SERVICE_NAME_BY_TOKEN[token] || String(value || "").trim();
+};
+const normalizeServiceLookupKey = (value) => normalizeComparableToken(displayServiceName(value));
+const PRESENTATION_TIERS = {
+  core: {
+    id: "core",
+    name: "Core",
+    assessmentFeeCents: 29999,
+    recurringSummary: ["Weekly Essential Cleaning"],
+  },
+  refined: {
+    id: "refined",
+    name: "Refined",
+    assessmentFeeCents: 79999,
+    recurringSummary: ["Weekly Essential Cleaning", "Weekly Turf Management"],
+  },
+  gallery: {
+    id: "gallery",
+    name: "Gallery",
+    assessmentFeeCents: 149999,
+    recurringSummary: ["Weekly Essential Cleaning", "Weekly Odour Elimination", "Weekly Turf Management"],
+  },
+  signature: {
+    id: "signature",
+    name: "Signature",
+    assessmentFeeCents: 219999,
+    recurringSummary: [
+      "Monthly Deep Cleaning",
+      "Weekly Essential Cleaning",
+      "Weekly Odour Elimination",
+      "Weekly Turf Management",
+      "Weekly Landscape Grooming",
+    ],
+  },
+};
+const normalizePresentationTierId = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+const resolvePresentationTierConfigFromData = (data) => {
+  const explicitTier = PRESENTATION_TIERS[normalizePresentationTierId(
+    data?.presentationTier || data?.presentationTierId || data?.presentationPackage || data?.assessmentFeeTier
+  )];
+  if (explicitTier) return explicitTier;
+  const cents = Number(
+    data?.presentationTierAssessmentFeeCents || data?.adminFeeCents || 0
+  );
+  if (!Number.isFinite(cents) || cents <= 0) return null;
+  const paymentState = String(data?.assessmentFeeStatus || (data?.adminFeePaid === true ? "paid" : ""))
+    .trim()
+    .toLowerCase();
+  const hasAssessmentFlow = Boolean(
+    String(data?.assessmentFeePaymentRequestId || "").trim() ||
+      String(data?.assessmentFeePaymentUrl || "").trim() ||
+      paymentState === "paid"
+  );
+  if (!hasAssessmentFlow) return null;
+  return Object.values(PRESENTATION_TIERS).find((tier) => tier.assessmentFeeCents === cents) || null;
+};
 const BOOKING_CATEGORY_SERVICES = {
   Residential: [
-    "Standard Cleaning",
+    "Essential Cleaning",
     "Deep Cleaning",
-    "Staging Furniture",
-    "Pest Control",
-    "Odour Control",
-    "Repainting",
-    "Pool Cleaning",
-    "Lawn Mowing",
-    "Plant Trimming",
-    "Lawn Colour Shading",
-    "Interior Wear & Tears Repair",
+    "Property Staging",
+    "Pest Management",
+    "Odour Elimination",
+    "Interior Repainting",
+    "Pool Care",
+    "Turf Management",
+    "Landscape Grooming",
+    "Turf Rejuvenation",
+    "Interior Restoration",
     "Pavement Cleaning",
   ],
   Office: [
-    "Standard Cleaning",
+    "Essential Cleaning",
     "Deep Cleaning",
-    "Staging Furniture",
-    "Pest Control",
-    "Odour Control",
-    "Repainting",
-    "Pool Cleaning",
-    "Lawn Mowing",
-    "Plant Trimming",
-    "Lawn Colour Shading",
-    "Interior Wear & Tears Repair",
+    "Property Staging",
+    "Pest Management",
+    "Odour Elimination",
+    "Interior Repainting",
+    "Pool Care",
+    "Turf Management",
+    "Landscape Grooming",
+    "Turf Rejuvenation",
+    "Interior Restoration",
     "Pavement Cleaning",
   ],
   Commercial: [
-    "Standard Cleaning",
+    "Essential Cleaning",
     "Deep Cleaning",
-    "Staging Furniture",
-    "Pest Control",
-    "Odour Control",
-    "Repainting",
-    "Pool Cleaning",
-    "Lawn Mowing",
-    "Plant Trimming",
-    "Lawn Colour Shading",
-    "Interior Wear & Tears Repair",
+    "Property Staging",
+    "Pest Management",
+    "Odour Elimination",
+    "Interior Repainting",
+    "Pool Care",
+    "Turf Management",
+    "Landscape Grooming",
+    "Turf Rejuvenation",
+    "Interior Restoration",
     "Pavement Cleaning",
   ],
   "Vacant Land": ["Plant Uprooting", "Site Excavation", "Weed Removal"],
@@ -777,6 +885,122 @@ const setFeedback = (el, message, isError = false) => {
   el.classList.toggle("is-visible", hasMessage);
   el.classList.toggle("is-error", hasMessage && isError);
   el.classList.toggle("is-success", hasMessage && !isError);
+};
+
+const isAssessmentTierRequired = () =>
+  Boolean(
+    currentUserData &&
+      String(currentUserData.assessmentFeeStatus || "").trim().toLowerCase() !== "paid"
+  );
+
+const hasSelectedPresentationTier = () =>
+  Boolean(resolvePresentationTierConfigFromData(currentUserData));
+
+const renderPresentationTierSelector = (data) => {
+  if (!presentationTierPanel || !presentationTierGrid || !presentationTierSummary) return;
+
+  const tier = resolvePresentationTierConfigFromData(data);
+  const needsSelection = String(data?.assessmentFeeStatus || "").trim().toLowerCase() !== "paid";
+  presentationTierPanel.classList.toggle("is-hidden", !needsSelection);
+  if (!needsSelection) {
+    presentationTierGrid.innerHTML = "";
+    presentationTierSummary.innerHTML = "";
+    setFeedback(presentationTierFeedback, "");
+    return;
+  }
+
+  presentationTierGrid.innerHTML = Object.values(PRESENTATION_TIERS)
+    .map((option) => {
+      const selected = tier?.id === option.id;
+      return `
+        <button
+          class="tier-option${selected ? " is-selected" : ""}"
+          type="button"
+          data-presentation-tier-option="${option.id}"
+          aria-pressed="${selected ? "true" : "false"}"
+          ${selectingPresentationTier ? "disabled" : ""}
+        >
+          <span class="tier-option-name">${escapeHtml(option.name)}</span>
+          <strong class="tier-option-price">${escapeHtml(formatCurrency(option.assessmentFeeCents))}</strong>
+          <span class="tier-option-note">Assessment fee</span>
+        </button>
+      `;
+    })
+    .join("");
+
+  presentationTierGrid.querySelectorAll("[data-presentation-tier-option]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const tierId = button.getAttribute("data-presentation-tier-option");
+      if (!tierId || selectingPresentationTier || !functions || !currentUser) return;
+      selectingPresentationTier = true;
+      renderPresentationTierSelector(currentUserData || {});
+      setFeedback(presentationTierFeedback, "Saving your selected collection...");
+      try {
+        const result = await functions.httpsCallable("selectPresentationTier")({
+          presentationTier: tierId,
+        });
+        const payload = result?.data || {};
+        currentUserData = {
+          ...(currentUserData || {}),
+          presentationTier: payload.presentationTier || tierId,
+          presentationTierName: payload.presentationTierName || PRESENTATION_TIERS[tierId]?.name || "",
+          presentationTierAssessmentFeeCents:
+            Number(payload.presentationTierAssessmentFeeCents || PRESENTATION_TIERS[tierId]?.assessmentFeeCents || 0) || 0,
+          presentationTierRecurringSummary: Array.isArray(payload.presentationTierRecurringSummary)
+            ? payload.presentationTierRecurringSummary.slice()
+            : PRESENTATION_TIERS[tierId]?.recurringSummary.slice() || [],
+          presentationTierServices: Array.isArray(payload.presentationTierServices)
+            ? payload.presentationTierServices.slice()
+            : [],
+          adminFeeCents:
+            Number(payload.presentationTierAssessmentFeeCents || PRESENTATION_TIERS[tierId]?.assessmentFeeCents || 0) || 0,
+          assessmentFeeStatus: "unpaid",
+          adminFeePaid: false,
+        };
+        setFeedback(
+          presentationTierFeedback,
+          `${currentUserData.presentationTierName || PRESENTATION_TIERS[tierId]?.name || "Collection"} selected.`
+        );
+        updateDashboard(currentUserData);
+      } catch (error) {
+        setFeedback(
+          presentationTierFeedback,
+          error.message || "We couldn't save your selected collection just now.",
+          true
+        );
+      } finally {
+        selectingPresentationTier = false;
+        renderPresentationTierSelector(currentUserData || data || {});
+        syncPaymentConsentState();
+      }
+    });
+  });
+
+  if (!tier) {
+    presentationTierSummary.innerHTML = `
+      <div class="tier-summary-card">
+        <strong>Select your collection before payment</strong>
+        <p>Core, Refined, Gallery, and Signature each guide the inspection scope and the tailored monthly offer that follows.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const summaryItems = Array.isArray(data?.presentationTierRecurringSummary) && data.presentationTierRecurringSummary.length
+    ? data.presentationTierRecurringSummary
+    : tier.recurringSummary;
+  presentationTierSummary.innerHTML = `
+    <div class="tier-summary-card">
+      <div class="tier-summary-head">
+        <span class="tier-summary-kicker">Selected Collection</span>
+        <strong>${escapeHtml(tier.name)}</strong>
+        <span>${escapeHtml(formatCurrency(tier.assessmentFeeCents))} assessment fee</span>
+      </div>
+      <div class="tier-summary-list">
+        ${summaryItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+      </div>
+    </div>
+  `;
 };
 
 const closeBookingNotice = () => {
@@ -858,11 +1082,12 @@ const setBookingFeedback = (message, isError = false) => {
 const hasAcceptedTerms = (checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked;
 
 const syncPaymentConsentState = () => {
+  const assessmentTierMissing = isAssessmentTierRequired() && !hasSelectedPresentationTier();
   if (payNowButton) {
-    payNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
+    payNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox) || assessmentTierMissing;
   }
   if (cardPayButton) {
-    cardPayButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
+    cardPayButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox) || assessmentTierMissing;
   }
   if (openPayNowButton) {
     openPayNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
@@ -1887,6 +2112,7 @@ if (!isFirebaseReady) {
     bookingServiceGrid.innerHTML = "";
     services.forEach((service) => {
       const selected = bookingSelectedServices.includes(service);
+      const serviceLabel = displayServiceName(service);
       const button = document.createElement("button");
       button.type = "button";
       button.className = "booking-service-card";
@@ -1895,7 +2121,7 @@ if (!isFirebaseReady) {
       }
       button.innerHTML = `
         <span class="booking-service-icon">${selected ? "✓" : "+"}</span>
-        <strong>${escapeHtml(service)}</strong>
+        <strong>${escapeHtml(serviceLabel)}</strong>
       `;
       button.addEventListener("click", () => {
         if (bookingSelectedServices.includes(service)) {
@@ -1967,7 +2193,7 @@ if (!isFirebaseReady) {
     if (bookingSummaryServices) {
       bookingSummaryServices.innerHTML = bookingSelectedServices.length
         ? bookingSelectedServices
-            .map((service) => `<span>${escapeHtml(service)}</span>`)
+            .map((service) => `<span>${escapeHtml(displayServiceName(service))}</span>`)
             .join("")
         : "";
     }
@@ -1977,7 +2203,7 @@ if (!isFirebaseReady) {
         bookingPricingLines.forEach((line) => {
           const row = document.createElement("div");
           row.className = "booking-summary-row";
-          row.innerHTML = `<span>${escapeHtml(line.name)}</span><strong>${escapeHtml(
+          row.innerHTML = `<span>${escapeHtml(displayServiceName(line.name))}</span><strong>${escapeHtml(
             formatCurrency(line.amountCents)
           )}</strong>`;
           bookingPricingRows.appendChild(row);
@@ -2061,27 +2287,25 @@ if (!isFirebaseReady) {
       catalogSnap.docs.forEach((doc) => {
         const data = doc.data() || {};
         const docId = String(doc.id || "")
-          .trim()
-          .toLowerCase();
+          .trim();
         const name = String(data.name || doc.id || "")
-          .trim()
-          .toLowerCase();
+          .trim();
         const cents = Number(data.priceCents || data.basePriceCents || 0);
         const timing = String(data.paymentTiming || data.billingTiming || "pay_now")
           .trim()
           .toLowerCase();
         if (docId) {
-          catalogById.set(docId, { id: docId, name, cents, timing });
+          catalogById.set(normalizeServiceLookupKey(docId), { id: docId, name, cents, timing });
         }
         if (name) {
-          catalogByName.set(name, { id: docId || name, cents, timing });
+          catalogByName.set(normalizeServiceLookupKey(name), { id: docId || name, cents, timing });
         }
       });
 
       const overrides = new Map();
       overridesSnap.docs.forEach((doc) => {
         const data = doc.data() || {};
-        overrides.set(String(doc.id || "").trim().toLowerCase(), {
+        overrides.set(normalizeServiceLookupKey(doc.id || ""), {
           enabled: data.isEnabled !== false,
           cents:
             data.overridePriceCents === undefined || data.overridePriceCents === null
@@ -2099,9 +2323,7 @@ if (!isFirebaseReady) {
       let monthly = false;
 
       bookingSelectedServices.forEach((service) => {
-        const normalizedService = String(service || "")
-          .trim()
-          .toLowerCase();
+        const normalizedService = normalizeServiceLookupKey(service);
         if (!normalizedService) return;
 
         const catalogEntry = catalogByName.get(normalizedService) || catalogById.get(normalizedService);
@@ -2444,6 +2666,7 @@ if (!isFirebaseReady) {
     const fallbackPaymentStatus = normalizedStatus(data.fallbackPaymentStatus || "");
     const outstandingBalance = Number(data.outstandingAmount || data.outstandingBalanceCents || 0);
     const hasOutstanding = outstandingBalance > 0;
+    const selectedTier = resolvePresentationTierConfigFromData(data);
     const mandateReason = String(data.mandateReason || "").trim();
     const mandateUrl = String(data.mandateUrl || "").trim();
     const assessmentFeePaymentUrl = String(data.assessmentFeePaymentUrl || "").trim();
@@ -2480,10 +2703,15 @@ if (!isFirebaseReady) {
     let message = "Your account is active and ready for bookings.";
 
     if (assessmentFeeStatus !== "paid") {
-      title = "Assessment fee";
-      message = `Kindly settle the once-off assessment fee of ${formatCurrency(
-        data.adminFeeCents || 29999
-      )} to begin your Curator presentation journey.`;
+      if (!selectedTier) {
+        title = "Select your collection";
+        message = "Choose Core, Refined, Gallery, or Signature before arranging the assessment fee payment.";
+      } else {
+        title = `${selectedTier.name} assessment fee`;
+        message = `${selectedTier.name} includes ${selectedTier.recurringSummary.join(", ")}. Kindly settle the once-off assessment fee of ${formatCurrency(
+          selectedTier.assessmentFeeCents
+        )} to begin your Curator presentation journey.`;
+      }
     } else if (inspectionStatus !== "completed") {
       title = "Inspection in preparation";
       message = "Your inspection is being arranged. We will let you know as soon as it has been completed.";
@@ -2529,6 +2757,7 @@ if (!isFirebaseReady) {
 
     if (statusTitle) statusTitle.textContent = title;
     if (statusMessage) statusMessage.textContent = message;
+    renderPresentationTierSelector(data);
 
     if (outstandingBadge) {
       if (hasOutstanding) {
@@ -3316,6 +3545,14 @@ if (!isFirebaseReady) {
   const startPaymentRequest = async (gateway) => {
     if (!currentUser || !currentUserData) return;
     setFeedback(paymentFeedback, "");
+    if (isAssessmentTierRequired() && !hasSelectedPresentationTier()) {
+      setFeedback(
+        presentationTierFeedback,
+        "Select Core, Refined, Gallery, or Signature before requesting your assessment fee payment.",
+        true
+      );
+      return;
+    }
     if (!hasAcceptedTerms(paymentTermsCheckbox)) {
       setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
       syncPaymentConsentState();
@@ -3886,8 +4123,8 @@ if (!isFirebaseReady) {
 
   const resolveServiceSummary = (data) => {
     const services = Array.isArray(data.services) ? data.services.filter(Boolean) : [];
-    if (services.length) return services.join(", ");
-    return String(data.serviceName || data.service || data.category || "Booking").trim() || "Booking";
+    if (services.length) return services.map((service) => displayServiceName(service)).join(", ");
+    return displayServiceName(String(data.serviceName || data.service || data.category || "Booking").trim() || "Booking");
   };
 
   const buildBookingMeta = (data, options = {}) => {

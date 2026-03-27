@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-    <link rel="stylesheet" href="styles.css?v=20260325g" />
+    <link rel="stylesheet" href="styles.css?v=20260327a" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -76,6 +76,16 @@
                 <li><span>Pay Now</span><span data-step="payNow">Pending</span></li>
                 <li><span>Activation</span><span data-step="activation">Pending</span></li>
               </ul>
+              <div class="tier-selection-card" data-presentation-tier-panel>
+                <div class="tier-selection-copy">
+                  <p class="tier-selection-tag">Presentation Collection</p>
+                  <h4>Select your collection</h4>
+                  <p>Choose the collection that matches the weekly presentation standard you would like Curator to prepare before settling the assessment fee.</p>
+                </div>
+                <div class="tier-selection-grid" data-presentation-tier-grid></div>
+                <div class="tier-selection-summary" data-presentation-tier-summary></div>
+                <p class="form-feedback" data-presentation-tier-feedback role="status" aria-live="polite"></p>
+              </div>
               <div class="form-actions">
                 <button class="btn primary" type="button" data-request-paynow>Request secure payment link</button>
                 <button class="btn ghost" type="button" data-request-card>Pay by card</button>
@@ -173,7 +183,7 @@
                 </div>
               </form>
               <p class="form-feedback payment-feedback-banner" data-payment-feedback role="status" aria-live="polite"></p>
-              <p class="portal-note">The assessment fee includes the inspection report.</p>
+              <p class="portal-note">Your selected collection guides the inspection scope, and the assessment fee includes the inspection report.</p>
             </div>
 
             <div class="dashboard-card help-card settings-card">
@@ -268,6 +278,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260325h"></script>
+    <script src="app.js?v=20260327b"></script>
   </body>
 </html>

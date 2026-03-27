@@ -1037,6 +1037,10 @@ const renderPresentationTierSelector = (data) => {
   `;
 };
 
+if (activationPage && presentationTierPanel && presentationTierGrid && presentationTierSummary) {
+  renderPresentationTierSelector({ assessmentFeeStatus: "unpaid" });
+}
+
 const closeBookingNotice = () => {
   if (!bookingNotice) return;
   bookingNotice.classList.add("is-hidden");

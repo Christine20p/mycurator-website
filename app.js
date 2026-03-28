@@ -4533,28 +4533,62 @@ if (!isFirebaseReady) {
     if (!adminPage || !db || !currentUser || adminDataLoaded) return;
     adminDataLoaded = true;
 
+    const normalizeDashboardDocs = (items, options = {}) => {
+      const { includePath = false } = options;
+      if (!Array.isArray(items)) return [];
+      return items.map((item) => ({
+        id: String(item?.id || "").trim(),
+        ...(includePath ? { path: String(item?.path || "").trim() } : {}),
+        data: item?.data && typeof item.data === "object" ? item.data : {},
+      }));
+    };
+
     let users = [];
+    let bookings = [];
+    let mandates = [];
+    let incidents = [];
+    let notifications = [];
+    let dashboardLoadedFromServer = false;
+
     try {
       if (functions) {
-        const result = await functions.httpsCallable("adminGetPortalUsers")();
-        users = Array.isArray(result?.data?.users)
-          ? result.data.users.map((item) => ({
-              id: String(item?.id || "").trim(),
-              data: item?.data && typeof item.data === "object" ? item.data : {},
-            }))
-          : [];
+        const result = await functions.httpsCallable("adminGetPortalDashboard")({ limit: 50 });
+        users = normalizeDashboardDocs(result?.data?.users);
+        bookings = normalizeDashboardDocs(result?.data?.bookings, { includePath: true }).filter((booking) =>
+          shouldIncludeAdminBooking(booking.data)
+        );
+        mandates = normalizeDashboardDocs(result?.data?.mandates, { includePath: true });
+        incidents = normalizeDashboardDocs(result?.data?.incidents, { includePath: true });
+        notifications = normalizeDashboardDocs(result?.data?.notifications, { includePath: true });
+        dashboardLoadedFromServer = true;
       } else {
         const userSnap = await db.collection("users").get();
         users = userSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
       }
     } catch (error) {
-      try {
-        const userSnap = await db.collection("users").get();
-        users = userSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
-      } catch (fallbackError) {
-        adminDataLoaded = false;
-        showMessage("We couldn't load client data. Please try again.");
-        return;
+      if (functions) {
+        try {
+          const result = await functions.httpsCallable("adminGetPortalUsers")();
+          users = normalizeDashboardDocs(result?.data?.users);
+        } catch (callableFallbackError) {
+          try {
+            const userSnap = await db.collection("users").get();
+            users = userSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+          } catch (fallbackError) {
+            adminDataLoaded = false;
+            showMessage("We couldn't load client data. Please try again.");
+            return;
+          }
+        }
+      } else {
+        try {
+          const userSnap = await db.collection("users").get();
+          users = userSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+        } catch (fallbackError) {
+          adminDataLoaded = false;
+          showMessage("We couldn't load client data. Please try again.");
+          return;
+        }
       }
     }
 
@@ -4604,28 +4638,29 @@ if (!isFirebaseReady) {
     renderUserList(adminAgentsList, agents, "Agents will appear here.");
     renderUserList(adminWorkersList, workers, "Workers will appear here.");
 
-    let bookings = [];
-    try {
-      let query = db.collectionGroup("bookings").orderBy("timestamp", "desc").limit(30);
-      let snap = await query.get();
-      bookings = snap.docs
-        .map((doc) => ({ id: doc.id, data: doc.data() || {} }))
-        .filter((booking) => shouldIncludeAdminBooking(booking.data));
-    } catch (error) {
+    if (!dashboardLoadedFromServer) {
       try {
-        let query = db.collectionGroup("bookings").orderBy("createdAt", "desc").limit(30);
+        let query = db.collectionGroup("bookings").orderBy("timestamp", "desc").limit(30);
         let snap = await query.get();
         bookings = snap.docs
           .map((doc) => ({ id: doc.id, data: doc.data() || {} }))
           .filter((booking) => shouldIncludeAdminBooking(booking.data));
-      } catch (err) {
+      } catch (error) {
         try {
-          let snap = await db.collectionGroup("bookings").limit(30).get();
+          let query = db.collectionGroup("bookings").orderBy("createdAt", "desc").limit(30);
+          let snap = await query.get();
           bookings = snap.docs
             .map((doc) => ({ id: doc.id, data: doc.data() || {} }))
             .filter((booking) => shouldIncludeAdminBooking(booking.data));
-        } catch (finalError) {
-          showMessage("We couldn't load bookings. Please try again.");
+        } catch (err) {
+          try {
+            let snap = await db.collectionGroup("bookings").limit(30).get();
+            bookings = snap.docs
+              .map((doc) => ({ id: doc.id, data: doc.data() || {} }))
+              .filter((booking) => shouldIncludeAdminBooking(booking.data));
+          } catch (finalError) {
+            showMessage("We couldn't load bookings. Please try again.");
+          }
         }
       }
     }
@@ -4658,16 +4693,17 @@ if (!isFirebaseReady) {
       renderBookingList(adminBookingsList, bookings, "Bookings will appear here.");
     }
 
-    let mandates = [];
-    try {
-      const mandateSnap = await db.collection("mandate_requests").orderBy("createdAt", "desc").limit(30).get();
-      mandates = mandateSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
-    } catch (error) {
+    if (!dashboardLoadedFromServer) {
       try {
-        const mandateSnap = await db.collection("mandate_requests").limit(30).get();
+        const mandateSnap = await db.collection("mandate_requests").orderBy("createdAt", "desc").limit(30).get();
         mandates = mandateSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
-      } catch (fallbackError) {
-        mandates = [];
+      } catch (error) {
+        try {
+          const mandateSnap = await db.collection("mandate_requests").limit(30).get();
+          mandates = mandateSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+        } catch (fallbackError) {
+          mandates = [];
+        }
       }
     }
 
@@ -4699,20 +4735,21 @@ if (!isFirebaseReady) {
       }
     }
 
-    let incidents = [];
-    try {
-      const incidentSnap = await db.collectionGroup("incidents").orderBy("createdAt", "desc").limit(50).get();
-      incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, path: doc.ref.path, data: doc.data() || {} }));
-    } catch (error) {
+    if (!dashboardLoadedFromServer) {
       try {
-        const incidentSnap = await db.collectionGroup("incidents").orderBy("timestamp", "desc").limit(50).get();
+        const incidentSnap = await db.collectionGroup("incidents").orderBy("createdAt", "desc").limit(50).get();
         incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, path: doc.ref.path, data: doc.data() || {} }));
-      } catch (fallbackError) {
+      } catch (error) {
         try {
-          const incidentSnap = await db.collectionGroup("incidents").limit(50).get();
+          const incidentSnap = await db.collectionGroup("incidents").orderBy("timestamp", "desc").limit(50).get();
           incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, path: doc.ref.path, data: doc.data() || {} }));
-        } catch (finalError) {
-          incidents = [];
+        } catch (fallbackError) {
+          try {
+            const incidentSnap = await db.collectionGroup("incidents").limit(50).get();
+            incidents = incidentSnap.docs.map((doc) => ({ id: doc.id, path: doc.ref.path, data: doc.data() || {} }));
+          } catch (finalError) {
+            incidents = [];
+          }
         }
       }
     }
@@ -4933,32 +4970,35 @@ if (!isFirebaseReady) {
     }
 
     if (adminCommsRecent) {
-      try {
-        const commsSnap = await db
-          .collection("admin_notifications")
-          .orderBy("createdAt", "desc")
-          .limit(20)
-          .get();
-        const comms = commsSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
-        adminCommsRecent.innerHTML = "";
-        if (!comms.length) {
-          clearList(adminCommsRecent, "Notifications will appear here.");
-        } else {
-          comms.forEach((note) => {
-            const data = note.data || {};
-            const card = createRoleCard({
-              title: data.title || "Notification",
-              meta: [
-                data.body || data.message || "",
-                data.target ? `Target: ${data.target}` : "",
-                data.createdAt ? formatDateTime(toDate(data.createdAt)) : "",
-              ],
-            });
-            adminCommsRecent.appendChild(card);
-          });
+      if (!dashboardLoadedFromServer) {
+        try {
+          const commsSnap = await db
+            .collection("admin_notifications")
+            .orderBy("createdAt", "desc")
+            .limit(20)
+            .get();
+          notifications = commsSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+        } catch (error) {
+          notifications = [];
         }
-      } catch (error) {
+      }
+
+      adminCommsRecent.innerHTML = "";
+      if (!notifications.length) {
         clearList(adminCommsRecent, "Notifications will appear here.");
+      } else {
+        notifications.forEach((note) => {
+          const data = note.data || {};
+          const card = createRoleCard({
+            title: data.title || "Notification",
+            meta: [
+              data.body || data.message || "",
+              data.target ? `Target: ${data.target}` : "",
+              data.createdAt ? formatDateTime(toDate(data.createdAt)) : "",
+            ],
+          });
+          adminCommsRecent.appendChild(card);
+        });
       }
     }
   };

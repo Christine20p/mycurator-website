@@ -4515,8 +4515,25 @@ if (!isFirebaseReady) {
       const userSnap = await db.collection("users").get();
       users = userSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
     } catch (error) {
-      showMessage("We couldn't load user data. Please try again.");
-      return;
+      if (functions) {
+        try {
+          const result = await functions.httpsCallable("adminGetPortalUsers")();
+          users = Array.isArray(result?.data?.users)
+            ? result.data.users.map((item) => ({
+                id: String(item?.id || "").trim(),
+                data: item?.data && typeof item.data === "object" ? item.data : {},
+              }))
+            : [];
+        } catch (fallbackError) {
+          adminDataLoaded = false;
+          showMessage("We couldn't load client data. Please try again.");
+          return;
+        }
+      } else {
+        adminDataLoaded = false;
+        showMessage("We couldn't load client data. Please try again.");
+        return;
+      }
     }
 
     const clients = [];

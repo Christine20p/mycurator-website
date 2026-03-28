@@ -690,6 +690,7 @@ const CUSTOM_MANDATE_BANK_ID = "__other__";
 const PAYMENT_TERMS_VERSION = "2026-03-20";
 const PAYMENT_TERMS_REQUIRED_MESSAGE =
   "Please accept the Payment Terms & Conditions to continue.";
+const PAYNOW_REQUEST_POLL_DELAYS_MS = [250, 500, 900, 1400, 2000, 2800];
 const ADMIN_INCIDENT_QUICK_REPLIES = [
   {
     label: "Acknowledge",
@@ -1267,6 +1268,84 @@ const postHttpFunction = async (path, payload) => {
     throw new Error(result.error || "Request failed.");
   }
   return result;
+};
+
+const readFirestoreDocumentOnce = async (docRef) => {
+  if (!docRef) return null;
+  try {
+    return await docRef.get({ source: "server" });
+  } catch (error) {
+    try {
+      return await docRef.get();
+    } catch (fallbackError) {
+      return null;
+    }
+  }
+};
+
+const extractPayNowRequestState = (data = {}) => ({
+  redirectUrl: String(data.redirectUrl || data.payNowUrl || "").trim(),
+  status: String(data.status || data.payNowStatus || "").trim().toLowerCase(),
+  paymentStatus: String(data.paymentStatus || "").trim().toLowerCase(),
+  bookingSyncStatus: String(data.bookingSyncStatus || "").trim().toLowerCase(),
+  processingMessage: String(data.processingMessage || data.message || "").trim(),
+  errorMessage: String(data.errorMessage || "").trim(),
+});
+
+const watchPayNowRequest = (requestId, onUpdate, initialData = null) => {
+  if (!db || !requestId || typeof onUpdate !== "function") {
+    return () => {};
+  }
+
+  const docRef = db.collection("paynow_requests").doc(requestId);
+  let stopped = false;
+  let pollTimer = null;
+  let pollIndex = 0;
+  let lastSignature = "";
+
+  const emit = (rawData) => {
+    if (stopped || !rawData) return;
+    const signature = JSON.stringify(extractPayNowRequestState(rawData));
+    if (signature === lastSignature) return;
+    lastSignature = signature;
+    onUpdate(rawData);
+  };
+
+  const schedulePoll = () => {
+    if (stopped || pollIndex >= PAYNOW_REQUEST_POLL_DELAYS_MS.length) {
+      return;
+    }
+
+    const delay = PAYNOW_REQUEST_POLL_DELAYS_MS[pollIndex];
+    pollIndex += 1;
+    pollTimer = window.setTimeout(async () => {
+      const snapshot = await readFirestoreDocumentOnce(docRef);
+      if (snapshot?.exists) {
+        emit(snapshot.data() || {});
+      }
+      schedulePoll();
+    }, delay);
+  };
+
+  const unsubscribe = docRef.onSnapshot((doc) => {
+    if (doc.exists) {
+      emit(doc.data() || {});
+    }
+  });
+
+  if (initialData && typeof initialData === "object") {
+    emit(initialData);
+  }
+  schedulePoll();
+
+  return () => {
+    stopped = true;
+    if (pollTimer) {
+      window.clearTimeout(pollTimer);
+      pollTimer = null;
+    }
+    unsubscribe();
+  };
 };
 
 const maskCellphoneForDisplay = (value) => {
@@ -3633,39 +3712,90 @@ if (!isFirebaseReady) {
       });
       const response = result && result.data ? result.data : {};
       const requestId = String(response.requestId || "").trim();
-      if (!requestId) {
+      const initialState = extractPayNowRequestState(response);
+      if (!requestId && !initialState.redirectUrl) {
         throw new Error("We could not prepare your secure payment just now.");
       }
 
-      setFeedback(paymentFeedback, response.message || "Preparing your secure payment link...");
+      setFeedback(
+        paymentFeedback,
+        initialState.processingMessage || "Preparing your secure payment link..."
+      );
+
+      if (initialState.redirectUrl && openPayNowButton) {
+        continueInCurrentWindow(initialState.redirectUrl, {
+          button: openPayNowButton,
+          consentCheckbox: paymentTermsCheckbox,
+          onConsentMissing: () => {
+            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+          },
+          onReady: () => {
+            setFeedback(
+              paymentFeedback,
+              "Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment."
+            );
+          },
+        });
+        syncPaymentConsentState();
+      }
+
+      if (!requestId) {
+        return;
+      }
+
       stopPayNowListener();
-      payNowListener = db
-        .collection("paynow_requests")
-        .doc(requestId)
-        .onSnapshot((doc) => {
-          const data = doc.data() || {};
-          if (data.redirectUrl) {
-            if (openPayNowButton) {
-              continueInCurrentWindow(data.redirectUrl, {
-                button: openPayNowButton,
-                consentCheckbox: paymentTermsCheckbox,
-                onConsentMissing: () => {
-                  setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-                },
-                onReady: () => {
-                  setFeedback(
-                    paymentFeedback,
-                    "Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment."
-                  );
-                },
-              });
-            }
+      payNowListener = watchPayNowRequest(
+        requestId,
+        (data) => {
+          const requestState = extractPayNowRequestState(data);
+
+          if (requestState.redirectUrl && openPayNowButton) {
+            continueInCurrentWindow(requestState.redirectUrl, {
+              button: openPayNowButton,
+              consentCheckbox: paymentTermsCheckbox,
+              onConsentMissing: () => {
+                setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+              },
+              onReady: () => {
+                setFeedback(
+                  paymentFeedback,
+                  "Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment."
+                );
+              },
+            });
             syncPaymentConsentState();
+          } else if (requestState.processingMessage) {
+            setFeedback(paymentFeedback, requestState.processingMessage);
           }
-          if (data.status && ["paid", "declined", "failed"].includes(String(data.status).toLowerCase())) {
+
+          if (requestState.status === "paid" || requestState.paymentStatus === "paid") {
+            if (openPayNowButton) {
+              openPayNowButton.classList.add("is-hidden");
+              openPayNowButton.onclick = null;
+            }
+            setFeedback(
+              paymentFeedback,
+              requestState.processingMessage || "Payment received. Refreshing your account status."
+            );
+            stopPayNowListener();
+            return;
+          }
+
+          if (requestState.errorMessage || ["declined", "failed"].includes(requestState.status)) {
+            if (openPayNowButton) {
+              openPayNowButton.classList.add("is-hidden");
+              openPayNowButton.onclick = null;
+            }
+            setFeedback(
+              paymentFeedback,
+              requestState.errorMessage || "Payment was not completed. Please try again.",
+              true
+            );
             stopPayNowListener();
           }
-        });
+        },
+        response
+      );
     } catch (error) {
       setFeedback(paymentFeedback, error.message || "We could not prepare your secure payment just now.", true);
     }
@@ -4042,26 +4172,43 @@ if (!isFirebaseReady) {
           return;
         }
 
-        if (result.status !== "payment_required" || !result.requestId) {
+        const initialRequestState = extractPayNowRequestState(result);
+        const requestId = String(result.requestId || "").trim();
+
+        if (result.status !== "payment_required" || (!requestId && !initialRequestState.redirectUrl)) {
           throw new Error("We could not prepare your secure payment just now.");
         }
 
-        setBookingFeedback("Preparing your secure payment link...");
-        stopPayNowListener();
-        payNowListener = db
-          .collection("paynow_requests")
-          .doc(result.requestId)
-          .onSnapshot((doc) => {
-            const data = doc.data() || {};
-            const redirectUrl = String(data.redirectUrl || data.payNowUrl || "").trim();
-            const status = String(data.status || data.payNowStatus || "").trim().toLowerCase();
-            const paymentStatus = String(data.paymentStatus || "").trim().toLowerCase();
-            const bookingSyncStatus = String(data.bookingSyncStatus || "").trim().toLowerCase();
-            const processingMessage = String(data.processingMessage || "").trim();
-            const errorMessage = String(data.errorMessage || "").trim();
+        setBookingFeedback(
+          initialRequestState.processingMessage || "Preparing your secure payment link..."
+        );
 
-            if (redirectUrl) {
-              continueInCurrentWindow(redirectUrl, {
+        if (initialRequestState.redirectUrl) {
+          continueInCurrentWindow(initialRequestState.redirectUrl, {
+            button: bookingOpenPaymentButton,
+            consentCheckbox: bookingPaymentTermsCheckbox,
+            onConsentMissing: () => {
+              setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+            },
+            onReady: () => {
+              setBookingFeedback("Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment.");
+            },
+          });
+          syncPaymentConsentState();
+        }
+
+        if (!requestId) {
+          return;
+        }
+
+        stopPayNowListener();
+        payNowListener = watchPayNowRequest(
+          requestId,
+          (data) => {
+            const requestState = extractPayNowRequestState(data);
+
+            if (requestState.redirectUrl) {
+              continueInCurrentWindow(requestState.redirectUrl, {
                 button: bookingOpenPaymentButton,
                 consentCheckbox: bookingPaymentTermsCheckbox,
                 onConsentMissing: () => {
@@ -4074,9 +4221,12 @@ if (!isFirebaseReady) {
               syncPaymentConsentState();
             }
 
-            const bookingReady = paymentStatus === "paid" && bookingSyncStatus === "ready";
+            const bookingReady =
+              requestState.paymentStatus === "paid" && requestState.bookingSyncStatus === "ready";
             const bookingStillSyncing =
-              status === "paid" || paymentStatus === "paid" || bookingSyncStatus === "pending";
+              requestState.status === "paid" ||
+              requestState.paymentStatus === "paid" ||
+              requestState.bookingSyncStatus === "pending";
 
             if (bookingReady) {
               if (bookingOpenPaymentButton) {
@@ -4097,17 +4247,22 @@ if (!isFirebaseReady) {
                 bookingOpenPaymentButton.onclick = null;
               }
               setBookingFeedback(
-                processingMessage || "Payment received. We are finalising your booking."
+                requestState.processingMessage || "Payment received. We are finalising your booking."
               );
-            } else if (errorMessage || status === "failed" || status === "declined") {
+            } else if (requestState.errorMessage || ["failed", "declined"].includes(requestState.status)) {
               if (bookingOpenPaymentButton) {
                 bookingOpenPaymentButton.classList.add("is-hidden");
                 bookingOpenPaymentButton.onclick = null;
               }
-              setBookingFeedback(errorMessage || "Payment was not completed. Please try again.", true);
+              setBookingFeedback(
+                requestState.errorMessage || "Payment was not completed. Please try again.",
+                true
+              );
               stopPayNowListener();
             }
-          });
+          },
+          result
+        );
       } catch (error) {
         setBookingFeedback(error.message || "We could not place your booking just now.", true);
       } finally {

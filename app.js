@@ -982,8 +982,10 @@ const ensureAssessmentTierBeforePayment = async () => {
 const renderPresentationTierSelector = (data) => {
   if (!presentationTierPanel || !presentationTierGrid || !presentationTierSummary) return;
 
-  const tier = resolvePresentationTierConfigFromData(data);
-  const needsSelection = String(data?.assessmentFeeStatus || "").trim().toLowerCase() !== "paid";
+  const sourceData = data || currentUserData || {};
+  const tier = resolvePresentationTierConfigFromData(sourceData);
+  const needsSelection =
+    String(sourceData?.assessmentFeeStatus || "").trim().toLowerCase() !== "paid";
   presentationTierPanel.classList.toggle("is-hidden", !needsSelection);
   if (!needsSelection) {
     presentationTierGrid.innerHTML = "";
@@ -1016,21 +1018,32 @@ const renderPresentationTierSelector = (data) => {
     button.addEventListener("click", async () => {
       const tierId = button.getAttribute("data-presentation-tier-option");
       if (!tierId || selectingPresentationTier || !functions || !currentUser) return;
+
+      const previousUserData = currentUserData ? { ...currentUserData } : null;
       selectingPresentationTier = true;
+      applyPresentationTierSelection(tierId, {});
+      updateDashboard(currentUserData);
       renderPresentationTierSelector(currentUserData || {});
       setFeedback(presentationTierFeedback, "Saving your selected collection...");
+
       try {
         const result = await functions.httpsCallable("selectPresentationTier")({
           presentationTier: tierId,
         });
         applyPresentationTierSelection(tierId, result?.data || {});
+        updateDashboard(currentUserData);
         setFeedback(
           presentationTierFeedback,
           `${currentUserData.presentationTierName || PRESENTATION_TIERS[tierId]?.name || "Collection"} selected.`
         );
         stopPayNowListener();
-        updateDashboard(currentUserData);
       } catch (error) {
+        currentUserData = previousUserData;
+        if (currentUserData) {
+          updateDashboard(currentUserData);
+        } else {
+          renderPresentationTierSelector({ assessmentFeeStatus: "unpaid" });
+        }
         setFeedback(
           presentationTierFeedback,
           error.message || "We couldn't save your selected collection just now.",
@@ -1054,8 +1067,10 @@ const renderPresentationTierSelector = (data) => {
     return;
   }
 
-  const summaryItems = Array.isArray(data?.presentationTierRecurringSummary) && data.presentationTierRecurringSummary.length
-    ? data.presentationTierRecurringSummary
+  const summaryItems =
+    Array.isArray(sourceData?.presentationTierRecurringSummary) &&
+    sourceData.presentationTierRecurringSummary.length
+      ? sourceData.presentationTierRecurringSummary
     : tier.recurringSummary;
   presentationTierSummary.innerHTML = `
     <div class="tier-summary-card">

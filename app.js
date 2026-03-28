@@ -495,7 +495,7 @@ const otpPanel = document.querySelector("[data-otp-panel]");
 const otpVerifyButton = document.querySelector("[data-verify-otp]");
 const otpResendButton = document.querySelector("[data-resend-otp]");
 const resetPasswordButton = document.querySelector("[data-reset-password]");
-const signOutButton = document.querySelector("[data-signout]");
+const signOutButtons = document.querySelectorAll("[data-signout]");
 const bookingForm = document.querySelector("[data-booking-form]");
 const registerAddressFieldset = registerForm?.querySelector('[data-address-fieldset="register"]');
 const bookingAddressFieldset = bookingForm?.querySelector('[data-address-fieldset="booking"]');
@@ -3375,9 +3375,32 @@ if (!isFirebaseReady) {
     });
   }
 
-  if (signOutButton && auth) {
-    signOutButton.addEventListener("click", () => {
-      auth.signOut();
+  if (signOutButtons.length && auth) {
+    signOutButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const defaultLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = "Signing out...";
+        try {
+          stopUserListener();
+          stopPayNowListener();
+          stopBookingPropertiesListener();
+          if (workerBookingsListener) workerBookingsListener();
+          workerBookingsListener = null;
+          workerBookingsCache = [];
+          agentDataLoaded = false;
+          adminDataLoaded = false;
+          pendingSecurityChange = null;
+          sessionStorage.removeItem("portalPendingOtp");
+          await auth.signOut();
+          redirectTo("portal-login.html");
+        } catch (error) {
+          showMessage("We couldn't sign you out just now. Please try again.");
+          button.disabled = false;
+          button.textContent = defaultLabel;
+        }
+      });
     });
   }
 
@@ -4512,24 +4535,23 @@ if (!isFirebaseReady) {
 
     let users = [];
     try {
-      const userSnap = await db.collection("users").get();
-      users = userSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
-    } catch (error) {
       if (functions) {
-        try {
-          const result = await functions.httpsCallable("adminGetPortalUsers")();
-          users = Array.isArray(result?.data?.users)
-            ? result.data.users.map((item) => ({
-                id: String(item?.id || "").trim(),
-                data: item?.data && typeof item.data === "object" ? item.data : {},
-              }))
-            : [];
-        } catch (fallbackError) {
-          adminDataLoaded = false;
-          showMessage("We couldn't load client data. Please try again.");
-          return;
-        }
+        const result = await functions.httpsCallable("adminGetPortalUsers")();
+        users = Array.isArray(result?.data?.users)
+          ? result.data.users.map((item) => ({
+              id: String(item?.id || "").trim(),
+              data: item?.data && typeof item.data === "object" ? item.data : {},
+            }))
+          : [];
       } else {
+        const userSnap = await db.collection("users").get();
+        users = userSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+      }
+    } catch (error) {
+      try {
+        const userSnap = await db.collection("users").get();
+        users = userSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+      } catch (fallbackError) {
         adminDataLoaded = false;
         showMessage("We couldn't load client data. Please try again.");
         return;

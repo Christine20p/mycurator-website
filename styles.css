@@ -2259,6 +2259,7 @@ body.nav-closing .site-footer {
   background: rgba(211, 180, 106, 0.12);
   color: var(--ink);
   display: none;
+  overflow-wrap: anywhere;
 }
 
 .portal-message.is-visible {
@@ -2333,12 +2334,14 @@ body.nav-closing .site-footer {
   align-items: center;
   gap: 8px;
   width: fit-content;
+  max-width: 100%;
   padding: 10px 16px;
   border-radius: 999px;
   background: rgba(228, 198, 176, 0.12);
   border: 1px solid rgba(228, 198, 176, 0.28);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
   color: #d7b39c;
+  overflow-wrap: anywhere;
 }
 
 .portal-dashboard-page [data-user-name],
@@ -2515,7 +2518,8 @@ body.nav-closing .site-footer {
 }
 
 .role-panel.is-active {
-  display: block;
+  display: grid;
+  gap: 14px;
   animation: portalFade 0.3s ease;
 }
 
@@ -2583,12 +2587,14 @@ body.nav-closing .site-footer {
 .role-card-title {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .role-card-meta {
   margin: 0;
   color: rgba(11, 11, 12, 0.6);
   font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }
 
 .role-card-response {
@@ -2617,11 +2623,13 @@ body.nav-closing .site-footer {
 .role-card-response-message {
   color: var(--ink);
   font-size: 0.92rem;
+  overflow-wrap: anywhere;
 }
 
 .role-card-response-meta {
   color: rgba(11, 11, 12, 0.56);
   font-size: 0.78rem;
+  overflow-wrap: anywhere;
 }
 
 .role-badge {
@@ -2725,6 +2733,7 @@ body.nav-closing .site-footer {
   display: block;
   font-size: 1rem;
   margin-top: 6px;
+  overflow-wrap: anywhere;
 }
 
 .admin-comms-form textarea {
@@ -2756,6 +2765,7 @@ body.nav-closing .site-footer {
   display: grid;
   gap: 14px;
   align-content: start;
+  min-width: 0;
 }
 
 .settings-card {
@@ -3854,6 +3864,10 @@ body.booking-sheet-open {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
   .booking-hero-pills,
   .booking-sheet-grid {
     grid-template-columns: 1fr;
@@ -3879,6 +3893,59 @@ body.booking-sheet-open {
 
   .service-category-body::before {
     display: none;
+  }
+
+  .dashboard-header {
+    align-items: stretch;
+  }
+
+  .dashboard-header > * {
+    min-width: 0;
+  }
+
+  .dashboard-header > .btn {
+    width: 100%;
+  }
+
+  .role-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .role-tab {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 14px;
+    letter-spacing: 0.1em;
+  }
+
+  .role-panel-header,
+  .form-actions,
+  .role-actions,
+  .role-card-actions,
+  .role-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-actions .btn,
+  .role-actions .btn,
+  .role-card-actions .btn,
+  .role-filters .role-filter,
+  .role-card-actions .role-quick-reply {
+    width: 100%;
+  }
+
+  .activation-steps li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .activation-steps span:last-child {
+    align-self: flex-start;
   }
 }
 
@@ -3934,7 +4001,8 @@ body.booking-sheet-open {
   }
 
   .portal-dashboard-page .dashboard-header,
-  .portal-booking-page .dashboard-header {
+  .portal-booking-page .dashboard-header,
+  .portal-role-page .dashboard-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
@@ -3942,7 +4010,8 @@ body.booking-sheet-open {
   }
 
   .portal-dashboard-page [data-signout],
-  .portal-booking-page [data-signout] {
+  .portal-booking-page [data-signout],
+  .portal-role-page [data-signout] {
     align-self: flex-start;
     margin-top: 2px;
   }
@@ -3953,6 +4022,39 @@ body.booking-sheet-open {
   .portal-role-page .container {
     padding: 16px;
     border-radius: 18px;
+  }
+
+  .dashboard-card,
+  .booking-hero-panel,
+  .booking-flow-card,
+  .booking-summary-card,
+  .booking-sheet-panel,
+  .mandate-form,
+  .account-form {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .role-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .role-tab {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+  }
+
+  .role-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .field.checkbox {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .field.checkbox input {
+    margin-top: 4px;
   }
 
   .container {
@@ -4006,14 +4108,6 @@ body.booking-sheet-open {
 
   .service-category-body {
     padding: 18px;
-  }
-
-  .booking-hero-panel,
-  .booking-flow-card,
-  .booking-summary-card,
-  .booking-sheet-panel {
-    padding: 18px;
-    border-radius: 20px;
   }
 
   .booking-category-grid,

@@ -1392,6 +1392,7 @@ const createPlacesAddressController = (fieldset) => {
   const suggestionsBox = fieldset.querySelector("[data-place-suggestions]");
   let searchTimer = null;
   let requestIndex = 0;
+  let changeHandler = null;
 
   const renderSuggestions = (suggestions, onSelect) => {
     if (!suggestionsBox) return;
@@ -1442,6 +1443,9 @@ const createPlacesAddressController = (fieldset) => {
     const details = collect();
     if (addressInput) {
       addressInput.value = details.formattedAddress;
+    }
+    if (typeof changeHandler === "function") {
+      changeHandler(details);
     }
     return details;
   };
@@ -1530,6 +1534,12 @@ const createPlacesAddressController = (fieldset) => {
   return {
     collect,
     syncAddress,
+    setOnChange(handler) {
+      changeHandler = typeof handler === "function" ? handler : null;
+      if (changeHandler) {
+        changeHandler(collect());
+      }
+    },
     isValid() {
       return isStructuredAddressComplete(collect());
     },
@@ -3160,6 +3170,10 @@ if (!isFirebaseReady) {
     ].forEach((field) => {
       field?.addEventListener("input", syncRegisterSubmitState);
       field?.addEventListener("change", syncRegisterSubmitState);
+    });
+
+    registerAddressController?.setOnChange(() => {
+      syncRegisterSubmitState();
     });
 
     syncRegisterIdentityUi();

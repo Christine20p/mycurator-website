@@ -919,6 +919,11 @@ const setFeedback = (el, message, isError = false) => {
   el.classList.toggle("is-success", hasMessage && !isError);
 };
 
+const formatCurrency = (cents) => {
+  if (!cents) return "R0.00";
+  return `R${(cents / 100).toFixed(2)}`;
+};
+
 const isAssessmentTierRequired = () =>
   Boolean(
     currentUserData &&
@@ -1760,11 +1765,6 @@ if (!isFirebaseReady) {
   if (activationPage || bookingPage) {
     setLoadingState();
   }
-
-  const formatCurrency = (cents) => {
-    if (!cents) return "R0.00";
-    return `R${(cents / 100).toFixed(2)}`;
-  };
 
   const toIsoDateValue = (date) => {
     const year = date.getFullYear();

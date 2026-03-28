@@ -1202,6 +1202,76 @@ const setBookingFeedback = (message, isError = false) => {
 };
 
 const hasAcceptedTerms = (checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked;
+const getBrowserNavigationContext = () => {
+  const userAgent = String(window.navigator?.userAgent || "");
+  const isAndroid = /Android/i.test(userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+  const isAndroidWebView = isAndroid && (/\bwv\b/i.test(userAgent) || /Version\/[\d.]+/i.test(userAgent));
+  const isIOSWebView =
+    isIOS &&
+    !/Safari/i.test(userAgent) &&
+    !/CriOS/i.test(userAgent) &&
+    !/FxiOS/i.test(userAgent) &&
+    !/EdgiOS/i.test(userAgent);
+  const isEmbeddedBrowser =
+    /FBAN|FBAV|Instagram|Line|LinkedInApp|TikTok|Telegram|Snapchat|Pinterest|MicroMessenger/i.test(userAgent);
+  const isStandaloneDisplayMode =
+    typeof window.matchMedia === "function" && window.matchMedia("(display-mode: standalone)").matches;
+  const isIOSStandalone = isIOS && window.navigator?.standalone === true;
+  const isAppShell =
+    typeof window.ReactNativeWebView !== "undefined" ||
+    typeof window.Capacitor !== "undefined" ||
+    typeof window.cordova !== "undefined";
+  return {
+    isAppLike:
+      isAppShell ||
+      isStandaloneDisplayMode ||
+      isIOSStandalone ||
+      isAndroidWebView ||
+      isIOSWebView ||
+      isEmbeddedBrowser,
+  };
+};
+
+const openExternalBrowserTarget = (target) => {
+  try {
+    const popup = window.open(target, "_blank", "noopener,noreferrer");
+    if (popup) {
+      try {
+        popup.opener = null;
+      } catch (error) {
+        // Ignore cross-window opener assignment issues.
+      }
+      if (typeof popup.focus === "function") {
+        popup.focus();
+      }
+      return true;
+    }
+  } catch (error) {
+    // Fall through to anchor navigation.
+  }
+
+  try {
+    const link = document.createElement("a");
+    link.href = target;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer external";
+    link.className = "is-hidden";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+const securePaymentRedirectMessage = () => {
+  const { isAppLike } = getBrowserNavigationContext();
+  return isAppLike
+    ? "Opening your secure payment page. If it does not continue automatically in the app, tap Continue with secure payment."
+    : "Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment.";
+};
 
 const syncPaymentConsentState = () => {
   if (payNowButton) {
@@ -1231,14 +1301,29 @@ const continueInCurrentWindow = (
 ) => {
   const target = String(url || "").trim();
   if (!target) return false;
+  const browserContext = getBrowserNavigationContext();
 
-  const navigate = () => {
+  const navigate = ({ fromButton = false } = {}) => {
     if (consentCheckbox && !hasAcceptedTerms(consentCheckbox)) {
       if (typeof onConsentMissing === "function") {
         onConsentMissing();
       }
       syncPaymentConsentState();
       return false;
+    }
+    if (browserContext.isAppLike && openExternalBrowserTarget(target)) {
+      return true;
+    }
+    if (fromButton && openExternalBrowserTarget(target)) {
+      return true;
+    }
+    try {
+      if (window.top && window.top !== window && window.top.location) {
+        window.top.location.assign(target);
+        return true;
+      }
+    } catch (error) {
+      // Ignore cross-origin frame access and fall back to current window navigation.
     }
     window.location.assign(target);
     return true;
@@ -1247,7 +1332,7 @@ const continueInCurrentWindow = (
   if (button) {
     button.classList.remove("is-hidden");
     button.onclick = () => {
-      navigate();
+      navigate({ fromButton: true });
     };
   }
 
@@ -1267,7 +1352,7 @@ const continueInCurrentWindow = (
   // Let the updated fallback button and status render before leaving the page.
   pendingExternalRedirectTimer = window.setTimeout(() => {
     navigate();
-  }, 120);
+  }, browserContext.isAppLike ? 240 : 120);
 
   return true;
 };
@@ -3778,17 +3863,14 @@ if (!isFirebaseReady) {
         continueInCurrentWindow(initialState.redirectUrl, {
           button: openPayNowButton,
           consentCheckbox: paymentTermsCheckbox,
-          onConsentMissing: () => {
-            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-          },
-          onReady: () => {
-            setFeedback(
-              paymentFeedback,
-              "Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment."
-            );
-          },
-        });
-        syncPaymentConsentState();
+	          onConsentMissing: () => {
+	            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+	          },
+	          onReady: () => {
+	            setFeedback(paymentFeedback, securePaymentRedirectMessage());
+	          },
+	        });
+	        syncPaymentConsentState();
       }
 
       if (!requestId) {
@@ -3805,17 +3887,14 @@ if (!isFirebaseReady) {
             continueInCurrentWindow(requestState.redirectUrl, {
               button: openPayNowButton,
               consentCheckbox: paymentTermsCheckbox,
-              onConsentMissing: () => {
-                setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-              },
-              onReady: () => {
-                setFeedback(
-                  paymentFeedback,
-                  "Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment."
-                );
-              },
-            });
-            syncPaymentConsentState();
+	              onConsentMissing: () => {
+	                setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+	              },
+	              onReady: () => {
+	                setFeedback(paymentFeedback, securePaymentRedirectMessage());
+	              },
+	            });
+	            syncPaymentConsentState();
           } else if (requestState.processingMessage) {
             setFeedback(paymentFeedback, requestState.processingMessage);
           }
@@ -4239,14 +4318,14 @@ if (!isFirebaseReady) {
           continueInCurrentWindow(initialRequestState.redirectUrl, {
             button: bookingOpenPaymentButton,
             consentCheckbox: bookingPaymentTermsCheckbox,
-            onConsentMissing: () => {
-              setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-            },
-            onReady: () => {
-              setBookingFeedback("Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment.");
-            },
-          });
-          syncPaymentConsentState();
+	            onConsentMissing: () => {
+	              setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+	            },
+	            onReady: () => {
+	              setBookingFeedback(securePaymentRedirectMessage());
+	            },
+	          });
+	          syncPaymentConsentState();
         }
 
         if (!requestId) {
@@ -4263,14 +4342,14 @@ if (!isFirebaseReady) {
               continueInCurrentWindow(requestState.redirectUrl, {
                 button: bookingOpenPaymentButton,
                 consentCheckbox: bookingPaymentTermsCheckbox,
-                onConsentMissing: () => {
-                  setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-                },
-                onReady: () => {
-                  setBookingFeedback("Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment.");
-                },
-              });
-              syncPaymentConsentState();
+	                onConsentMissing: () => {
+	                  setBookingFeedback(PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+	                },
+	                onReady: () => {
+	                  setBookingFeedback(securePaymentRedirectMessage());
+	                },
+	              });
+	              syncPaymentConsentState();
             }
 
             const bookingReady =

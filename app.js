@@ -933,6 +933,51 @@ const isAssessmentTierRequired = () =>
 const hasSelectedPresentationTier = () =>
   Boolean(resolvePresentationTierConfigFromData(currentUserData));
 
+const defaultPresentationTier = () => PRESENTATION_TIERS.core;
+
+const applyPresentationTierSelection = (tierId, payload = {}) => {
+  const fallbackTier = PRESENTATION_TIERS[normalizePresentationTierId(tierId)] || defaultPresentationTier();
+  currentUserData = {
+    ...(currentUserData || {}),
+    presentationTier: payload.presentationTier || fallbackTier.id,
+    presentationTierName: payload.presentationTierName || fallbackTier.name || "",
+    presentationTierAssessmentFeeCents:
+      Number(payload.presentationTierAssessmentFeeCents || fallbackTier.assessmentFeeCents || 0) || 0,
+    presentationTierRecurringSummary: Array.isArray(payload.presentationTierRecurringSummary)
+      ? payload.presentationTierRecurringSummary.slice()
+      : fallbackTier.recurringSummary.slice() || [],
+    presentationTierServices: Array.isArray(payload.presentationTierServices)
+      ? payload.presentationTierServices.slice()
+      : [],
+    adminFeeCents:
+      Number(payload.presentationTierAssessmentFeeCents || fallbackTier.assessmentFeeCents || 0) || 0,
+    assessmentFeeStatus: "unpaid",
+    adminFeePaid: false,
+    assessmentFeePaymentRequestId: "",
+    assessmentFeePaymentUrl: "",
+    currentPaymentRequestId: "",
+    currentPaymentType: "",
+    payNowGateway: "ozow",
+  };
+  return currentUserData;
+};
+
+const ensureAssessmentTierBeforePayment = async () => {
+  const existingTier = resolvePresentationTierConfigFromData(currentUserData);
+  if (existingTier || !isAssessmentTierRequired()) {
+    return existingTier || defaultPresentationTier();
+  }
+  if (!functions || !currentUser) {
+    return defaultPresentationTier();
+  }
+  const fallbackTier = defaultPresentationTier();
+  const result = await functions.httpsCallable("selectPresentationTier")({
+    presentationTier: fallbackTier.id,
+  });
+  applyPresentationTierSelection(fallbackTier.id, result?.data || {});
+  return resolvePresentationTierConfigFromData(currentUserData) || fallbackTier;
+};
+
 const renderPresentationTierSelector = (data) => {
   if (!presentationTierPanel || !presentationTierGrid || !presentationTierSummary) return;
 
@@ -977,29 +1022,7 @@ const renderPresentationTierSelector = (data) => {
         const result = await functions.httpsCallable("selectPresentationTier")({
           presentationTier: tierId,
         });
-        const payload = result?.data || {};
-        currentUserData = {
-          ...(currentUserData || {}),
-          presentationTier: payload.presentationTier || tierId,
-          presentationTierName: payload.presentationTierName || PRESENTATION_TIERS[tierId]?.name || "",
-          presentationTierAssessmentFeeCents:
-            Number(payload.presentationTierAssessmentFeeCents || PRESENTATION_TIERS[tierId]?.assessmentFeeCents || 0) || 0,
-          presentationTierRecurringSummary: Array.isArray(payload.presentationTierRecurringSummary)
-            ? payload.presentationTierRecurringSummary.slice()
-            : PRESENTATION_TIERS[tierId]?.recurringSummary.slice() || [],
-          presentationTierServices: Array.isArray(payload.presentationTierServices)
-            ? payload.presentationTierServices.slice()
-            : [],
-          adminFeeCents:
-            Number(payload.presentationTierAssessmentFeeCents || PRESENTATION_TIERS[tierId]?.assessmentFeeCents || 0) || 0,
-          assessmentFeeStatus: "unpaid",
-          adminFeePaid: false,
-          assessmentFeePaymentRequestId: "",
-          assessmentFeePaymentUrl: "",
-          currentPaymentRequestId: "",
-          currentPaymentType: "",
-          payNowGateway: "ozow",
-        };
+        applyPresentationTierSelection(tierId, result?.data || {});
         setFeedback(
           presentationTierFeedback,
           `${currentUserData.presentationTierName || PRESENTATION_TIERS[tierId]?.name || "Collection"} selected.`
@@ -1131,9 +1154,8 @@ const setBookingFeedback = (message, isError = false) => {
 const hasAcceptedTerms = (checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked;
 
 const syncPaymentConsentState = () => {
-  const assessmentTierMissing = isAssessmentTierRequired() && !hasSelectedPresentationTier();
   if (payNowButton) {
-    payNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox) || assessmentTierMissing;
+    payNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
   }
   if (openPayNowButton) {
     openPayNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
@@ -2714,7 +2736,7 @@ if (!isFirebaseReady) {
     const fallbackPaymentStatus = normalizedStatus(data.fallbackPaymentStatus || "");
     const outstandingBalance = Number(data.outstandingAmount || data.outstandingBalanceCents || 0);
     const hasOutstanding = outstandingBalance > 0;
-    const selectedTier = resolvePresentationTierConfigFromData(data);
+    const selectedTier = resolvePresentationTierConfigFromData(data) || defaultPresentationTier();
     const mandateReason = String(data.mandateReason || "").trim();
     const mandateUrl = String(data.mandateUrl || "").trim();
     const assessmentFeePaymentUrl = String(data.assessmentFeePaymentUrl || "").trim();
@@ -2751,15 +2773,10 @@ if (!isFirebaseReady) {
     let message = "Your account is active and ready for bookings.";
 
     if (assessmentFeeStatus !== "paid") {
-      if (!selectedTier) {
-        title = "Select your collection";
-        message = "Choose Core, Refined, Gallery, or Signature before arranging the assessment fee payment.";
-      } else {
-        title = `${selectedTier.name} assessment fee`;
-        message = `${selectedTier.name} ${selectedTier.positioningLine.toLowerCase()}. Includes ${selectedTier.recurringSummary.join(", ")}. Kindly settle the once-off assessment fee of ${formatCurrency(
-          selectedTier.assessmentFeeCents
-        )} to begin your Curator presentation journey.`;
-      }
+      title = "Assessment fee";
+      message = `Kindly settle the once-off assessment fee of ${formatCurrency(
+        Number(data.adminFeeCents || selectedTier?.assessmentFeeCents || 29999)
+      )} to begin your Curator presentation journey.`;
     } else if (inspectionStatus !== "completed") {
       title = "Inspection in preparation";
       message = "Your inspection is being arranged. We will let you know as soon as it has been completed.";
@@ -3600,14 +3617,6 @@ if (!isFirebaseReady) {
   const startPaymentRequest = async (gateway) => {
     if (!currentUser || !currentUserData) return;
     setFeedback(paymentFeedback, "");
-    if (isAssessmentTierRequired() && !hasSelectedPresentationTier()) {
-      setFeedback(
-        presentationTierFeedback,
-        "Select Core, Refined, Gallery, or Signature before requesting your assessment fee payment.",
-        true
-      );
-      return;
-    }
     if (!hasAcceptedTerms(paymentTermsCheckbox)) {
       setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
       syncPaymentConsentState();
@@ -3616,6 +3625,7 @@ if (!isFirebaseReady) {
     if (openPayNowButton) openPayNowButton.classList.add("is-hidden");
 
     try {
+      await ensureAssessmentTierBeforePayment();
       const result = await functions.httpsCallable("startAccountPaymentRequest")({
         gateway: gateway || "ozow",
         paymentTermsAccepted: true,

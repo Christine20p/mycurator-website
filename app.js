@@ -685,6 +685,7 @@ let bookingPricingMessageText = "";
 let bookingPricingRequestId = 0;
 let bookingSubmitting = false;
 let selectingPresentationTier = false;
+let pendingPresentationTierId = "";
 
 const CUSTOM_MANDATE_BANK_ID = "__other__";
 const PAYMENT_TERMS_VERSION = "2026-03-20";
@@ -840,6 +841,37 @@ const resolvePresentationTierConfigFromData = (data) => {
   if (!hasAssessmentFlow) return null;
   return Object.values(PRESENTATION_TIERS).find((tier) => tier.assessmentFeeCents === cents) || null;
 };
+const resolvePendingPresentationTierConfig = () =>
+  PRESENTATION_TIERS[normalizePresentationTierId(pendingPresentationTierId)] || null;
+const resolveEffectivePresentationTierData = (data) => {
+  const sourceData = data || currentUserData || {};
+  const pendingTier = resolvePendingPresentationTierConfig();
+  if (!pendingTier) return sourceData;
+  return {
+    ...sourceData,
+    presentationTier: pendingTier.id,
+    presentationTierId: pendingTier.id,
+    presentationPackage: pendingTier.id,
+    assessmentFeeTier: pendingTier.id,
+    presentationTierName: pendingTier.name,
+    presentationTierAssessmentFeeCents: pendingTier.assessmentFeeCents,
+    presentationTierRecurringSummary: pendingTier.recurringSummary.slice(),
+    adminFeeCents: pendingTier.assessmentFeeCents,
+  };
+};
+const resolveEffectivePresentationTierConfig = (data) =>
+  resolvePendingPresentationTierConfig() || resolvePresentationTierConfigFromData(data);
+const syncPendingPresentationTierFromSnapshot = (data) => {
+  const pendingTier = resolvePendingPresentationTierConfig();
+  if (!pendingTier) return;
+  const snapshotTier = resolvePresentationTierConfigFromData(data);
+  const assessmentFeeStatus = String(data?.assessmentFeeStatus || (data?.adminFeePaid === true ? "paid" : ""))
+    .trim()
+    .toLowerCase();
+  if (assessmentFeeStatus === "paid" || snapshotTier?.id === pendingTier.id) {
+    pendingPresentationTierId = "";
+  }
+};
 const BOOKING_CATEGORY_SERVICES = {
   Residential: [
     "Essential Cleaning",
@@ -932,7 +964,7 @@ const isAssessmentTierRequired = () =>
   );
 
 const hasSelectedPresentationTier = () =>
-  Boolean(resolvePresentationTierConfigFromData(currentUserData));
+  Boolean(resolveEffectivePresentationTierConfig(currentUserData));
 
 const defaultPresentationTier = () => PRESENTATION_TIERS.core;
 
@@ -964,7 +996,7 @@ const applyPresentationTierSelection = (tierId, payload = {}) => {
 };
 
 const ensureAssessmentTierBeforePayment = async () => {
-  const existingTier = resolvePresentationTierConfigFromData(currentUserData);
+  const existingTier = resolveEffectivePresentationTierConfig(currentUserData);
   if (existingTier || !isAssessmentTierRequired()) {
     return existingTier || defaultPresentationTier();
   }
@@ -976,14 +1008,14 @@ const ensureAssessmentTierBeforePayment = async () => {
     presentationTier: fallbackTier.id,
   });
   applyPresentationTierSelection(fallbackTier.id, result?.data || {});
-  return resolvePresentationTierConfigFromData(currentUserData) || fallbackTier;
+  return resolveEffectivePresentationTierConfig(currentUserData) || fallbackTier;
 };
 
 const renderPresentationTierSelector = (data) => {
   if (!presentationTierPanel || !presentationTierGrid || !presentationTierSummary) return;
 
-  const sourceData = data || currentUserData || {};
-  const tier = resolvePresentationTierConfigFromData(sourceData);
+  const sourceData = resolveEffectivePresentationTierData(data);
+  const tier = resolveEffectivePresentationTierConfig(sourceData);
   const needsSelection =
     String(sourceData?.assessmentFeeStatus || "").trim().toLowerCase() !== "paid";
   presentationTierPanel.classList.toggle("is-hidden", !needsSelection);
@@ -1021,6 +1053,7 @@ const renderPresentationTierSelector = (data) => {
 
       const previousUserData = currentUserData ? { ...currentUserData } : null;
       selectingPresentationTier = true;
+      pendingPresentationTierId = tierId;
       applyPresentationTierSelection(tierId, {});
       updateDashboard(currentUserData);
       renderPresentationTierSelector(currentUserData || {});
@@ -1038,6 +1071,7 @@ const renderPresentationTierSelector = (data) => {
         );
         stopPayNowListener();
       } catch (error) {
+        pendingPresentationTierId = "";
         currentUserData = previousUserData;
         if (currentUserData) {
           updateDashboard(currentUserData);
@@ -1866,7 +1900,9 @@ const startUserListener = (uid, onUpdate) => {
       showMessage("We could not load your profile. Please contact support.");
       return;
     }
-    currentUserData = doc.data();
+    const snapshotData = doc.data();
+    syncPendingPresentationTierFromSnapshot(snapshotData);
+    currentUserData = snapshotData;
     if (onUpdate) onUpdate(currentUserData);
   });
 };
@@ -2830,7 +2866,8 @@ if (!isFirebaseReady) {
     const fallbackPaymentStatus = normalizedStatus(data.fallbackPaymentStatus || "");
     const outstandingBalance = Number(data.outstandingAmount || data.outstandingBalanceCents || 0);
     const hasOutstanding = outstandingBalance > 0;
-    const selectedTier = resolvePresentationTierConfigFromData(data) || defaultPresentationTier();
+    const effectiveData = resolveEffectivePresentationTierData(data);
+    const selectedTier = resolveEffectivePresentationTierConfig(effectiveData) || defaultPresentationTier();
     const mandateReason = String(data.mandateReason || "").trim();
     const mandateUrl = String(data.mandateUrl || "").trim();
     const assessmentFeePaymentUrl = String(data.assessmentFeePaymentUrl || "").trim();
@@ -2869,7 +2906,7 @@ if (!isFirebaseReady) {
     if (assessmentFeeStatus !== "paid") {
       title = "Assessment fee";
       message = `Kindly settle the once-off assessment fee of ${formatCurrency(
-        Number(data.adminFeeCents || selectedTier?.assessmentFeeCents || 29999)
+        Number(effectiveData.adminFeeCents || selectedTier?.assessmentFeeCents || 29999)
       )} to begin your Curator presentation journey.`;
     } else if (inspectionStatus !== "completed") {
       title = "Inspection in preparation";
@@ -2916,7 +2953,7 @@ if (!isFirebaseReady) {
 
     if (statusTitle) statusTitle.textContent = title;
     if (statusMessage) statusMessage.textContent = message;
-    renderPresentationTierSelector(data);
+    renderPresentationTierSelector(effectiveData);
 
     if (outstandingBadge) {
       if (hasOutstanding) {

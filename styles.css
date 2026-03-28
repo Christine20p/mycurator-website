@@ -3756,6 +3756,16 @@ body.booking-sheet-open {
     flex-direction: column;
   }
 
+  .activation-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .activation-dashboard-grid .settings-card,
+  .activation-dashboard-grid .activation-card,
+  .activation-dashboard-grid .concierge-card {
+    grid-area: auto;
+  }
+
   .booking-dashboard-grid {
     grid-template-columns: 1fr;
   }

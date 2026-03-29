@@ -1274,7 +1274,8 @@ const syncPaymentConsentState = () => {
   const hasPortalConsent = hasAcceptedTerms(paymentTermsCheckbox);
   const hasRequiredTierSelection = !isAssessmentTierRequired() || hasSelectedPresentationTier();
   if (payNowButton) {
-    payNowButton.disabled = !hasPortalConsent || !hasRequiredTierSelection;
+    payNowButton.disabled =
+      !portalCurrentPaymentType || !hasPortalConsent || !hasRequiredTierSelection;
   }
   if (openPayNowButton) {
     openPayNowButton.disabled = !hasPortalConsent || !hasRequiredTierSelection;
@@ -2983,7 +2984,9 @@ if (!isFirebaseReady) {
         ? "Continue with secure payment"
         : currentPaymentType === "fallback"
           ? "Settle outstanding balance"
-          : "Settle initial amount";
+          : currentPaymentType === "pay_now"
+            ? "Settle initial amount"
+            : "Continue with secure payment";
 
     let title = "Your service profile is ready";
     let message = "Your account is active and ready for bookings.";
@@ -3062,7 +3065,7 @@ if (!isFirebaseReady) {
 
     if (payNowButton) {
       payNowButton.textContent = paymentButtonLabel;
-      payNowButton.classList.toggle("is-hidden", !currentPaymentType);
+      payNowButton.classList.remove("is-hidden");
     }
 
     if (openPayNowButton) {
@@ -3938,6 +3941,10 @@ if (!isFirebaseReady) {
 
   if (payNowButton) {
     payNowButton.addEventListener("click", () => {
+      if (!portalCurrentPaymentType) {
+        setFeedback(paymentFeedback, "Payment is not available for this stage yet.", true);
+        return;
+      }
       if (usesPrimaryPortalPaymentButton()) {
         continueInCurrentWindow(portalCurrentPaymentUrl, {
           consentCheckbox: paymentTermsCheckbox,

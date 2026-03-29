@@ -599,6 +599,8 @@ const customBankNote = document.querySelector("[data-custom-bank-note]");
 const stepElements = document.querySelectorAll("[data-step]");
 const roleTabs = document.querySelectorAll("[data-role-tab]");
 const rolePanels = document.querySelectorAll("[data-role-panel]");
+let portalCurrentPaymentType = "";
+let portalCurrentPaymentUrl = "";
 
 const workerPage = document.querySelector("[data-worker-page]");
 const workerStatToday = document.querySelector("[data-worker-stat-today]");
@@ -1264,6 +1266,9 @@ const securePaymentRedirectMessage = () => {
     ? "Opening your secure payment page. If it does not continue automatically in the app, tap Continue with secure payment."
     : "Taking you to our secure payment page. If it does not continue automatically, select Continue with secure payment.";
 };
+
+const usesPrimaryPortalPaymentButton = () =>
+  portalCurrentPaymentType === "assessment_fee" && Boolean(portalCurrentPaymentUrl);
 
 const syncPaymentConsentState = () => {
   const hasPortalConsent = hasAcceptedTerms(paymentTermsCheckbox);
@@ -3052,17 +3057,16 @@ if (!isFirebaseReady) {
     updateStep("payNow", readableStepStatus(payNowStatus));
     updateStep("activation", readableStepStatus(activationStatus));
     updateStep("tier", String(effectiveData.presentationTierName || resolvedTier?.name || "").trim() || "Pending");
+    portalCurrentPaymentType = currentPaymentType;
+    portalCurrentPaymentUrl = currentPaymentUrl;
 
     if (payNowButton) {
       payNowButton.textContent = paymentButtonLabel;
-      payNowButton.classList.toggle(
-        "is-hidden",
-        !currentPaymentType || (currentPaymentType === "assessment_fee" && Boolean(currentPaymentUrl))
-      );
+      payNowButton.classList.toggle("is-hidden", !currentPaymentType);
     }
 
     if (openPayNowButton) {
-      if (currentPaymentUrl) {
+      if (currentPaymentUrl && !usesPrimaryPortalPaymentButton()) {
         continueInCurrentWindow(currentPaymentUrl, {
           button: openPayNowButton,
           consentCheckbox: paymentTermsCheckbox,
@@ -3858,18 +3862,18 @@ if (!isFirebaseReady) {
         initialState.processingMessage || "Preparing your secure payment link..."
       );
 
-      if (initialState.redirectUrl && openPayNowButton) {
+      if (initialState.redirectUrl) {
         continueInCurrentWindow(initialState.redirectUrl, {
-          button: openPayNowButton,
+          button: usesPrimaryPortalPaymentButton() ? null : openPayNowButton,
           consentCheckbox: paymentTermsCheckbox,
-	          onConsentMissing: () => {
-	            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-	          },
-	          onReady: () => {
-	            setFeedback(paymentFeedback, securePaymentRedirectMessage());
-	          },
-	        });
-	        syncPaymentConsentState();
+          onConsentMissing: () => {
+            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+          },
+          onReady: () => {
+            setFeedback(paymentFeedback, securePaymentRedirectMessage());
+          },
+        });
+        syncPaymentConsentState();
       }
 
       if (!requestId) {
@@ -3882,18 +3886,19 @@ if (!isFirebaseReady) {
         (data) => {
           const requestState = extractPayNowRequestState(data);
 
-          if (requestState.redirectUrl && openPayNowButton) {
+          if (requestState.redirectUrl) {
+            portalCurrentPaymentUrl = requestState.redirectUrl;
             continueInCurrentWindow(requestState.redirectUrl, {
-              button: openPayNowButton,
+              button: usesPrimaryPortalPaymentButton() ? null : openPayNowButton,
               consentCheckbox: paymentTermsCheckbox,
-	              onConsentMissing: () => {
-	                setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
-	              },
-	              onReady: () => {
-	                setFeedback(paymentFeedback, securePaymentRedirectMessage());
-	              },
-	            });
-	            syncPaymentConsentState();
+              onConsentMissing: () => {
+                setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+              },
+              onReady: () => {
+                setFeedback(paymentFeedback, securePaymentRedirectMessage());
+              },
+            });
+            syncPaymentConsentState();
           } else if (requestState.processingMessage) {
             setFeedback(paymentFeedback, requestState.processingMessage);
           }
@@ -3932,7 +3937,21 @@ if (!isFirebaseReady) {
   };
 
   if (payNowButton) {
-    payNowButton.addEventListener("click", () => startPaymentRequest("ozow"));
+    payNowButton.addEventListener("click", () => {
+      if (usesPrimaryPortalPaymentButton()) {
+        continueInCurrentWindow(portalCurrentPaymentUrl, {
+          consentCheckbox: paymentTermsCheckbox,
+          onConsentMissing: () => {
+            setFeedback(paymentFeedback, PAYMENT_TERMS_REQUIRED_MESSAGE, true);
+          },
+          onReady: () => {
+            setFeedback(paymentFeedback, securePaymentRedirectMessage());
+          },
+        });
+        return;
+      }
+      startPaymentRequest("ozow");
+    });
   }
 
   if (mandateForm) {

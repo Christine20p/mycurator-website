@@ -2120,8 +2120,12 @@ body.nav-closing .site-footer {
 
 .tier-option {
   display: grid;
-  gap: 6px;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 8px;
   padding: 14px;
+  aspect-ratio: 1 / 1;
+  align-content: stretch;
+  justify-items: start;
   border-radius: 18px;
   border: 1px solid rgba(122, 94, 71, 0.14);
   background: rgba(255, 250, 245, 0.82);
@@ -2159,16 +2163,19 @@ body.nav-closing .site-footer {
   font-size: 0.84rem;
   line-height: 1.45;
   color: rgba(52, 35, 25, 0.88);
+  align-self: start;
 }
 
 .tier-option-price {
   font-size: 1.12rem;
   color: #342319;
+  align-self: end;
 }
 
 .tier-option-note {
   font-size: 0.78rem;
   color: rgba(11, 11, 12, 0.56);
+  align-self: end;
 }
 
 .tier-summary-card {

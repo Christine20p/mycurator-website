@@ -688,6 +688,7 @@ let bookingPricingRequestId = 0;
 let bookingSubmitting = false;
 let selectingPresentationTier = false;
 let pendingPresentationTierId = "";
+let updateDashboard = () => {};
 
 const CUSTOM_MANDATE_BANK_ID = "__other__";
 const PAYMENT_TERMS_VERSION = "2026-03-20";
@@ -1043,13 +1044,23 @@ const renderPresentationTierSelector = (data) => {
   presentationTierGrid.querySelectorAll("[data-presentation-tier-option]").forEach((button) => {
     button.addEventListener("click", async () => {
       const tierId = button.getAttribute("data-presentation-tier-option");
-      if (!tierId || selectingPresentationTier || !functions || !currentUser) return;
+      if (!tierId || selectingPresentationTier) return;
 
       const previousUserData = currentUserData ? { ...currentUserData } : null;
-      selectingPresentationTier = true;
       pendingPresentationTierId = tierId;
       applyPresentationTierSelection(tierId, {});
       updateDashboard(currentUserData);
+      renderPresentationTierSelector(currentUserData || {});
+      if (!functions || !currentUser) {
+        setFeedback(
+          presentationTierFeedback,
+          "Tier selected locally. Sign in on the hosted portal to save it to your account."
+        );
+        syncPaymentConsentState();
+        return;
+      }
+
+      selectingPresentationTier = true;
       renderPresentationTierSelector(currentUserData || {});
       setFeedback(presentationTierFeedback, "Saving your selected collection...");
 
@@ -2926,7 +2937,7 @@ if (!isFirebaseReady) {
     });
   };
 
-  const updateDashboard = (data) => {
+  updateDashboard = (data) => {
     if (!data) return;
 
     if (userNameLabel) {

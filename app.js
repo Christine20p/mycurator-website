@@ -1115,10 +1115,6 @@ const renderPresentationTierSelector = (data) => {
   `;
 };
 
-if (activationPage && presentationTierPanel && presentationTierGrid && presentationTierSummary) {
-  renderPresentationTierSelector({ assessmentFeeStatus: "unpaid" });
-}
-
 const closeBookingNotice = () => {
   if (!bookingNotice) return;
   bookingNotice.classList.add("is-hidden");
@@ -1831,6 +1827,10 @@ const escapeHtml = (value) =>
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
+
+if (activationPage && presentationTierPanel && presentationTierGrid && presentationTierSummary) {
+  renderPresentationTierSelector({ assessmentFeeStatus: "unpaid" });
+}
 
 const toDate = (value) => {
   if (!value) return null;

@@ -1108,34 +1108,7 @@ const renderPresentationTierSelector = (data) => {
     });
   });
 
-  if (!tier) {
-    presentationTierSummary.innerHTML = `
-      <div class="tier-summary-card">
-        <strong>Select your collection before payment</strong>
-        <p>Core, Refined, Gallery, and Signature each guide the inspection scope and the tailored monthly offer that follows.</p>
-      </div>
-    `;
-    return;
-  }
-
-  const summaryItems =
-    Array.isArray(sourceData?.presentationTierRecurringSummary) &&
-    sourceData.presentationTierRecurringSummary.length
-      ? sourceData.presentationTierRecurringSummary
-    : tier.recurringSummary;
-  presentationTierSummary.innerHTML = `
-    <div class="tier-summary-card">
-      <div class="tier-summary-head">
-        <span class="tier-summary-kicker">Selected Collection</span>
-        <strong>${escapeHtml(tier.name)}</strong>
-        <p>${escapeHtml(tier.positioningLine || "")}</p>
-        <span>${escapeHtml(formatCurrency(tier.assessmentFeeCents))} assessment fee</span>
-      </div>
-      <div class="tier-summary-list">
-        ${summaryItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
-      </div>
-    </div>
-  `;
+  presentationTierSummary.innerHTML = "";
 };
 
 const closeBookingNotice = () => {

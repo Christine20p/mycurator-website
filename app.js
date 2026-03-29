@@ -2952,7 +2952,8 @@ if (!isFirebaseReady) {
     const outstandingBalance = Number(data.outstandingAmount || data.outstandingBalanceCents || 0);
     const hasOutstanding = outstandingBalance > 0;
     const effectiveData = resolveEffectivePresentationTierData(data);
-    const selectedTier = resolveEffectivePresentationTierConfig(effectiveData) || defaultPresentationTier();
+    const resolvedTier = resolveEffectivePresentationTierConfig(effectiveData);
+    const selectedTier = resolvedTier || defaultPresentationTier();
     const mandateReason = String(data.mandateReason || "").trim();
     const mandateUrl = String(data.mandateUrl || "").trim();
     const assessmentFeePaymentUrl = String(data.assessmentFeePaymentUrl || "").trim();
@@ -2980,7 +2981,7 @@ if (!isFirebaseReady) {
           : payNowPaymentUrl;
     const paymentButtonLabel =
       currentPaymentType === "assessment_fee"
-        ? "Settle assessment fee"
+        ? "Continue with secure payment"
         : currentPaymentType === "fallback"
           ? "Settle outstanding balance"
           : "Settle initial amount";
@@ -3056,10 +3057,14 @@ if (!isFirebaseReady) {
     updateStep("mandate", readableStepStatus(mandateStatus));
     updateStep("payNow", readableStepStatus(payNowStatus));
     updateStep("activation", readableStepStatus(activationStatus));
+    updateStep("tier", String(effectiveData.presentationTierName || resolvedTier?.name || "").trim() || "Pending");
 
     if (payNowButton) {
       payNowButton.textContent = paymentButtonLabel;
-      payNowButton.classList.toggle("is-hidden", !currentPaymentType);
+      payNowButton.classList.toggle(
+        "is-hidden",
+        !currentPaymentType || (currentPaymentType === "assessment_fee" && Boolean(currentPaymentUrl))
+      );
     }
 
     if (openPayNowButton) {

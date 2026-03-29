@@ -2116,7 +2116,7 @@ body.nav-closing .site-footer {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  width: min(100%, 332px);
+  width: min(100%, 336px);
 }
 
 .tier-option {
@@ -2172,6 +2172,8 @@ body.nav-closing .site-footer {
   flex-wrap: wrap;
   gap: 4px;
   align-content: start;
+  max-height: 44px;
+  overflow: hidden;
 }
 
 .tier-option-service {

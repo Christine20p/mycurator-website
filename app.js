@@ -822,6 +822,14 @@ const compactTierServiceLabel = (value) =>
   String(value || "")
     .replace(/^(daily|weekly|monthly)\s+/i, "")
     .trim();
+const tierCardServicesPreview = (items) => {
+  const services = Array.isArray(items) ? items : [];
+  const visible = services.slice(0, 3).map((item) => compactTierServiceLabel(item));
+  if (services.length > 3) {
+    visible.push(`+${services.length - 3} more`);
+  }
+  return visible;
+};
 const normalizePresentationTierId = (value) =>
   String(value || "")
     .trim()
@@ -1039,7 +1047,7 @@ const renderPresentationTierSelector = (data) => {
           <span class="tier-option-name">${escapeHtml(option.name)}</span>
           <span class="tier-option-positioning">"${escapeHtml(option.positioningLine || "")}"</span>
           <span class="tier-option-services">
-            ${option.recurringSummary
+            ${tierCardServicesPreview(option.recurringSummary)
               .map(
                 (item) =>
                   `<span class="tier-option-service">${escapeHtml(compactTierServiceLabel(item))}</span>`

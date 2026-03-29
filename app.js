@@ -1000,15 +1000,7 @@ const ensureAssessmentTierBeforePayment = async () => {
   if (existingTier || !isAssessmentTierRequired()) {
     return existingTier || defaultPresentationTier();
   }
-  if (!functions || !currentUser) {
-    return defaultPresentationTier();
-  }
-  const fallbackTier = defaultPresentationTier();
-  const result = await functions.httpsCallable("selectPresentationTier")({
-    presentationTier: fallbackTier.id,
-  });
-  applyPresentationTierSelection(fallbackTier.id, result?.data || {});
-  return resolveEffectivePresentationTierConfig(currentUserData) || fallbackTier;
+  throw new Error("Select your property presentation tier before continuing with secure payment.");
 };
 
 const renderPresentationTierSelector = (data) => {
@@ -1274,11 +1266,13 @@ const securePaymentRedirectMessage = () => {
 };
 
 const syncPaymentConsentState = () => {
+  const hasPortalConsent = hasAcceptedTerms(paymentTermsCheckbox);
+  const hasRequiredTierSelection = !isAssessmentTierRequired() || hasSelectedPresentationTier();
   if (payNowButton) {
-    payNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
+    payNowButton.disabled = !hasPortalConsent || !hasRequiredTierSelection;
   }
   if (openPayNowButton) {
-    openPayNowButton.disabled = !hasAcceptedTerms(paymentTermsCheckbox);
+    openPayNowButton.disabled = !hasPortalConsent || !hasRequiredTierSelection;
   }
   if (bookingSubmitButton) {
     bookingSubmitButton.disabled = !hasAcceptedTerms(bookingPaymentTermsCheckbox);

@@ -2121,7 +2121,7 @@ body.nav-closing .site-footer {
 
 .tier-option {
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto auto 1fr auto auto;
   gap: 6px;
   padding: 12px;
   aspect-ratio: 1 / 1;
@@ -2165,6 +2165,25 @@ body.nav-closing .site-footer {
   line-height: 1.35;
   color: rgba(52, 35, 25, 0.88);
   align-self: start;
+}
+
+.tier-option-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-content: start;
+}
+
+.tier-option-service {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(79, 56, 41, 0.08);
+  color: rgba(52, 35, 25, 0.82);
+  font-size: 0.62rem;
+  line-height: 1.2;
 }
 
 .tier-option-price {

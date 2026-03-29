@@ -818,6 +818,10 @@ const PRESENTATION_TIERS = {
     ],
   },
 };
+const compactTierServiceLabel = (value) =>
+  String(value || "")
+    .replace(/^(daily|weekly|monthly)\s+/i, "")
+    .trim();
 const normalizePresentationTierId = (value) =>
   String(value || "")
     .trim()
@@ -1034,6 +1038,14 @@ const renderPresentationTierSelector = (data) => {
         >
           <span class="tier-option-name">${escapeHtml(option.name)}</span>
           <span class="tier-option-positioning">"${escapeHtml(option.positioningLine || "")}"</span>
+          <span class="tier-option-services">
+            ${option.recurringSummary
+              .map(
+                (item) =>
+                  `<span class="tier-option-service">${escapeHtml(compactTierServiceLabel(item))}</span>`
+              )
+              .join("")}
+          </span>
           <strong class="tier-option-price">${escapeHtml(formatCurrency(option.assessmentFeeCents))}</strong>
           <span class="tier-option-note">Assessment fee</span>
         </button>

@@ -105,7 +105,7 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: url("assets/companylogo.png?v=20260330b");
+  background-image: url("assets/companylogo.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: min(60vw, 520px);

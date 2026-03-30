@@ -2689,6 +2689,31 @@ const fetchUserProfileDoc = async (user) => {
   };
 };
 
+const redirectAuthenticatedPortalUser = async (user) => {
+  if (!user) return false;
+  const freshUser = await ensureFreshAuthSession(user);
+  const profileDoc = await fetchUserProfileDoc(freshUser);
+  if (!profileDoc?.exists) {
+    throw new Error("We could not load your portal profile. Please contact support.");
+  }
+
+  currentUserData = profileDoc.data();
+  if (!isOtpVerified(currentUserData)) {
+    pendingOtpUserId = freshUser.uid;
+    sessionStorage.setItem("portalPendingOtp", freshUser.uid);
+    if (otpPanel) {
+      otpPanel.classList.remove("is-hidden");
+    }
+    showMessage("Verify the OTP sent to your cellphone to finish setting up your account.");
+    return "otp";
+  }
+
+  sessionStorage.removeItem("portalPendingOtp");
+  clearMessage();
+  redirectToRole(resolveRole(currentUserData));
+  return "redirected";
+};
+
 const stopUserListener = () => {
   if (userListener) userListener();
   userListener = null;
@@ -4308,6 +4333,7 @@ if (!isFirebaseReady) {
           : loginForm.querySelector("button[type='submit']");
       const defaultButtonLabel =
         submitButton instanceof HTMLButtonElement ? submitButton.textContent : "";
+      let routeState = "";
       if (!email || !password) {
         setFeedback(loginFeedback, "Please enter your email and password.", true);
         return;
@@ -4317,12 +4343,18 @@ if (!isFirebaseReady) {
         submitButton.textContent = "Signing in...";
       }
       try {
-        await auth.signInWithEmailAndPassword(email, password);
-        setFeedback(loginFeedback, "Sign-in successful. Loading your portal...");
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        routeState = await redirectAuthenticatedPortalUser(result?.user || auth.currentUser);
+        setFeedback(
+          loginFeedback,
+          routeState === "otp"
+            ? "Continue with the OTP verification below to finish registration."
+            : "Sign-in successful. Loading your portal..."
+        );
       } catch (error) {
         setFeedback(loginFeedback, error.message || "Unable to sign in.", true);
       } finally {
-        if (submitButton instanceof HTMLButtonElement) {
+        if (routeState !== "redirected" && submitButton instanceof HTMLButtonElement) {
           submitButton.disabled = false;
           submitButton.textContent = defaultButtonLabel;
         }

@@ -32,6 +32,18 @@ const CONTACT_INQUIRY_ENDPOINT =
   "https://africa-south1-mycurator-cf6ab.cloudfunctions.net/submitInquiry";
 const CLOUD_FUNCTIONS_REGION = "africa-south1";
 const DEFAULT_FUNCTIONS_PROJECT_ID = "mycurator-cf6ab";
+const GOOGLE_PLACES_COUNTRY = "za";
+const GOOGLE_PLACES_REGION = "ZA";
+const GOOGLE_PLACES_LANGUAGE = "en";
+const GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT = "https://places.googleapis.com/v1/places:autocomplete";
+const GOOGLE_PLACES_DETAILS_ENDPOINT = "https://places.googleapis.com/v1/places";
+const GOOGLE_PLACES_AUTOCOMPLETE_FIELDS = [
+  "suggestions.placePrediction.placeId",
+  "suggestions.placePrediction.text.text",
+  "suggestions.placePrediction.structuredFormat.mainText.text",
+  "suggestions.placePrediction.structuredFormat.secondaryText.text",
+].join(",");
+const GOOGLE_PLACES_DETAILS_FIELDS = ["formattedAddress", "addressComponents", "location"].join(",");
 let navCloseTimer = null;
 
 function initPointerRing() {
@@ -2424,6 +2436,222 @@ const buildStructuredAddressFromRecord = (data, fallbackAddress = "") => {
   };
 };
 
+const resolveGooglePlacesApiKey = () =>
+  String(
+    window.firebaseConfig?.googlePlacesApiKey ||
+      window.firebaseConfig?.googleMapsApiKey ||
+      window.firebaseConfig?.apiKey ||
+      ""
+  ).trim();
+
+const createGooglePlacesSessionToken = () =>
+  window.crypto?.randomUUID
+    ? window.crypto.randomUUID()
+    : `mycurator-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+const fetchGooglePlacesJson = async (url, options, fallbackErrorMessage) => {
+  const response = await window.fetch(url, options);
+  const text = await response.text();
+  let data = {};
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      data = {};
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || fallbackErrorMessage);
+  }
+
+  return data;
+};
+
+const getGoogleAddressComponent = (components, types) => {
+  if (!Array.isArray(components)) return "";
+  for (const type of types) {
+    const match = components.find(
+      (component) => Array.isArray(component?.types) && component.types.includes(type)
+    );
+    if (match?.longText) {
+      return normalizeLocationText(match.longText);
+    }
+  }
+  return "";
+};
+
+const buildStructuredAddressFromGooglePlace = (place) => {
+  const components = Array.isArray(place?.address_components) ? place.address_components : [];
+  const location = place?.geometry?.location;
+  const latitude = typeof location?.lat === "function" ? location.lat() : location?.lat;
+  const longitude = typeof location?.lng === "function" ? location.lng() : location?.lng;
+  const details = buildStructuredAddress({
+    placeId: place?.place_id,
+    apartmentNumber: getGoogleAddressComponent(components, ["subpremise", "premise"]),
+    houseNumber: getGoogleAddressComponent(components, ["street_number"]),
+    route: normalizeCapitalizedWords(getGoogleAddressComponent(components, ["route"])),
+    suburb: normalizeCapitalizedWords(
+      getGoogleAddressComponent(components, [
+        "sublocality_level_1",
+        "sublocality",
+        "neighborhood",
+        "administrative_area_level_2",
+      ])
+    ),
+    town: normalizeCapitalizedWords(
+      getGoogleAddressComponent(components, [
+        "locality",
+        "postal_town",
+        "administrative_area_level_2",
+        "administrative_area_level_3",
+      ])
+    ),
+    province: normalizeCapitalizedWords(
+      getGoogleAddressComponent(components, ["administrative_area_level_1"])
+    ),
+    postalCode: getGoogleAddressComponent(components, ["postal_code"]),
+    country: getGoogleAddressComponent(components, ["country"]) || "South Africa",
+    latitude,
+    longitude,
+  });
+
+  return {
+    ...details,
+    formattedAddress: normalizeLocationText(place?.formatted_address) || details.formattedAddress,
+  };
+};
+
+const searchPlacesWithGoogle = async (query, sessionToken) => {
+  const apiKey = resolveGooglePlacesApiKey();
+  if (!apiKey) {
+    throw new Error("Missing Google Places API key.");
+  }
+
+  const data = await fetchGooglePlacesJson(
+    GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": GOOGLE_PLACES_AUTOCOMPLETE_FIELDS,
+      },
+      body: JSON.stringify({
+        input: query,
+        sessionToken,
+        includedRegionCodes: [GOOGLE_PLACES_COUNTRY],
+        languageCode: GOOGLE_PLACES_LANGUAGE,
+        regionCode: GOOGLE_PLACES_COUNTRY,
+      }),
+    },
+    "Google autocomplete request failed."
+  );
+
+  const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+  return suggestions
+    .map((item) => item?.placePrediction)
+    .filter(Boolean)
+    .map((prediction) => ({
+      source: "google",
+      placeId: normalizeLocationText(prediction.placeId),
+      text: normalizeLocationText(prediction.text?.text),
+      primaryText:
+        normalizeLocationText(prediction.structuredFormat?.mainText?.text) ||
+        normalizeLocationText(prediction.text?.text),
+      secondaryText: normalizeLocationText(prediction.structuredFormat?.secondaryText?.text),
+    }))
+    .filter((prediction) => prediction.placeId);
+};
+
+const getPlaceAddressDetailsWithGoogle = async (placeId, sessionToken) => {
+  const apiKey = resolveGooglePlacesApiKey();
+  if (!apiKey) {
+    throw new Error("Missing Google Places API key.");
+  }
+
+  const query = new URLSearchParams({
+    languageCode: GOOGLE_PLACES_LANGUAGE,
+    regionCode: GOOGLE_PLACES_COUNTRY,
+  });
+  if (sessionToken) {
+    query.set("sessionToken", sessionToken);
+  }
+
+  const place = await fetchGooglePlacesJson(
+    `${GOOGLE_PLACES_DETAILS_ENDPOINT}/${encodeURIComponent(placeId)}?${query.toString()}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": GOOGLE_PLACES_DETAILS_FIELDS,
+      },
+    },
+    "Google place details request failed."
+  );
+
+  return buildStructuredAddressFromGooglePlace({
+    place_id: placeId,
+    formatted_address: place?.formattedAddress,
+    address_components: Array.isArray(place?.addressComponents) ? place.addressComponents : [],
+    geometry: {
+      location: {
+        lat: place?.location?.latitude,
+        lng: place?.location?.longitude,
+      },
+    },
+  });
+};
+
+const searchPlacesWithFunctions = async (query) => {
+  if (!functions) return [];
+  const response = await functions.httpsCallable("searchPlacesAutocomplete")({ input: query });
+  const suggestions = Array.isArray(response.data?.suggestions) ? response.data.suggestions : [];
+  return suggestions.map((item) => ({ ...item, source: "functions" }));
+};
+
+const getPlaceAddressDetailsWithFunctions = async (placeId) => {
+  if (!functions) {
+    throw new Error("Firebase Functions is not available.");
+  }
+
+  const detailsResponse = await functions.httpsCallable("getPlaceAddressDetails")({ placeId });
+  return detailsResponse.data?.address || {};
+};
+
+const searchPlacesAutocomplete = async (query, sessionToken) => {
+  try {
+    return await searchPlacesWithGoogle(query, sessionToken);
+  } catch (error) {
+    console.error("Unable to search Google places", error);
+    if (!functions) {
+      throw error;
+    }
+    return searchPlacesWithFunctions(query);
+  }
+};
+
+const resolvePlaceAddressDetails = async (item, sessionToken) => {
+  if (!item?.placeId) {
+    throw new Error("Missing place identifier.");
+  }
+
+  if (item.source === "functions") {
+    return getPlaceAddressDetailsWithFunctions(item.placeId);
+  }
+
+  try {
+    return await getPlaceAddressDetailsWithGoogle(item.placeId, sessionToken);
+  } catch (error) {
+    console.error("Unable to resolve Google place details", error);
+    if (!functions) {
+      throw error;
+    }
+    return getPlaceAddressDetailsWithFunctions(item.placeId);
+  }
+};
+
 const isStructuredAddressComplete = (details) =>
   Boolean(
     normalizeLocationText(details.houseNumber) &&
@@ -2451,12 +2679,14 @@ const createPlacesAddressController = (fieldset) => {
   let searchTimer = null;
   let requestIndex = 0;
   let changeHandler = null;
+  let googlePlacesSessionToken = "";
 
   const renderSuggestions = (suggestions, onSelect) => {
     if (!suggestionsBox) return;
     if (!Array.isArray(suggestions) || !suggestions.length) {
       suggestionsBox.innerHTML = "";
       suggestionsBox.classList.remove("is-visible");
+      suggestionsBox.classList.add("is-hidden");
       return;
     }
 
@@ -2471,6 +2701,7 @@ const createPlacesAddressController = (fieldset) => {
       )
       .join("");
     suggestionsBox.classList.add("is-visible");
+    suggestionsBox.classList.remove("is-hidden");
     suggestionsBox.querySelectorAll("[data-place-index]").forEach((button) => {
       button.addEventListener("click", () => {
         const index = Number(button.getAttribute("data-place-index"));
@@ -2557,7 +2788,8 @@ const createPlacesAddressController = (fieldset) => {
         window.clearTimeout(searchTimer);
       }
 
-      if (query.length < 3 || !functions) {
+      if (query.length < 3) {
+        googlePlacesSessionToken = "";
         renderSuggestions([], () => {});
         return;
       }
@@ -2565,16 +2797,16 @@ const createPlacesAddressController = (fieldset) => {
       searchTimer = window.setTimeout(async () => {
         const currentRequest = requestIndex + 1;
         requestIndex = currentRequest;
+        if (!googlePlacesSessionToken) {
+          googlePlacesSessionToken = createGooglePlacesSessionToken();
+        }
         try {
-          const response = await functions.httpsCallable("searchPlacesAutocomplete")({ input: query });
+          const suggestions = await searchPlacesAutocomplete(query, googlePlacesSessionToken);
           if (currentRequest !== requestIndex) return;
-          const suggestions = Array.isArray(response.data?.suggestions) ? response.data.suggestions : [];
           renderSuggestions(suggestions, async (item) => {
             try {
-              const detailsResponse = await functions.httpsCallable("getPlaceAddressDetails")({
-                placeId: item.placeId,
-              });
-              const details = detailsResponse.data?.address || {};
+              const details = await resolvePlaceAddressDetails(item, googlePlacesSessionToken);
+              googlePlacesSessionToken = "";
               apply(details);
             } catch (error) {
               console.error("Unable to resolve place details", error);
@@ -2585,6 +2817,12 @@ const createPlacesAddressController = (fieldset) => {
           renderSuggestions([], () => {});
         }
       }, 320);
+    });
+
+    searchInput.addEventListener("blur", () => {
+      window.setTimeout(() => {
+        renderSuggestions([], () => {});
+      }, 140);
     });
   }
 

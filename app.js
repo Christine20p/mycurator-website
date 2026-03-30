@@ -2595,6 +2595,8 @@ const resolveRole = (data) => {
   return "client";
 };
 
+const isOtpVerified = (data) => data?.otpVerified !== false;
+
 const routeForRole = (role) => roleRoutes[role] || "app.html";
 const isRolePageForRole = (role) => rolePage && pageName === routeForRole(role);
 
@@ -2685,26 +2687,6 @@ const fetchUserProfileDoc = async (user) => {
     exists: true,
     data: () => resolvedData
   };
-};
-
-const redirectAuthenticatedPortalUser = async (user) => {
-  if (!user) return false;
-  const pendingOtp = sessionStorage.getItem("portalPendingOtp");
-  if (loginPage && pendingOtp && pendingOtp === user.uid) {
-    pendingOtpUserId = pendingOtp;
-    if (otpPanel) {
-      otpPanel.classList.remove("is-hidden");
-    }
-    return "otp";
-  }
-
-  const profileDoc = await fetchUserProfileDoc(user);
-  if (!profileDoc?.exists) {
-    throw new Error("We could not load your portal profile. Please contact support.");
-  }
-
-  redirectToRole(resolveRole(profileDoc.data()));
-  return "redirected";
 };
 
 const stopUserListener = () => {
@@ -4326,7 +4308,6 @@ if (!isFirebaseReady) {
           : loginForm.querySelector("button[type='submit']");
       const defaultButtonLabel =
         submitButton instanceof HTMLButtonElement ? submitButton.textContent : "";
-      let redirectStarted = false;
       if (!email || !password) {
         setFeedback(loginFeedback, "Please enter your email and password.", true);
         return;
@@ -4336,20 +4317,12 @@ if (!isFirebaseReady) {
         submitButton.textContent = "Signing in...";
       }
       try {
-        const result = await auth.signInWithEmailAndPassword(email, password);
-        const signedInUser = await ensureFreshAuthSession(result?.user || auth.currentUser);
-        const redirectState = await redirectAuthenticatedPortalUser(signedInUser);
-        redirectStarted = redirectState === "redirected";
-        setFeedback(
-          loginFeedback,
-          redirectState === "otp"
-            ? "Continue with the OTP verification below to finish registration."
-            : "Sign-in successful. Loading your portal..."
-        );
+        await auth.signInWithEmailAndPassword(email, password);
+        setFeedback(loginFeedback, "Sign-in successful. Loading your portal...");
       } catch (error) {
         setFeedback(loginFeedback, error.message || "Unable to sign in.", true);
       } finally {
-        if (!redirectStarted && submitButton instanceof HTMLButtonElement) {
+        if (submitButton instanceof HTMLButtonElement) {
           submitButton.disabled = false;
           submitButton.textContent = defaultButtonLabel;
         }
@@ -6311,15 +6284,6 @@ if (!isFirebaseReady) {
       return;
     }
 
-    if (loginPage) {
-      const pendingOtp = sessionStorage.getItem("portalPendingOtp");
-      if (pendingOtp && pendingOtp === user.uid) {
-        pendingOtpUserId = pendingOtp;
-        if (otpPanel) otpPanel.classList.remove("is-hidden");
-        return;
-      }
-    }
-
     await ensureFreshAuthSession(user);
 
     let profileDoc = null;
@@ -6342,6 +6306,22 @@ if (!isFirebaseReady) {
     }
 
     currentUserData = profileDoc.data();
+    if (!isOtpVerified(currentUserData)) {
+      pendingOtpUserId = user.uid;
+      sessionStorage.setItem("portalPendingOtp", user.uid);
+      if (otpPanel) {
+        otpPanel.classList.remove("is-hidden");
+      }
+      if (loginPage) {
+        showMessage("Verify the OTP sent to your cellphone to finish setting up your account.");
+        return;
+      }
+      redirectTo("portal-login.html");
+      return;
+    }
+
+    sessionStorage.removeItem("portalPendingOtp");
+    clearMessage();
     const role = resolveRole(currentUserData);
 
     if (rolePage) {

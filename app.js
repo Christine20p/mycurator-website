@@ -1599,6 +1599,10 @@ if (loginPage && portalMessage) {
   }
 }
 
+if (registerForm) {
+  registerForm.setAttribute("novalidate", "novalidate");
+}
+
 const getOtpDeliveryWarning = (result) => {
   if (result?.delivery === "log") {
     return "OTP delivery is not configured yet. Contact support before continuing.";

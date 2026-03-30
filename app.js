@@ -553,6 +553,9 @@ const registerDocumentNumberWrapper = registerForm?.querySelector("[data-documen
 const registerDocumentNumberLabel = registerForm?.querySelector("[data-document-number-label]");
 const registerDocumentDobWrapper = registerForm?.querySelector("[data-document-dob-field]");
 const registerDocumentFeedback = registerForm?.querySelector("[data-document-feedback]");
+const registerAgentFeedback = registerForm?.querySelector("[data-agent-feedback]");
+const registerEmailFeedback = registerForm?.querySelector("[data-email-feedback]");
+const registerPasswordFeedback = registerForm?.querySelector("[data-password-feedback]");
 const registerSubmitButton = registerForm?.querySelector("button[type='submit']");
 const registerTitleField = registerForm?.querySelector("select[name='title']");
 const registerFullNameField = registerForm?.querySelector("input[name='full_name']");
@@ -974,6 +977,50 @@ const setFeedback = (el, message, isError = false) => {
   el.classList.toggle("is-success", hasMessage && !isError);
 };
 
+const setInlineFeedback = (el, message, tone = "error") => {
+  if (!el) return;
+  const hasMessage = Boolean(message);
+  el.textContent = hasMessage ? String(message).trim() : "";
+  el.classList.toggle("is-visible", hasMessage);
+  el.classList.toggle("is-error", hasMessage && tone === "error");
+  el.classList.toggle("is-success", hasMessage && tone === "success");
+  el.classList.toggle("is-muted", hasMessage && tone === "muted");
+};
+
+const clearInlineFeedback = (el) => {
+  setInlineFeedback(el, "");
+};
+
+const registerLiveValidationState = {
+  email: {
+    requestId: 0,
+    timerId: 0,
+    value: "",
+    status: "idle",
+    message: "",
+  },
+  agent: {
+    requestId: 0,
+    timerId: 0,
+    value: "",
+    status: "idle",
+    message: "",
+  },
+};
+
+const resetRegisterLiveValidationState = (key) => {
+  if (!registerLiveValidationState[key]) return;
+  const state = registerLiveValidationState[key];
+  if (state.timerId) {
+    window.clearTimeout(state.timerId);
+  }
+  state.requestId = 0;
+  state.timerId = 0;
+  state.value = "";
+  state.status = "idle";
+  state.message = "";
+};
+
 const showRegisterPopup = (message, title = "Registration issue") => {
   if (!(registerPopup && registerPopupMessage && registerPopupTitle)) {
     if (typeof window !== "undefined" && typeof window.alert === "function") {
@@ -1045,23 +1092,35 @@ const showRegistrationError = (message, options = {}) => {
   setFeedback(feedbackTarget, resolvedMessage, true);
   if (Array.isArray(options.invalidTargets)) {
     options.invalidTargets.forEach((target) => {
-      const field = target instanceof HTMLElement
-        ? (target.classList.contains("field") || target.classList.contains("address-fieldset")
-          ? target
-          : target.closest(".field") || target)
-        : null;
-      field?.classList.add("is-invalid");
+      setRegisterFieldError(target, true);
     });
   }
   showRegisterPopup(resolvedMessage, options.title || "Registration issue");
 };
 
-const clearRegisterFieldError = (target) => {
+const resolveRegisterFieldElement = (target) => {
   if (!(target instanceof HTMLElement)) return;
-  const field = target.classList.contains("field") || target.classList.contains("address-fieldset")
-    ? target
-    : target.closest(".field");
-  field?.classList.remove("is-invalid");
+  if (
+    target.classList.contains("field") ||
+    target.classList.contains("address-fieldset") ||
+    target.classList.contains("register-agreement")
+  ) {
+    return target;
+  }
+  return (
+    target.closest(".field") ||
+    target.closest(".address-fieldset") ||
+    target.closest(".register-agreement")
+  );
+};
+
+const setRegisterFieldError = (target, isInvalid = true) => {
+  const field = resolveRegisterFieldElement(target);
+  field?.classList.toggle("is-invalid", Boolean(isInvalid));
+};
+
+const clearRegisterFieldError = (target) => {
+  setRegisterFieldError(target, false);
 };
 
 const clearRegisterValidationState = () => {
@@ -1080,6 +1139,211 @@ const clearRegisterValidationState = () => {
     registerConfirmPasswordField,
     registerTermsField,
   ].forEach((field) => clearRegisterFieldError(field));
+};
+
+const normalizeRegisterEmail = (value) => String(value || "").trim().toLowerCase();
+const normalizeRegisterAgentCode = (value) =>
+  String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+
+const isValidRegisterEmailFormat = (value) => {
+  const normalized = normalizeRegisterEmail(value);
+  if (!normalized) return false;
+  if (registerEmailField instanceof HTMLInputElement) {
+    return registerEmailField.checkValidity();
+  }
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+};
+
+const validateRegisterPasswordState = () => {
+  const password = String(registerPasswordField?.value || "");
+  const confirmPassword = String(registerConfirmPasswordField?.value || "");
+
+  if (!password && !confirmPassword) {
+    clearInlineFeedback(registerPasswordFeedback);
+    clearRegisterFieldError(registerPasswordField);
+    clearRegisterFieldError(registerConfirmPasswordField);
+    return { status: "idle", message: "" };
+  }
+
+  if (password && password.length < 6) {
+    setInlineFeedback(registerPasswordFeedback, "Use at least 6 characters for your password.", "error");
+    setRegisterFieldError(registerPasswordField, true);
+    return { status: "invalid", message: "Use at least 6 characters for your password." };
+  }
+
+  if (confirmPassword && password !== confirmPassword) {
+    setInlineFeedback(registerPasswordFeedback, "Passwords do not match yet.", "error");
+    setRegisterFieldError(registerPasswordField, true);
+    setRegisterFieldError(registerConfirmPasswordField, true);
+    return { status: "invalid", message: "Passwords do not match yet." };
+  }
+
+  if (password && confirmPassword && password === confirmPassword) {
+    clearRegisterFieldError(registerPasswordField);
+    clearRegisterFieldError(registerConfirmPasswordField);
+    setInlineFeedback(registerPasswordFeedback, "Passwords match.", "success");
+    return { status: "valid", message: "" };
+  }
+
+  clearInlineFeedback(registerPasswordFeedback);
+  clearRegisterFieldError(registerPasswordField);
+  clearRegisterFieldError(registerConfirmPasswordField);
+  return { status: "pending", message: "" };
+};
+
+const runRegisterEmailCheck = async ({ force = false } = {}) => {
+  const email = normalizeRegisterEmail(registerEmailField?.value || "");
+  const currentRequestId = registerLiveValidationState.email.requestId + 1;
+  registerLiveValidationState.email.requestId = currentRequestId;
+  registerLiveValidationState.email.value = email;
+
+  if (!email) {
+    resetRegisterLiveValidationState("email");
+    clearInlineFeedback(registerEmailFeedback);
+    clearRegisterFieldError(registerEmailField);
+    return { status: "idle", message: "", value: email };
+  }
+
+  if (!isValidRegisterEmailFormat(email)) {
+    registerLiveValidationState.email.status = "invalid";
+    registerLiveValidationState.email.message = "Enter a valid email address.";
+    setInlineFeedback(registerEmailFeedback, registerLiveValidationState.email.message, "error");
+    setRegisterFieldError(registerEmailField, true);
+    return { status: "invalid", message: registerLiveValidationState.email.message, value: email };
+  }
+
+  if (!auth) {
+    registerLiveValidationState.email.status = "pending";
+    registerLiveValidationState.email.message = "";
+    clearInlineFeedback(registerEmailFeedback);
+    clearRegisterFieldError(registerEmailField);
+    return { status: "pending", message: "", value: email };
+  }
+
+  setInlineFeedback(registerEmailFeedback, "Checking email address...", "muted");
+  try {
+    const methods = await auth.fetchSignInMethodsForEmail(email);
+    if (currentRequestId !== registerLiveValidationState.email.requestId || email !== normalizeRegisterEmail(registerEmailField?.value || "")) {
+      return { status: "stale", message: "", value: email };
+    }
+    if (Array.isArray(methods) && methods.length > 0) {
+      registerLiveValidationState.email.status = "invalid";
+      registerLiveValidationState.email.message = "That email address is already registered.";
+      setInlineFeedback(registerEmailFeedback, registerLiveValidationState.email.message, "error");
+      setRegisterFieldError(registerEmailField, true);
+      return { status: "invalid", message: registerLiveValidationState.email.message, value: email };
+    }
+    registerLiveValidationState.email.status = "valid";
+    registerLiveValidationState.email.message = "";
+    setInlineFeedback(registerEmailFeedback, "Email address is available.", "success");
+    clearRegisterFieldError(registerEmailField);
+    return { status: "valid", message: "", value: email };
+  } catch (error) {
+    if (currentRequestId !== registerLiveValidationState.email.requestId) {
+      return { status: "stale", message: "", value: email };
+    }
+    const message = force
+      ? "We could not verify this email address right now."
+      : "We could not verify this email yet.";
+    registerLiveValidationState.email.status = "error";
+    registerLiveValidationState.email.message = message;
+    setInlineFeedback(registerEmailFeedback, message, "error");
+    setRegisterFieldError(registerEmailField, true);
+    return { status: "error", message, value: email };
+  }
+};
+
+const runRegisterAgentCodeCheck = async ({ force = false } = {}) => {
+  const code = normalizeRegisterAgentCode(registerAgentCodeField?.value || "");
+  const currentRequestId = registerLiveValidationState.agent.requestId + 1;
+  registerLiveValidationState.agent.requestId = currentRequestId;
+  registerLiveValidationState.agent.value = code;
+
+  if (!code) {
+    resetRegisterLiveValidationState("agent");
+    clearInlineFeedback(registerAgentFeedback);
+    clearRegisterFieldError(registerAgentCodeField);
+    return { status: "idle", message: "", value: code };
+  }
+
+  if (code.length < 4) {
+    registerLiveValidationState.agent.status = "pending";
+    registerLiveValidationState.agent.message = force
+      ? "Enter the full real estate agent code."
+      : "Continue typing to verify this code.";
+    setInlineFeedback(
+      registerAgentFeedback,
+      registerLiveValidationState.agent.message,
+      force ? "error" : "muted"
+    );
+    setRegisterFieldError(registerAgentCodeField, force);
+    return {
+      status: force ? "invalid" : "pending",
+      message: registerLiveValidationState.agent.message,
+      value: code,
+    };
+  }
+
+  if (!db) {
+    registerLiveValidationState.agent.status = "pending";
+    registerLiveValidationState.agent.message = "";
+    clearInlineFeedback(registerAgentFeedback);
+    clearRegisterFieldError(registerAgentCodeField);
+    return { status: "pending", message: "", value: code };
+  }
+
+  setInlineFeedback(registerAgentFeedback, "Checking agent code...", "muted");
+  try {
+    const snap = await readFirestoreDocumentOnce(db.collection("realEstateCodes").doc(code));
+    if (currentRequestId !== registerLiveValidationState.agent.requestId || code !== normalizeRegisterAgentCode(registerAgentCodeField?.value || "")) {
+      return { status: "stale", message: "", value: code };
+    }
+    if (!snap?.exists) {
+      registerLiveValidationState.agent.status = "invalid";
+      registerLiveValidationState.agent.message = "We could not find that real estate agent code.";
+      setInlineFeedback(registerAgentFeedback, registerLiveValidationState.agent.message, "error");
+      setRegisterFieldError(registerAgentCodeField, true);
+      return { status: "invalid", message: registerLiveValidationState.agent.message, value: code };
+    }
+    registerLiveValidationState.agent.status = "valid";
+    registerLiveValidationState.agent.message = "";
+    setInlineFeedback(registerAgentFeedback, "Agent code verified.", "success");
+    clearRegisterFieldError(registerAgentCodeField);
+    return { status: "valid", message: "", value: code };
+  } catch (error) {
+    if (currentRequestId !== registerLiveValidationState.agent.requestId) {
+      return { status: "stale", message: "", value: code };
+    }
+    const message = force
+      ? "We could not verify that agent code right now."
+      : "We could not verify that agent code yet.";
+    registerLiveValidationState.agent.status = "error";
+    registerLiveValidationState.agent.message = message;
+    setInlineFeedback(registerAgentFeedback, message, "error");
+    setRegisterFieldError(registerAgentCodeField, true);
+    return { status: "error", message, value: code };
+  }
+};
+
+const scheduleRegisterEmailCheck = () => {
+  if (registerLiveValidationState.email.timerId) {
+    window.clearTimeout(registerLiveValidationState.email.timerId);
+  }
+  registerLiveValidationState.email.timerId = window.setTimeout(() => {
+    void runRegisterEmailCheck();
+  }, 320);
+};
+
+const scheduleRegisterAgentCodeCheck = () => {
+  if (registerLiveValidationState.agent.timerId) {
+    window.clearTimeout(registerLiveValidationState.agent.timerId);
+  }
+  registerLiveValidationState.agent.timerId = window.setTimeout(() => {
+    void runRegisterAgentCodeCheck();
+  }, 320);
 };
 
 const getRegisterFormState = () => {
@@ -1102,8 +1366,8 @@ const getRegisterFormState = () => {
     documentNumber,
     documentCountry,
     cellphone: String(formData.get("cellphone") || "").trim(),
-    realEstateCode: String(formData.get("agent_code") || "").trim(),
-    email: String(formData.get("email") || "").trim(),
+    realEstateCode: normalizeRegisterAgentCode(formData.get("agent_code")),
+    email: normalizeRegisterEmail(formData.get("email")),
     password,
     confirmPassword,
     termsAccepted: Boolean(registerTermsCheckbox?.checked),
@@ -1162,11 +1426,31 @@ const validateRegisterSubmission = () => {
     };
   }
 
+  if (state.cellphone.length < 10) {
+    return {
+      valid: false,
+      title: "Check your cellphone",
+      message: "Enter a valid 10-digit cellphone number.",
+      invalidTargets: [registerCellphoneField],
+      state,
+    };
+  }
+
   if (state.password !== state.confirmPassword) {
     return {
       valid: false,
       title: "Password mismatch",
       message: "Passwords do not match.",
+      invalidTargets: [registerPasswordField, registerConfirmPasswordField],
+      state,
+    };
+  }
+
+  if (state.password.length < 6) {
+    return {
+      valid: false,
+      title: "Weak password",
+      message: "Use at least 6 characters for your password.",
       invalidTargets: [registerPasswordField, registerConfirmPasswordField],
       state,
     };
@@ -2210,6 +2494,31 @@ const redirectTo = (target) => {
 
 const redirectToRole = (role) => {
   redirectTo(routeForRole(role));
+};
+
+const fetchUserProfileDoc = async (user) => {
+  if (!db || !user?.uid) return null;
+  return db.collection("users").doc(user.uid).get();
+};
+
+const redirectAuthenticatedPortalUser = async (user) => {
+  if (!user) return false;
+  const pendingOtp = sessionStorage.getItem("portalPendingOtp");
+  if (loginPage && pendingOtp && pendingOtp === user.uid) {
+    pendingOtpUserId = pendingOtp;
+    if (otpPanel) {
+      otpPanel.classList.remove("is-hidden");
+    }
+    return "otp";
+  }
+
+  const profileDoc = await fetchUserProfileDoc(user);
+  if (!profileDoc?.exists) {
+    throw new Error("We could not load your portal profile. Please contact support.");
+  }
+
+  redirectToRole(resolveRole(profileDoc.data()));
+  return "redirected";
 };
 
 const stopUserListener = () => {
@@ -3549,6 +3858,19 @@ if (!isFirebaseReady) {
     const state = getRegisterIdentityState();
     const isPassport = state.documentType === "passport";
     const isSouthAfricanId = state.documentType === "sa_id";
+    const hasIdentityInput = Boolean(state.documentType || state.documentNumber || state.documentCountry);
+    const shouldFlagType = !state.documentType && Boolean(state.documentNumber || state.documentCountry);
+    const passportNumberValid = isPassport
+      ? validatePassportNumber(state.documentNumber).isValid
+      : false;
+    const shouldFlagNumber =
+      Boolean(state.documentType) &&
+      Boolean(state.documentNumber) &&
+      ((isSouthAfricanId && !state.isValid) || (isPassport && !passportNumberValid));
+    const shouldFlagCountry =
+      isPassport &&
+      Boolean(state.documentNumber || state.documentCountry) &&
+      !state.documentCountry;
 
     if (registerDocumentNumberLabel) {
       registerDocumentNumberLabel.textContent = isPassport ? "Passport Number" : "South African ID Number";
@@ -3580,7 +3902,55 @@ if (!isFirebaseReady) {
       registerDocumentFeedback.classList.toggle("is-error", shouldShowMessage);
       registerDocumentFeedback.classList.toggle("is-success", false);
     }
+    if (!hasIdentityInput) {
+      clearRegisterFieldError(registerDocumentTypeField);
+      clearRegisterFieldError(registerDocumentNumberField);
+      clearRegisterFieldError(registerDocumentCountryField);
+    } else {
+      setRegisterFieldError(registerDocumentTypeField, shouldFlagType);
+      setRegisterFieldError(registerDocumentNumberField, shouldFlagNumber);
+      setRegisterFieldError(registerDocumentCountryField, shouldFlagCountry);
+    }
     syncRegisterSubmitState();
+  };
+
+  const validateRegisterCellphoneState = () => {
+    const value = String(registerCellphoneField?.value || "").trim();
+    if (!value) {
+      clearRegisterFieldError(registerCellphoneField);
+      return { status: "idle", message: "" };
+    }
+    if (value.length < 10) {
+      setRegisterFieldError(registerCellphoneField, true);
+      return { status: "invalid", message: "Enter a valid 10-digit cellphone number." };
+    }
+    clearRegisterFieldError(registerCellphoneField);
+    return { status: "valid", message: "" };
+  };
+
+  const validateRegisterRequiredFieldState = (field) => {
+    if (field === registerTermsCheckbox) {
+      setRegisterFieldError(registerTermsField, !registerTermsCheckbox?.checked);
+      return;
+    }
+    if (field === registerAddressFieldset) {
+      setRegisterFieldError(
+        registerAddressFieldset,
+        !isStructuredAddressComplete(registerAddressController?.collect() || {})
+      );
+      return;
+    }
+    if (
+      !(
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement ||
+        field instanceof HTMLTextAreaElement
+      )
+    ) {
+      return;
+    }
+    const value = String(field.value || "").trim();
+    setRegisterFieldError(field, !value);
   };
 
   const syncRegisterSubmitState = () => {
@@ -3607,26 +3977,69 @@ if (!isFirebaseReady) {
   if (registerForm) {
     registerFullNameField?.addEventListener("input", () => {
       registerFullNameField.value = normalizeCapitalizedWords(registerFullNameField.value).trimStart();
-      clearRegisterFieldError(registerFullNameField);
+      validateRegisterRequiredFieldState(registerFullNameField);
       syncRegisterSubmitState();
+    });
+    registerFullNameField?.addEventListener("blur", () => {
+      validateRegisterRequiredFieldState(registerFullNameField);
     });
 
     registerSurnameField?.addEventListener("input", () => {
       registerSurnameField.value = normalizeSurnameText(registerSurnameField.value);
-      clearRegisterFieldError(registerSurnameField);
+      validateRegisterRequiredFieldState(registerSurnameField);
       syncRegisterSubmitState();
+    });
+    registerSurnameField?.addEventListener("blur", () => {
+      validateRegisterRequiredFieldState(registerSurnameField);
     });
 
     registerCellphoneField?.addEventListener("input", () => {
       registerCellphoneField.value = registerCellphoneField.value.replace(/\D/g, "").slice(0, 10);
-      clearRegisterFieldError(registerCellphoneField);
+      validateRegisterCellphoneState();
       syncRegisterSubmitState();
+    });
+    registerCellphoneField?.addEventListener("blur", () => {
+      validateRegisterCellphoneState();
     });
 
     registerEmailField?.addEventListener("input", () => {
       registerEmailField.value = registerEmailField.value.toLowerCase().replace(/\s+/g, "");
-      clearRegisterFieldError(registerEmailField);
+      if (!registerEmailField.value) {
+        resetRegisterLiveValidationState("email");
+        clearInlineFeedback(registerEmailFeedback);
+        clearRegisterFieldError(registerEmailField);
+      } else {
+        scheduleRegisterEmailCheck();
+      }
       syncRegisterSubmitState();
+    });
+    registerEmailField?.addEventListener("blur", () => {
+      if (!String(registerEmailField.value || "").trim()) {
+        validateRegisterRequiredFieldState(registerEmailField);
+        clearInlineFeedback(registerEmailFeedback);
+        return;
+      }
+      void runRegisterEmailCheck({ force: true });
+    });
+
+    registerAgentCodeField?.addEventListener("input", () => {
+      registerAgentCodeField.value = normalizeRegisterAgentCode(registerAgentCodeField.value);
+      if (!registerAgentCodeField.value) {
+        resetRegisterLiveValidationState("agent");
+        clearInlineFeedback(registerAgentFeedback);
+        clearRegisterFieldError(registerAgentCodeField);
+      } else {
+        scheduleRegisterAgentCodeCheck();
+      }
+      syncRegisterSubmitState();
+    });
+    registerAgentCodeField?.addEventListener("blur", () => {
+      if (!String(registerAgentCodeField.value || "").trim()) {
+        validateRegisterRequiredFieldState(registerAgentCodeField);
+        clearInlineFeedback(registerAgentFeedback);
+        return;
+      }
+      void runRegisterAgentCodeCheck({ force: true });
     });
 
     [
@@ -3634,9 +4047,29 @@ if (!isFirebaseReady) {
       registerDocumentNumberField,
       registerDocumentCountryField,
     ].forEach((field) => {
-      field?.addEventListener("change", () => {
-        clearRegisterFieldError(field);
+      field?.addEventListener("input", () => {
         syncRegisterIdentityUi();
+      });
+      field?.addEventListener("change", () => {
+        syncRegisterIdentityUi();
+      });
+      field?.addEventListener("blur", () => {
+        syncRegisterIdentityUi();
+        if (field === registerDocumentTypeField && !String(registerDocumentTypeField?.value || "").trim()) {
+          validateRegisterRequiredFieldState(registerDocumentTypeField);
+        }
+        if (field === registerDocumentNumberField) {
+          const hasDocumentType = Boolean(String(registerDocumentTypeField?.value || "").trim());
+          if (hasDocumentType && !String(registerDocumentNumberField?.value || "").trim()) {
+            validateRegisterRequiredFieldState(registerDocumentNumberField);
+          }
+        }
+        if (field === registerDocumentCountryField) {
+          const needsCountry = String(registerDocumentTypeField?.value || "").trim() === "passport";
+          if (needsCountry && !String(registerDocumentCountryField?.value || "").trim()) {
+            validateRegisterRequiredFieldState(registerDocumentCountryField);
+          }
+        }
       });
     });
 
@@ -3649,27 +4082,50 @@ if (!isFirebaseReady) {
       registerCellphoneField,
       registerAgentCodeField,
       registerEmailField,
-      registerPasswordField,
-      registerConfirmPasswordField,
       registerTitleField,
-      registerTermsCheckbox,
     ].forEach((field) => {
       field?.addEventListener("input", () => {
-        clearRegisterFieldError(field);
         syncRegisterSubmitState();
       });
       field?.addEventListener("change", () => {
-        clearRegisterFieldError(field);
         syncRegisterSubmitState();
       });
     });
 
+    [registerPasswordField, registerConfirmPasswordField].forEach((field) => {
+      field?.addEventListener("input", () => {
+        validateRegisterPasswordState();
+        syncRegisterSubmitState();
+      });
+      field?.addEventListener("change", () => {
+        validateRegisterPasswordState();
+        syncRegisterSubmitState();
+      });
+      field?.addEventListener("blur", () => {
+        if (!String(field?.value || "").trim()) {
+          validateRegisterRequiredFieldState(field);
+          return;
+        }
+        validateRegisterPasswordState();
+      });
+    });
+
+    registerTitleField?.addEventListener("blur", () => {
+      validateRegisterRequiredFieldState(registerTitleField);
+    });
+
+    registerTermsCheckbox?.addEventListener("change", () => {
+      validateRegisterRequiredFieldState(registerTermsCheckbox);
+      syncRegisterSubmitState();
+    });
+
     registerAddressController?.setOnChange(() => {
-      clearRegisterFieldError(registerAddressFieldset);
+      validateRegisterRequiredFieldState(registerAddressFieldset);
       syncRegisterSubmitState();
     });
 
     syncRegisterIdentityUi();
+    validateRegisterPasswordState();
   }
 
   if (loginForm && auth) {
@@ -3678,14 +4134,38 @@ if (!isFirebaseReady) {
       setFeedback(loginFeedback, "");
       const email = loginForm.login_email?.value?.trim() || "";
       const password = loginForm.login_password?.value || "";
+      const submitButton =
+        event.submitter instanceof HTMLButtonElement
+          ? event.submitter
+          : loginForm.querySelector("button[type='submit']");
+      const defaultButtonLabel =
+        submitButton instanceof HTMLButtonElement ? submitButton.textContent : "";
+      let redirectStarted = false;
       if (!email || !password) {
         setFeedback(loginFeedback, "Please enter your email and password.", true);
         return;
       }
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Signing in...";
+      }
       try {
-        await auth.signInWithEmailAndPassword(email, password);
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        const redirectState = await redirectAuthenticatedPortalUser(result?.user || auth.currentUser);
+        redirectStarted = redirectState === "redirected";
+        setFeedback(
+          loginFeedback,
+          redirectState === "otp"
+            ? "Continue with the OTP verification below to finish registration."
+            : "Sign-in successful. Loading your portal..."
+        );
       } catch (error) {
         setFeedback(loginFeedback, error.message || "Unable to sign in.", true);
+      } finally {
+        if (!redirectStarted && submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = false;
+          submitButton.textContent = defaultButtonLabel;
+        }
       }
     });
   }
@@ -3739,6 +4219,35 @@ if (!isFirebaseReady) {
           feedbackEl: registerFeedback,
           invalidTargets: validation.invalidTargets,
         });
+        return;
+      }
+
+      const [emailCheck, agentCheck] = await Promise.all([
+        runRegisterEmailCheck({ force: true }),
+        runRegisterAgentCodeCheck({ force: true }),
+      ]);
+
+      if (emailCheck.status !== "valid") {
+        showRegistrationError(
+          emailCheck.message || "We could not verify this email address right now.",
+          {
+            title: emailCheck.status === "invalid" ? "Check your email" : "Email verification issue",
+            feedbackEl: registerFeedback,
+            invalidTargets: [registerEmailField],
+          }
+        );
+        return;
+      }
+
+      if (agentCheck.status !== "valid") {
+        showRegistrationError(
+          agentCheck.message || "We could not verify that real estate agent code right now.",
+          {
+            title: agentCheck.status === "invalid" ? "Check your agent code" : "Agent code verification issue",
+            feedbackEl: registerFeedback,
+            invalidTargets: [registerAgentCodeField],
+          }
+        );
         return;
       }
 
@@ -5626,7 +6135,7 @@ if (!isFirebaseReady) {
 
     let profileDoc = null;
     try {
-      profileDoc = await db.collection("users").doc(user.uid).get();
+      profileDoc = await fetchUserProfileDoc(user);
     } catch (error) {
       if (loginPage && registrationProfilePending) {
         return;

@@ -1843,6 +1843,31 @@ body.nav-closing .site-footer {
   color: #9e3434;
 }
 
+.field-inline-feedback {
+  display: none;
+  font-size: 0.78rem;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.45;
+  color: rgba(11, 11, 12, 0.58);
+}
+
+.field-inline-feedback.is-visible {
+  display: block;
+}
+
+.field-inline-feedback.is-error {
+  color: #9e3434;
+}
+
+.field-inline-feedback.is-success {
+  color: #1d6b52;
+}
+
+.field-inline-feedback.is-muted {
+  color: rgba(79, 56, 41, 0.68);
+}
+
 .field input,
 .field select,
 .field textarea {

@@ -2765,7 +2765,7 @@ if (!isFirebaseReady) {
       bankSelect && storedBankId && Array.from(bankSelect.options).some((option) => option.value === storedBankId)
     );
     if (mandateAmountLabel) {
-      mandateAmountLabel.textContent = `Monthly amount: ${formatCurrency(amountCents)}`;
+      mandateAmountLabel.textContent = formatCurrency(amountCents);
     }
     if (mandateReferenceLabel) {
       mandateReferenceLabel.textContent = reference || "Pending";

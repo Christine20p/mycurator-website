@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-    <link rel="stylesheet" href="styles.css?v=20260330h" />
+    <link rel="stylesheet" href="styles.css?v=20260330i" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -104,82 +104,120 @@
                 <button class="btn ghost is-hidden" type="button" data-open-paynow>Continue with secure payment</button>
               </div>
               <div class="form-actions">
-                <button class="btn ghost is-hidden" type="button" data-open-mandate>Continue with mandate</button>
-                <button class="btn ghost is-hidden" type="button" data-request-mandate>Arrange mandate</button>
+                <button class="btn ghost is-hidden" type="button" data-open-mandate>Continue with monthly approval</button>
+                <button class="btn ghost is-hidden" type="button" data-request-mandate>Set up monthly approval</button>
               </div>
               <form class="portal-form mandate-form is-hidden" data-mandate-form>
-                <p class="portal-note">
-                  <strong data-mandate-amount>Monthly amount: R0.00</strong><br />
-                  Reference: <span data-mandate-reference>Pending</span>
-                </p>
-                <div class="form-grid">
-                  <label class="field">Account holder
-                    <input type="text" name="debtor_name" placeholder="Account holder name" required />
-                  </label>
-                  <label class="field">Bank
-                    <select name="debtor_bank_id" required>
-                      <option value="">Select your bank</option>
-                      <option value="1">Standard Bank</option>
-                      <option value="2">Nedbank</option>
-                      <option value="3">FirstRand / FNB</option>
-                      <option value="6">Access Bank</option>
-                      <option value="7">African Bank</option>
-                      <option value="10">Capitec</option>
-                      <option value="16">Absa</option>
-                      <option value="44">Bidvest</option>
-                      <option value="55">Finbond</option>
-                      <option value="__other__">Tyme, Ubank, Discovery, Old Mutual or another supported bank</option>
-                    </select>
-                  </label>
-                  <div class="form-grid is-hidden" data-custom-bank-fields>
-                    <label class="field">Bank name
-                      <input type="text" name="custom_bank_name" placeholder="Tyme Bank" />
+                <div class="mandate-form-header">
+                  <p class="mandate-form-tag">Monthly plan setup</p>
+                  <h4>Confirm the account for your ongoing service plan</h4>
+                  <p>
+                    Add the account details once and we will prepare the bank approval step for your monthly service arrangement.
+                  </p>
+                </div>
+                <div class="mandate-summary">
+                  <div class="mandate-summary-block">
+                    <span class="mandate-summary-label">Monthly amount</span>
+                    <strong class="mandate-summary-value" data-mandate-amount>R0.00</strong>
+                  </div>
+                  <div class="mandate-summary-block">
+                    <span class="mandate-summary-label">Reference</span>
+                    <span class="mandate-summary-value" data-mandate-reference>Pending</span>
+                  </div>
+                </div>
+                <div class="mandate-section-card">
+                  <div class="mandate-section-copy">
+                    <p class="mandate-section-tag">Account holder</p>
+                    <h5>Your approval details</h5>
+                    <p>Use the name and identification details linked to the account you want to use.</p>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Account holder
+                      <input type="text" name="debtor_name" placeholder="Account holder name" required />
                     </label>
-                    <label class="field">Bank ID
-                      <input type="text" name="custom_bank_id" inputmode="numeric" maxlength="6" placeholder="Institution identifier" />
+                    <label class="field">ID type
+                      <select name="debtor_id_type" required>
+                        <option value="2">South African ID</option>
+                        <option value="1">Passport</option>
+                      </select>
+                    </label>
+                    <label class="field form-span-2">ID or passport number
+                      <input type="text" name="debtor_id" placeholder="ID or passport number" required />
                     </label>
                   </div>
-                  <p class="portal-note is-hidden" data-custom-bank-note>
-                    Use this when your bank is supported but not in the preset list. Enter the bank name and bank ID from your onboarding documents.
-                  </p>
-                  <label class="field">Branch code
-                    <input type="text" name="debtor_branch_number" inputmode="numeric" maxlength="6" placeholder="6-digit universal branch code" required />
-                  </label>
-                  <label class="field">Account number
-                    <input type="text" name="debtor_account_number" inputmode="numeric" placeholder="Bank account number" required />
-                  </label>
-                  <label class="field">Account type
-                    <select name="debtor_account_type" required>
-                      <option value="01">Current / Cheque</option>
-                      <option value="02">Savings</option>
-                      <option value="03">Transmission</option>
-                    </select>
-                  </label>
-                  <label class="field">ID type
-                    <select name="debtor_id_type" required>
-                      <option value="2">South African ID</option>
-                      <option value="1">Passport</option>
-                    </select>
-                  </label>
-                  <label class="field">ID or passport number
-                    <input type="text" name="debtor_id" placeholder="ID or passport number" required />
-                  </label>
-                  <label class="field">First collection date
-                    <input type="date" name="start_date" required />
-                  </label>
-                  <label class="field">Collection day
-                    <input type="number" name="collection_day" min="1" max="30" placeholder="1-30" required />
-                  </label>
-                  <label class="field">Tracking days
-                    <input type="number" name="tracking_days" min="10" max="10" value="10" readonly />
-                  </label>
                 </div>
-                <label class="field checkbox">
+                <div class="mandate-section-card">
+                  <div class="mandate-section-copy">
+                    <p class="mandate-section-tag">Bank account</p>
+                    <h5>Where your monthly payment will come from</h5>
+                    <p>Choose your bank and enter the everyday account details you already use.</p>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Bank
+                      <select name="debtor_bank_id" required>
+                        <option value="">Select your bank</option>
+                        <option value="1">Standard Bank</option>
+                        <option value="2">Nedbank</option>
+                        <option value="3">FirstRand / FNB</option>
+                        <option value="6">Access Bank</option>
+                        <option value="7">African Bank</option>
+                        <option value="10">Capitec</option>
+                        <option value="16">Absa</option>
+                        <option value="44">Bidvest</option>
+                        <option value="55">Finbond</option>
+                        <option value="__other__">Tyme, Ubank, Discovery, Old Mutual or another supported bank</option>
+                      </select>
+                    </label>
+                    <label class="field">Account type
+                      <select name="debtor_account_type" required>
+                        <option value="01">Current / Cheque</option>
+                        <option value="02">Savings</option>
+                        <option value="03">Transmission</option>
+                      </select>
+                    </label>
+                    <div class="form-grid is-hidden" data-custom-bank-fields>
+                      <label class="field">Bank name
+                        <input type="text" name="custom_bank_name" placeholder="Tyme Bank" />
+                      </label>
+                      <label class="field">Bank ID
+                        <input type="text" name="custom_bank_id" inputmode="numeric" maxlength="6" placeholder="Institution identifier" />
+                      </label>
+                    </div>
+                    <p class="portal-note is-hidden" data-custom-bank-note>
+                      Use this when your bank is supported but not in the preset list. Enter the bank name and bank ID from your onboarding documents.
+                    </p>
+                    <label class="field">Branch code
+                      <input type="text" name="debtor_branch_number" inputmode="numeric" maxlength="6" placeholder="6-digit universal branch code" required />
+                    </label>
+                    <label class="field">Account number
+                      <input type="text" name="debtor_account_number" inputmode="numeric" placeholder="Bank account number" required />
+                    </label>
+                  </div>
+                </div>
+                <div class="mandate-section-card">
+                  <div class="mandate-section-copy">
+                    <p class="mandate-section-tag">Collection timing</p>
+                    <h5>How your monthly plan starts</h5>
+                    <p>Choose when the first collection can begin so the service plan can start smoothly.</p>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">First collection date
+                      <input type="date" name="start_date" required />
+                    </label>
+                    <label class="field">Collection day
+                      <input type="number" name="collection_day" min="1" max="30" placeholder="1-30" required />
+                    </label>
+                    <label class="field">Tracking days
+                      <input type="number" name="tracking_days" min="10" max="10" value="10" readonly />
+                    </label>
+                  </div>
+                </div>
+                <label class="field checkbox mandate-consent">
                   <input type="checkbox" name="mandate_consent" required />
-                  <span>I confirm that I am authorised to approve this bank account for DebiCheck collections.</span>
+                  <span>I confirm that I am allowed to approve collections from this account for my monthly service plan.</span>
                 </label>
-                <div class="form-actions">
-                  <button class="btn primary" type="submit">Submit DebiCheck details</button>
+                <div class="form-actions mandate-actions">
+                  <button class="btn primary" type="submit">Continue to bank approval</button>
                   <button class="btn ghost" type="button" data-cancel-mandate>Cancel</button>
                 </div>
               </form>
@@ -279,6 +317,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260330l"></script>
+    <script src="app.js?v=20260330m"></script>
   </body>
 </html>

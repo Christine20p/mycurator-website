@@ -2263,14 +2263,95 @@ body.nav-closing .site-footer {
 }
 
 .mandate-form {
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(15, 76, 75, 0.06);
-  border: 1px solid rgba(15, 76, 75, 0.14);
+  gap: 16px;
+  padding: 18px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(177, 138, 104, 0.12), rgba(15, 76, 75, 0.04));
+  border: 1px solid rgba(122, 94, 71, 0.16);
 }
 
 .mandate-form strong {
   color: var(--deep-teal);
+}
+
+.mandate-form-header {
+  display: grid;
+  gap: 6px;
+}
+
+.mandate-form-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #342319;
+}
+
+.mandate-form-header p:last-child {
+  margin: 0;
+  color: rgba(11, 11, 12, 0.66);
+}
+
+.mandate-form-tag,
+.mandate-section-tag {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.7);
+}
+
+.mandate-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mandate-summary-block,
+.mandate-section-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(122, 94, 71, 0.12);
+}
+
+.mandate-summary-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.66);
+}
+
+.mandate-summary-value {
+  font-size: 1rem;
+  color: #342319;
+}
+
+.mandate-section-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.mandate-section-copy h5 {
+  margin: 0;
+  font-size: 1rem;
+  color: #342319;
+}
+
+.mandate-section-copy p:last-child {
+  margin: 0;
+  color: rgba(11, 11, 12, 0.66);
+}
+
+.mandate-consent {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(122, 94, 71, 0.12);
+}
+
+.mandate-actions {
+  justify-content: flex-start;
 }
 
 .portal-shell {
@@ -4092,6 +4173,10 @@ body.booking-sheet-open {
 
   .field.checkbox input {
     margin-top: 4px;
+  }
+
+  .mandate-summary {
+    grid-template-columns: 1fr;
   }
 
   .container {

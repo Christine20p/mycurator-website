@@ -1844,16 +1844,18 @@ body.nav-closing .site-footer {
 }
 
 .field-inline-feedback {
-  display: none;
+  display: block;
+  min-height: 1.2rem;
   font-size: 0.78rem;
   letter-spacing: normal;
   text-transform: none;
   line-height: 1.45;
   color: rgba(11, 11, 12, 0.58);
+  visibility: hidden;
 }
 
 .field-inline-feedback.is-visible {
-  display: block;
+  visibility: visible;
 }
 
 .field-inline-feedback.is-error {
@@ -2149,6 +2151,25 @@ body.nav-closing .site-footer {
 .portal-form--register {
   display: grid;
   gap: 20px;
+}
+
+.portal-form--register .form-feedback {
+  display: block;
+  visibility: hidden;
+}
+
+.portal-form--register .form-feedback.is-visible,
+.portal-form--register .form-feedback.is-error,
+.portal-form--register .form-feedback.is-success {
+  visibility: visible;
+}
+
+.portal-form--register [data-document-feedback] {
+  min-height: 3.25rem;
+}
+
+.portal-form--register [data-register-feedback] {
+  min-height: 3.5rem;
 }
 
 .portal-form--register .form-grid {

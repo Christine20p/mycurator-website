@@ -680,6 +680,7 @@ let currentUserData = null;
 let userListener = null;
 let payNowListener = null;
 let pendingOtpUserId = null;
+let portalRegistrationStateCallable = null;
 let registrationProfilePending = false;
 let hasRedirectedToBooking = false;
 let workerBookingsListener = null;
@@ -1021,6 +1022,16 @@ const resetRegisterLiveValidationState = (key) => {
   state.message = "";
 };
 
+const checkPortalRegistrationState = async (payload = {}) => {
+  if (!functions?.httpsCallable) {
+    return null;
+  }
+  portalRegistrationStateCallable =
+    portalRegistrationStateCallable || functions.httpsCallable("checkPortalRegistrationState");
+  const result = await portalRegistrationStateCallable(payload);
+  return result?.data || null;
+};
+
 const showRegisterPopup = (message, title = "Registration issue") => {
   if (!(registerPopup && registerPopupMessage && registerPopupTitle)) {
     if (typeof window !== "undefined" && typeof window.alert === "function") {
@@ -1215,7 +1226,7 @@ const runRegisterEmailCheck = async ({ force = false } = {}) => {
     return { status: "invalid", message: registerLiveValidationState.email.message, value: email };
   }
 
-  if (!auth) {
+  if (!auth && !functions?.httpsCallable) {
     registerLiveValidationState.email.status = "pending";
     registerLiveValidationState.email.message = "";
     clearInlineFeedback(registerEmailFeedback);
@@ -1225,7 +1236,41 @@ const runRegisterEmailCheck = async ({ force = false } = {}) => {
 
   setInlineFeedback(registerEmailFeedback, "Checking email address...", "muted");
   try {
-    const methods = await auth.fetchSignInMethodsForEmail(email);
+    let methods = [];
+    let remoteState = null;
+    try {
+      remoteState = await checkPortalRegistrationState({ email });
+    } catch (remoteError) {
+      remoteState = null;
+    }
+    if (currentRequestId !== registerLiveValidationState.email.requestId || email !== normalizeRegisterEmail(registerEmailField?.value || "")) {
+      return { status: "stale", message: "", value: email };
+    }
+    if (remoteState && remoteState.emailRegistered === true) {
+      registerLiveValidationState.email.status = "invalid";
+      registerLiveValidationState.email.message = "That email address is already registered.";
+      setInlineFeedback(registerEmailFeedback, registerLiveValidationState.email.message, "error");
+      setRegisterFieldError(registerEmailField, true);
+      return { status: "invalid", message: registerLiveValidationState.email.message, value: email };
+    }
+    if (remoteState && remoteState.emailRegistered === false) {
+      registerLiveValidationState.email.status = "valid";
+      registerLiveValidationState.email.message = "";
+      setInlineFeedback(registerEmailFeedback, "Email address is available.", "success");
+      clearRegisterFieldError(registerEmailField);
+      return { status: "valid", message: "", value: email };
+    }
+    if (!(auth && typeof auth.fetchSignInMethodsForEmail === "function")) {
+      const message = force
+        ? "We could not verify this email address right now."
+        : "We could not verify this email yet.";
+      registerLiveValidationState.email.status = force ? "error" : "pending";
+      registerLiveValidationState.email.message = message;
+      setInlineFeedback(registerEmailFeedback, message, force ? "error" : "muted");
+      setRegisterFieldError(registerEmailField, force);
+      return { status: force ? "error" : "pending", message, value: email };
+    }
+    methods = await auth.fetchSignInMethodsForEmail(email);
     if (currentRequestId !== registerLiveValidationState.email.requestId || email !== normalizeRegisterEmail(registerEmailField?.value || "")) {
       return { status: "stale", message: "", value: email };
     }
@@ -1287,7 +1332,7 @@ const runRegisterAgentCodeCheck = async ({ force = false } = {}) => {
     };
   }
 
-  if (!db) {
+  if (!db && !functions?.httpsCallable) {
     registerLiveValidationState.agent.status = "pending";
     registerLiveValidationState.agent.message = "";
     clearInlineFeedback(registerAgentFeedback);
@@ -1297,6 +1342,39 @@ const runRegisterAgentCodeCheck = async ({ force = false } = {}) => {
 
   setInlineFeedback(registerAgentFeedback, "Checking agent code...", "muted");
   try {
+    let remoteState = null;
+    try {
+      remoteState = await checkPortalRegistrationState({ realEstateCode: code });
+    } catch (remoteError) {
+      remoteState = null;
+    }
+    if (currentRequestId !== registerLiveValidationState.agent.requestId || code !== normalizeRegisterAgentCode(registerAgentCodeField?.value || "")) {
+      return { status: "stale", message: "", value: code };
+    }
+    if (remoteState && remoteState.realEstateCodeValid === false) {
+      registerLiveValidationState.agent.status = "invalid";
+      registerLiveValidationState.agent.message = "We could not find that real estate agent code.";
+      setInlineFeedback(registerAgentFeedback, registerLiveValidationState.agent.message, "error");
+      setRegisterFieldError(registerAgentCodeField, true);
+      return { status: "invalid", message: registerLiveValidationState.agent.message, value: code };
+    }
+    if (remoteState && remoteState.realEstateCodeValid === true) {
+      registerLiveValidationState.agent.status = "valid";
+      registerLiveValidationState.agent.message = "";
+      setInlineFeedback(registerAgentFeedback, "Agent code verified.", "success");
+      clearRegisterFieldError(registerAgentCodeField);
+      return { status: "valid", message: "", value: code };
+    }
+    if (!db) {
+      const message = force
+        ? "We could not verify that real estate agent code right now."
+        : "We could not verify that real estate agent code yet.";
+      registerLiveValidationState.agent.status = force ? "error" : "pending";
+      registerLiveValidationState.agent.message = message;
+      setInlineFeedback(registerAgentFeedback, message, force ? "error" : "muted");
+      setRegisterFieldError(registerAgentCodeField, force);
+      return { status: force ? "error" : "pending", message, value: code };
+    }
     const snap = await readFirestoreDocumentOnce(db.collection("realEstateCodes").doc(code));
     if (currentRequestId !== registerLiveValidationState.agent.requestId || code !== normalizeRegisterAgentCode(registerAgentCodeField?.value || "")) {
       return { status: "stale", message: "", value: code };
@@ -2494,6 +2572,20 @@ const redirectTo = (target) => {
 
 const redirectToRole = (role) => {
   redirectTo(routeForRole(role));
+};
+
+const ensureFreshAuthSession = async (user) => {
+  if (!user || typeof user.getIdToken !== "function") return user;
+  try {
+    await user.getIdToken(true);
+  } catch (refreshError) {
+    try {
+      await user.getIdToken();
+    } catch (tokenError) {
+      // Let downstream reads surface the actual issue.
+    }
+  }
+  return user;
 };
 
 const fetchUserProfileDoc = async (user) => {
@@ -4151,7 +4243,8 @@ if (!isFirebaseReady) {
       }
       try {
         const result = await auth.signInWithEmailAndPassword(email, password);
-        const redirectState = await redirectAuthenticatedPortalUser(result?.user || auth.currentUser);
+        const signedInUser = await ensureFreshAuthSession(result?.user || auth.currentUser);
+        const redirectState = await redirectAuthenticatedPortalUser(signedInUser);
         redirectStarted = redirectState === "redirected";
         setFeedback(
           loginFeedback,
@@ -4257,7 +4350,7 @@ if (!isFirebaseReady) {
       disableForm(registerForm, true);
       try {
         const result = await auth.createUserWithEmailAndPassword(email, password);
-        user = result.user;
+        user = await ensureFreshAuthSession(result?.user || auth.currentUser);
         await functions.httpsCallable("completeClientRegistration")({
           title,
           fullName,
@@ -6132,6 +6225,8 @@ if (!isFirebaseReady) {
         return;
       }
     }
+
+    await ensureFreshAuthSession(user);
 
     let profileDoc = null;
     try {

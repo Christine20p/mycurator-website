@@ -1879,6 +1879,28 @@ syncPaymentConsentState();
 
 let pendingExternalRedirectUrl = "";
 let pendingExternalRedirectTimer = null;
+let pendingPortalRedirectTimer = null;
+const PORTAL_REDIRECT_TARGET_KEY = "portalRedirectTarget";
+
+const getCurrentPageName = () => window.location.pathname.split("/").pop() || "index.html";
+
+const buildPortalPageUrl = (target) => {
+  const trimmedTarget = String(target || "").trim();
+  if (!trimmedTarget) return "";
+  try {
+    return new URL(trimmedTarget, window.location.href).toString();
+  } catch (error) {
+    return trimmedTarget;
+  }
+};
+
+const clearPortalRedirectTarget = (target = "") => {
+  const storedTarget = String(sessionStorage.getItem(PORTAL_REDIRECT_TARGET_KEY) || "").trim();
+  if (!storedTarget) return;
+  if (!target || storedTarget === target) {
+    sessionStorage.removeItem(PORTAL_REDIRECT_TARGET_KEY);
+  }
+};
 
 const continueInCurrentWindow = (
   url,
@@ -2538,7 +2560,8 @@ if (rolePage) {
   setupRoleTabs();
 }
 
-const pageName = window.location.pathname.split("/").pop();
+const pageName = getCurrentPageName();
+clearPortalRedirectTarget(pageName);
 
 const roleRoutes = {
   admin: "portal-admin.html",
@@ -2575,14 +2598,61 @@ const resolveRole = (data) => {
 const routeForRole = (role) => roleRoutes[role] || "app.html";
 const isRolePageForRole = (role) => rolePage && pageName === routeForRole(role);
 
-const redirectTo = (target) => {
-  if (pageName !== target) {
-    window.location.href = target;
+const redirectTo = (target, { replace = false } = {}) => {
+  const trimmedTarget = String(target || "").trim();
+  if (!trimmedTarget) return false;
+
+  const currentPage = getCurrentPageName();
+  if (currentPage === trimmedTarget) {
+    clearPortalRedirectTarget(trimmedTarget);
+    return true;
   }
+
+  const absoluteTarget = buildPortalPageUrl(trimmedTarget);
+  sessionStorage.setItem(PORTAL_REDIRECT_TARGET_KEY, trimmedTarget);
+
+  const navigate = (strategy = "assign") => {
+    try {
+      if (strategy === "replace") {
+        window.location.replace(absoluteTarget);
+        return true;
+      }
+      if (strategy === "open") {
+        window.open(absoluteTarget, "_self");
+        return true;
+      }
+      window.location.assign(absoluteTarget);
+      return true;
+    } catch (navigationError) {
+      try {
+        window.location.href = absoluteTarget;
+        return true;
+      } catch (hrefError) {
+        return false;
+      }
+    }
+  };
+
+  if (pendingPortalRedirectTimer) {
+    window.clearTimeout(pendingPortalRedirectTimer);
+  }
+
+  navigate(replace ? "replace" : "assign");
+
+  pendingPortalRedirectTimer = window.setTimeout(() => {
+    if (getCurrentPageName() !== currentPage) return;
+    navigate("replace");
+    window.setTimeout(() => {
+      if (getCurrentPageName() !== currentPage) return;
+      navigate("open");
+    }, 220);
+  }, 220);
+
+  return true;
 };
 
 const redirectToRole = (role) => {
-  redirectTo(routeForRole(role));
+  return redirectTo(routeForRole(role), { replace: loginPage });
 };
 
 const ensureFreshAuthSession = async (user) => {

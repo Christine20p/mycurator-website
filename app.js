@@ -675,6 +675,7 @@ const adminCommsRecent = document.querySelector("[data-admin-comms-recent]");
 let auth = null;
 let db = null;
 let functions = null;
+let authPersistenceReady = Promise.resolve();
 let currentUser = null;
 let currentUserData = null;
 let userListener = null;
@@ -1880,7 +1881,12 @@ syncPaymentConsentState();
 let pendingExternalRedirectUrl = "";
 let pendingExternalRedirectTimer = null;
 let pendingPortalRedirectTimer = null;
+let pendingUnauthenticatedPortalRedirectTimer = null;
 const PORTAL_REDIRECT_TARGET_KEY = "portalRedirectTarget";
+const PORTAL_AUTH_HANDOFF_KEY = "portalAuthHandoffAt";
+const PORTAL_AUTH_HANDOFF_TARGET_KEY = "portalAuthHandoffTarget";
+const AUTH_SESSION_RESTORE_GRACE_MS = 2200;
+const AUTH_HANDOFF_RESTORE_GRACE_MS = 8000;
 
 const getCurrentPageName = () => window.location.pathname.split("/").pop() || "index.html";
 
@@ -1900,6 +1906,30 @@ const clearPortalRedirectTarget = (target = "") => {
   if (!target || storedTarget === target) {
     sessionStorage.removeItem(PORTAL_REDIRECT_TARGET_KEY);
   }
+};
+
+const setPortalAuthHandoff = (target = "") => {
+  sessionStorage.setItem(PORTAL_AUTH_HANDOFF_KEY, String(Date.now()));
+  sessionStorage.setItem(PORTAL_AUTH_HANDOFF_TARGET_KEY, String(target || "").trim());
+};
+
+const clearPortalAuthHandoff = () => {
+  sessionStorage.removeItem(PORTAL_AUTH_HANDOFF_KEY);
+  sessionStorage.removeItem(PORTAL_AUTH_HANDOFF_TARGET_KEY);
+};
+
+const getPortalAuthHandoffAge = (target = "") => {
+  const rawTimestamp = Number(sessionStorage.getItem(PORTAL_AUTH_HANDOFF_KEY) || "");
+  const storedTarget = String(sessionStorage.getItem(PORTAL_AUTH_HANDOFF_TARGET_KEY) || "").trim();
+  if (!Number.isFinite(rawTimestamp) || rawTimestamp <= 0) return null;
+  if (target && storedTarget && storedTarget !== target) return null;
+  return Date.now() - rawTimestamp;
+};
+
+const clearPendingUnauthenticatedPortalRedirect = () => {
+  if (!pendingUnauthenticatedPortalRedirectTimer) return;
+  window.clearTimeout(pendingUnauthenticatedPortalRedirectTimer);
+  pendingUnauthenticatedPortalRedirectTimer = null;
 };
 
 const continueInCurrentWindow = (
@@ -2657,6 +2687,30 @@ const redirectToRole = (role) => {
   return redirectTo(routeForRole(role), { replace: loginPage });
 };
 
+const scheduleUnauthenticatedPortalRedirect = () => {
+  if (!(activationPage || bookingPage || rolePage)) return;
+
+  clearPendingUnauthenticatedPortalRedirect();
+
+  const targetPage = getCurrentPageName();
+  const handoffAge = getPortalAuthHandoffAge(targetPage);
+  const delay =
+    handoffAge !== null && handoffAge <= AUTH_HANDOFF_RESTORE_GRACE_MS
+      ? AUTH_HANDOFF_RESTORE_GRACE_MS
+      : AUTH_SESSION_RESTORE_GRACE_MS;
+
+  if (activationPage || bookingPage) {
+    setLoadingState();
+  }
+  showMessage("Restoring your portal session...");
+
+  pendingUnauthenticatedPortalRedirectTimer = window.setTimeout(() => {
+    pendingUnauthenticatedPortalRedirectTimer = null;
+    clearPortalAuthHandoff();
+    redirectTo("portal-login.html", { replace: true });
+  }, delay);
+};
+
 const ensureFreshAuthSession = async (user) => {
   if (!user || typeof user.getIdToken !== "function") return user;
   try {
@@ -2710,7 +2764,9 @@ const redirectAuthenticatedPortalUser = async (user) => {
 
   sessionStorage.removeItem("portalPendingOtp");
   clearMessage();
-  redirectToRole(resolveRole(currentUserData));
+  const resolvedRole = resolveRole(currentUserData);
+  setPortalAuthHandoff(routeForRole(resolvedRole));
+  redirectToRole(resolvedRole);
   return "redirected";
 };
 
@@ -2754,6 +2810,11 @@ if (!isFirebaseReady) {
   auth = firebase.auth();
   db = firebase.firestore();
   functions = firebase.app().functions("africa-south1");
+  if (firebase.auth?.Auth?.Persistence?.LOCAL) {
+    authPersistenceReady = auth
+      .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .catch(() => undefined);
+  }
 
   if (activationPage || bookingPage) {
     setLoadingState();
@@ -4343,6 +4404,7 @@ if (!isFirebaseReady) {
         submitButton.textContent = "Signing in...";
       }
       try {
+        await authPersistenceReady;
         const result = await auth.signInWithEmailAndPassword(email, password);
         routeState = await redirectAuthenticatedPortalUser(result?.user || auth.currentUser);
         setFeedback(
@@ -4448,6 +4510,7 @@ if (!isFirebaseReady) {
       registrationProfilePending = true;
       disableForm(registerForm, true);
       try {
+        await authPersistenceReady;
         const result = await auth.createUserWithEmailAndPassword(email, password);
         user = await ensureFreshAuthSession(result?.user || auth.currentUser);
         await functions.httpsCallable("completeClientRegistration")({
@@ -4538,6 +4601,7 @@ if (!isFirebaseReady) {
         setFeedback(otpFeedback, "OTP verified. Redirecting to activation...");
         if (otpPanel) otpPanel.classList.add("is-hidden");
         sessionStorage.removeItem("portalPendingOtp");
+        setPortalAuthHandoff("app.html");
         window.location.href = "app.html";
       } catch (error) {
         showRegistrationError(error.message || "OTP verification failed.", {
@@ -6292,6 +6356,7 @@ if (!isFirebaseReady) {
     currentUser = user;
 
     if (!user) {
+      clearPendingUnauthenticatedPortalRedirect();
       stopUserListener();
       stopPayNowListener();
       stopBookingPropertiesListener();
@@ -6311,10 +6376,13 @@ if (!isFirebaseReady) {
       setBookingSheetOpen(false);
       closeSettingsOtpPanel();
       if (activationPage || bookingPage || rolePage) {
-        redirectTo("portal-login.html");
+        scheduleUnauthenticatedPortalRedirect();
       }
       return;
     }
+
+    clearPendingUnauthenticatedPortalRedirect();
+    clearPortalAuthHandoff();
 
     await ensureFreshAuthSession(user);
 

@@ -2115,17 +2115,16 @@ body.nav-closing .site-footer {
 .tier-selection-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  width: min(100%, 472px);
+  gap: 14px;
+  width: 100%;
 }
 
 .tier-option {
   display: grid;
   grid-template-rows: auto auto 1fr auto auto;
-  gap: 6px;
-  padding: 14px;
+  gap: 8px;
+  padding: 16px;
   aspect-ratio: 1 / 1;
-  min-height: 224px;
   align-content: stretch;
   justify-items: start;
   border-radius: 18px;

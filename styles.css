@@ -2161,8 +2161,8 @@ body.nav-closing .site-footer {
 }
 
 .tier-option-positioning {
-  font-size: 0.86rem;
-  line-height: 1.4;
+  font-size: 0.78rem;
+  line-height: 1.35;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: #342319;
@@ -2179,20 +2179,20 @@ body.nav-closing .site-footer {
 .tier-option-service {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
-  padding: 4px 8px;
+  min-height: 20px;
+  padding: 3px 6px;
   border-radius: 999px;
   border: 1px solid rgba(79, 56, 41, 0.1);
   background: rgba(79, 56, 41, 0.12);
   color: #342319;
-  font-size: 0.69rem;
+  font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.2;
 }
 
 .tier-option-price {
-  font-size: 1.14rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.1;
   color: #342319;
@@ -2200,7 +2200,7 @@ body.nav-closing .site-footer {
 }
 
 .tier-option-note {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;

@@ -1904,7 +1904,20 @@ body.nav-closing .site-footer {
   color: inherit;
 }
 
+.address-fieldset.is-invalid .field,
+.address-fieldset.is-invalid .field-inline-feedback.is-error {
+  color: inherit;
+}
+
 .address-fieldset.is-invalid > input {
+  border-color: rgba(11, 11, 12, 0.2);
+  box-shadow: none;
+  background: #fff;
+}
+
+.address-fieldset.is-invalid .field > input,
+.address-fieldset.is-invalid .field > select,
+.address-fieldset.is-invalid .field > textarea {
   border-color: rgba(11, 11, 12, 0.2);
   box-shadow: none;
   background: #fff;

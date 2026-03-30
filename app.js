@@ -540,6 +540,11 @@ const bookingNoticeDismissButtons = document.querySelectorAll("[data-booking-not
 const loginFeedback = document.querySelector("[data-login-feedback]");
 const registerFeedback = document.querySelector("[data-register-feedback]");
 const otpFeedback = document.querySelector("[data-otp-feedback]");
+const registerPopup = document.querySelector("[data-register-popup]");
+const registerPopupTitle = document.querySelector("[data-register-popup-title]");
+const registerPopupMessage = document.querySelector("[data-register-popup-message]");
+const registerPopupDismissButtons = document.querySelectorAll("[data-register-popup-dismiss]");
+const passwordToggleButtons = document.querySelectorAll("[data-password-toggle]");
 const registerDocumentTypeField = registerForm?.querySelector("select[name='document_type']");
 const registerDocumentNumberField = registerForm?.querySelector("input[name='document_number']");
 const registerDocumentCountryField = registerForm?.querySelector("input[name='document_country']");
@@ -959,6 +964,70 @@ const setFeedback = (el, message, isError = false) => {
   el.classList.toggle("is-success", hasMessage && !isError);
 };
 
+const showRegisterPopup = (message, title = "Registration issue") => {
+  if (!(registerPopup && registerPopupMessage && registerPopupTitle)) return;
+  registerPopupTitle.textContent = title;
+  registerPopupMessage.textContent = String(message || "").trim();
+  registerPopup.classList.remove("is-hidden");
+  registerPopup.setAttribute("aria-hidden", "false");
+  const dismissButton = registerPopup.querySelector("[data-register-popup-dismiss]");
+  if (dismissButton instanceof HTMLButtonElement) {
+    window.setTimeout(() => dismissButton.focus(), 0);
+  }
+};
+
+const hideRegisterPopup = () => {
+  if (!registerPopup) return;
+  registerPopup.classList.add("is-hidden");
+  registerPopup.setAttribute("aria-hidden", "true");
+};
+
+const formatRegistrationError = (error, fallbackMessage = "Unable to create account.") => {
+  const code = String(error?.code || "").trim().toLowerCase();
+  if (code === "auth/email-already-in-use") {
+    return {
+      title: "Email already registered",
+      message: "That email address is already registered. Sign in instead or use a different email address."
+    };
+  }
+  if (code === "auth/invalid-email") {
+    return {
+      title: "Invalid email",
+      message: "Enter a valid email address before continuing."
+    };
+  }
+  if (code === "auth/weak-password") {
+    return {
+      title: "Weak password",
+      message: "Use a stronger password with at least 6 characters."
+    };
+  }
+  if (code === "auth/network-request-failed") {
+    return {
+      title: "Connection issue",
+      message: "We could not reach the server just now. Check your connection and try again."
+    };
+  }
+  if (code === "auth/too-many-requests") {
+    return {
+      title: "Too many attempts",
+      message: "Too many attempts were made just now. Wait a moment and try again."
+    };
+  }
+  return {
+    title: "Registration issue",
+    message: error?.message || fallbackMessage
+  };
+};
+
+const showRegistrationError = (message, options = {}) => {
+  const resolvedMessage = String(message || "").trim();
+  if (!resolvedMessage) return;
+  const feedbackTarget = options.feedbackEl || registerFeedback;
+  setFeedback(feedbackTarget, "");
+  showRegisterPopup(resolvedMessage, options.title || "Registration issue");
+};
+
 const formatCurrency = (cents) => {
   if (!cents) return "R0.00";
   return `R${(cents / 100).toFixed(2)}`;
@@ -1351,6 +1420,30 @@ const continueInCurrentWindow = (
 
 bookingNoticeDismissButtons.forEach((button) => {
   button.addEventListener("click", closeBookingNotice);
+});
+
+registerPopupDismissButtons.forEach((button) => {
+  button.addEventListener("click", hideRegisterPopup);
+});
+
+if (registerPopup) {
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !registerPopup.classList.contains("is-hidden")) {
+      hideRegisterPopup();
+    }
+  });
+}
+
+passwordToggleButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const field = button.closest(".password-field");
+    const input = field?.querySelector("input");
+    if (!(input instanceof HTMLInputElement)) return;
+    const shouldReveal = input.type === "password";
+    input.type = shouldReveal ? "text" : "password";
+    button.textContent = shouldReveal ? "Hide" : "Show";
+    button.setAttribute("aria-label", shouldReveal ? "Hide password" : "Show password");
+  });
 });
 
 if (loginPage && portalMessage) {
@@ -3460,6 +3553,7 @@ if (!isFirebaseReady) {
   if (registerForm && auth && db) {
     registerForm.addEventListener("submit", async (event) => {
       event.preventDefault();
+      hideRegisterPopup();
       setFeedback(registerFeedback, "");
       setFeedback(otpFeedback, "");
 
@@ -3489,17 +3583,26 @@ if (!isFirebaseReady) {
         !password ||
         !confirmPassword
       ) {
-        setFeedback(registerFeedback, "Please fill in all fields.", true);
+        showRegistrationError("Please fill in all fields.", {
+          title: "Missing information",
+          feedbackEl: registerFeedback
+        });
         return;
       }
 
       if (!identityState.isValid) {
-        setFeedback(registerFeedback, identityState.message || MISSING_DOCUMENT_TYPE_MESSAGE, true);
+        showRegistrationError(identityState.message || MISSING_DOCUMENT_TYPE_MESSAGE, {
+          title: "Check your document details",
+          feedbackEl: registerFeedback
+        });
         return;
       }
 
       if (password !== confirmPassword) {
-        setFeedback(registerFeedback, "Passwords do not match.", true);
+        showRegistrationError("Passwords do not match.", {
+          title: "Password mismatch",
+          feedbackEl: registerFeedback
+        });
         return;
       }
 
@@ -3542,13 +3645,18 @@ if (!isFirebaseReady) {
           });
           const deliveryWarning = getOtpDeliveryWarning(payload);
           if (deliveryWarning) {
-            setFeedback(registerFeedback, deliveryWarning, true);
+            showRegistrationError(deliveryWarning, {
+              title: "OTP delivery issue",
+              feedbackEl: registerFeedback
+            });
           }
         } catch (otpError) {
-          setFeedback(
-            registerFeedback,
+          showRegistrationError(
             otpError.message || "Account created, but the OTP could not be sent. Use Resend OTP or contact support.",
-            true
+            {
+              title: "OTP delivery issue",
+              feedbackEl: registerFeedback
+            }
           );
         }
       } catch (error) {
@@ -3559,7 +3667,11 @@ if (!isFirebaseReady) {
             await auth.signOut().catch(() => {});
           }
         }
-        setFeedback(registerFeedback, error.message || "Unable to create account.", true);
+        const registrationError = formatRegistrationError(error, "Unable to create account.");
+        showRegistrationError(registrationError.message, {
+          title: registrationError.title,
+          feedbackEl: registerFeedback
+        });
       } finally {
         registrationProfilePending = false;
         disableForm(registerForm, false);
@@ -3572,11 +3684,15 @@ if (!isFirebaseReady) {
     otpVerifyButton.addEventListener("click", async () => {
       const otpInput = otpPanel?.querySelector("input[name='otp_code']");
       const code = otpInput?.value?.trim();
+      hideRegisterPopup();
       if (!pendingOtpUserId) {
         pendingOtpUserId = sessionStorage.getItem("portalPendingOtp");
       }
       if (!code || !pendingOtpUserId) {
-        setFeedback(otpFeedback, "Enter the OTP code to continue.", true);
+        showRegistrationError("Enter the OTP code to continue.", {
+          title: "Missing OTP code",
+          feedbackEl: otpFeedback
+        });
         return;
       }
       try {
@@ -3586,13 +3702,17 @@ if (!isFirebaseReady) {
         sessionStorage.removeItem("portalPendingOtp");
         window.location.href = "app.html";
       } catch (error) {
-        setFeedback(otpFeedback, error.message || "OTP verification failed.", true);
+        showRegistrationError(error.message || "OTP verification failed.", {
+          title: "OTP verification issue",
+          feedbackEl: otpFeedback
+        });
       }
     });
   }
 
   if (otpResendButton) {
     otpResendButton.addEventListener("click", async () => {
+      hideRegisterPopup();
       if (!pendingOtpUserId) {
         pendingOtpUserId = sessionStorage.getItem("portalPendingOtp");
       }
@@ -3604,12 +3724,18 @@ if (!isFirebaseReady) {
         });
         const deliveryWarning = getOtpDeliveryWarning(payload);
         if (deliveryWarning) {
-          setFeedback(otpFeedback, deliveryWarning, true);
+          showRegistrationError(deliveryWarning, {
+            title: "OTP delivery issue",
+            feedbackEl: otpFeedback
+          });
           return;
         }
         setFeedback(otpFeedback, "OTP resent.");
       } catch (error) {
-        setFeedback(otpFeedback, error.message || "Unable to resend OTP.", true);
+        showRegistrationError(error.message || "Unable to resend OTP.", {
+          title: "OTP resend issue",
+          feedbackEl: otpFeedback
+        });
       }
     });
   }

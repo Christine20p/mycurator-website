@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-    <link rel="stylesheet" href="styles.css?v=20260330l" />
+    <link rel="stylesheet" href="styles.css?v=20260330m" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -74,7 +74,10 @@
                     <input type="email" name="login_email" placeholder="name@email.com" required />
                   </label>
                   <label class="field">Password
-                    <input type="password" name="login_password" placeholder="Password" required />
+                    <div class="password-field">
+                      <input type="password" name="login_password" placeholder="Password" required />
+                      <button class="password-toggle" type="button" data-password-toggle aria-label="Show password">Show</button>
+                    </div>
                   </label>
                   <div class="form-actions">
                     <button class="btn primary" type="submit">Sign in</button>
@@ -88,24 +91,24 @@
               </div>
 
               <div class="auth-side-panel">
-                <p class="auth-side-eyebrow">Portal onboarding</p>
-                <h3>Register once. Manage every client step here.</h3>
+                <p class="auth-side-eyebrow">Client registration</p>
+                <h3>Register your client portal profile here.</h3>
                 <p>
-                  Your portal profile links identity, property details, agent activation, and OTP verification
-                  in one place.
+                  You can verify your identity, add your property details, activate with your agent code, and
+                  complete OTP verification in one place.
                 </p>
                 <div class="auth-side-list">
                   <div class="auth-side-item">
-                    <strong>Verified identity</strong>
-                    <span>ID or passport details are checked before activation continues.</span>
+                    <strong>Your identity</strong>
+                    <span>Use your ID or passport details so we can verify your profile before activation continues.</span>
                   </div>
                   <div class="auth-side-item">
-                    <strong>Property linked</strong>
-                    <span>Capture the service address once and continue inside the client dashboard.</span>
+                    <strong>Your property</strong>
+                    <span>Add your service address once and continue inside your client dashboard.</span>
                   </div>
                   <div class="auth-side-item">
-                    <strong>OTP protected</strong>
-                    <span>Registration is completed with a one-time code sent to the cellphone on file.</span>
+                    <strong>Your OTP</strong>
+                    <span>Complete registration with the one-time code sent to your cellphone.</span>
                   </div>
                 </div>
               </div>
@@ -120,30 +123,6 @@
                     We will verify your identity, link your property address, and connect your profile to the
                     correct real estate network.
                   </p>
-                </div>
-                <div class="register-hero-badges" aria-hidden="true">
-                  <span class="register-badge">Identity matched</span>
-                  <span class="register-badge">Address captured</span>
-                  <span class="register-badge">Agent-linked access</span>
-                  <span class="register-badge">OTP confirmed</span>
-                </div>
-              </div>
-
-              <div class="register-steps" aria-hidden="true">
-                <div class="register-step">
-                  <span class="register-step-number">01</span>
-                  <strong>Identity</strong>
-                  <small>Profile and document details</small>
-                </div>
-                <div class="register-step">
-                  <span class="register-step-number">02</span>
-                  <strong>Property</strong>
-                  <small>Presentation address and location</small>
-                </div>
-                <div class="register-step">
-                  <span class="register-step-number">03</span>
-                  <strong>Access</strong>
-                  <small>Portal login and activation code</small>
                 </div>
               </div>
 
@@ -252,10 +231,16 @@
                       <input type="email" name="email" placeholder="name@email.com" inputmode="email" autocapitalize="none" required />
                     </label>
                     <label class="field">Create password
-                      <input type="password" name="password" placeholder="Create password" required />
+                      <div class="password-field">
+                        <input type="password" name="password" placeholder="Create password" required />
+                        <button class="password-toggle" type="button" data-password-toggle aria-label="Show password">Show</button>
+                      </div>
                     </label>
                     <label class="field">Confirm password
-                      <input type="password" name="confirm_password" placeholder="Confirm password" required />
+                      <div class="password-field">
+                        <input type="password" name="confirm_password" placeholder="Confirm password" required />
+                        <button class="password-toggle" type="button" data-password-toggle aria-label="Show password">Show</button>
+                      </div>
                     </label>
                   </div>
                 </section>
@@ -293,6 +278,18 @@
               </div>
             </div>
           </div>
+          <div class="auth-popup is-hidden" data-register-popup aria-hidden="true">
+            <div class="auth-popup-backdrop" data-register-popup-dismiss></div>
+            <div class="auth-popup-card" role="alertdialog" aria-modal="true" aria-labelledby="register-popup-title">
+              <button class="auth-popup-close" type="button" data-register-popup-dismiss aria-label="Dismiss registration message">Dismiss</button>
+              <p class="auth-popup-kicker">Registration notice</p>
+              <h3 id="register-popup-title" data-register-popup-title>Registration issue</h3>
+              <p class="auth-popup-message" data-register-popup-message></p>
+              <div class="auth-popup-actions">
+                <button class="btn primary" type="button" data-register-popup-dismiss>Dismiss</button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 </main>
@@ -325,6 +322,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260330o"></script>
+    <script src="app.js?v=20260330p"></script>
   </body>
 </html>

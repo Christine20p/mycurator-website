@@ -1922,6 +1922,22 @@ body.nav-closing .site-footer {
   align-content: start;
 }
 
+.portal-form--register .address-fieldset {
+  gap: 12px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(122, 94, 71, 0.16);
+  background: linear-gradient(180deg, rgba(247, 241, 231, 0.95), rgba(255, 255, 255, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.portal-form--register .address-fieldset > span {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.72);
+}
+
 .address-grid {
   margin-top: 2px;
 }
@@ -2044,6 +2060,21 @@ body.nav-closing .site-footer {
   margin: 0;
   font-size: 0.85rem;
   color: rgba(11, 11, 12, 0.6);
+}
+
+.portal-form--register {
+  display: grid;
+  gap: 20px;
+}
+
+.portal-form--register .form-grid {
+  gap: 14px;
+}
+
+.portal-form--register .field.checkbox a {
+  color: var(--deep-teal);
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .payment-terms-card {
@@ -2500,20 +2531,27 @@ body.nav-closing .site-footer {
 
 .portal-auth {
   display: grid;
-  grid-template-columns: minmax(260px, 340px) minmax(320px, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 22px;
   align-items: start;
+}
+
+.auth-rail {
+  display: grid;
+  gap: 18px;
+  position: sticky;
+  top: 112px;
 }
 
 .auth-card {
   background: #ffffff;
   color: var(--ink);
-  border-radius: 20px;
-  padding: 18px;
+  border-radius: 24px;
+  padding: 22px;
   border: 1px solid rgba(11, 11, 12, 0.08);
   box-shadow: var(--shadow-soft);
   display: grid;
-  gap: 12px;
+  gap: 16px;
   align-content: start;
 }
 
@@ -2523,8 +2561,29 @@ body.nav-closing .site-footer {
   box-shadow: var(--shadow);
 }
 
+.auth-card--register {
+  padding: clamp(22px, 3vw, 32px);
+  gap: 20px;
+  border-color: rgba(179, 145, 113, 0.2);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 247, 242, 0.95));
+  box-shadow: 0 24px 60px rgba(39, 28, 20, 0.14);
+}
+
+.auth-header {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.72);
+}
+
 .auth-header h3 {
-  margin: 0 0 6px;
+  margin: 0;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -2532,6 +2591,234 @@ body.nav-closing .site-footer {
 .auth-header p {
   margin: 0;
   color: rgba(11, 11, 12, 0.65);
+}
+
+.auth-side-panel {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(211, 180, 106, 0.18), transparent 40%),
+    linear-gradient(180deg, rgba(24, 24, 26, 0.96), rgba(47, 39, 31, 0.96));
+  border: 1px solid rgba(211, 180, 106, 0.22);
+  color: rgba(247, 241, 231, 0.9);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.28);
+}
+
+.auth-side-eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(226, 202, 150, 0.88);
+}
+
+.auth-side-panel h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  line-height: 1.15;
+}
+
+.auth-side-panel > p:last-of-type {
+  margin: 0;
+  color: rgba(247, 241, 231, 0.76);
+}
+
+.auth-side-list {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-side-item {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auth-side-item strong {
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f3e4c3;
+}
+
+.auth-side-item span {
+  color: rgba(247, 241, 231, 0.76);
+  line-height: 1.55;
+}
+
+.register-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.85fr);
+  gap: 18px;
+  padding: 22px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top left, rgba(211, 180, 106, 0.2), transparent 38%),
+    linear-gradient(145deg, rgba(64, 51, 42, 0.95), rgba(121, 95, 72, 0.92));
+  border: 1px solid rgba(179, 145, 113, 0.28);
+  color: #f8f2e8;
+}
+
+.register-hero-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.register-eyebrow {
+  margin: 0;
+  font-size: 0.74rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(245, 228, 191, 0.86);
+}
+
+.register-hero-copy h3 {
+  margin: 0;
+  font-size: clamp(1.65rem, 2.4vw, 2.2rem);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+}
+
+.register-hero-copy p {
+  margin: 0;
+  max-width: 44rem;
+  color: rgba(248, 242, 232, 0.82);
+  line-height: 1.65;
+}
+
+.register-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: start;
+  gap: 10px;
+}
+
+.register-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f8f2e8;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.register-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.register-step {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(247, 241, 231, 0.95), rgba(255, 255, 255, 0.96));
+  border: 1px solid rgba(122, 94, 71, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.register-step-number {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.62);
+}
+
+.register-step strong {
+  font-size: 0.96rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.register-step small {
+  color: rgba(11, 11, 12, 0.58);
+  line-height: 1.4;
+}
+
+.register-section {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(250, 248, 245, 0.98), rgba(245, 240, 234, 0.92));
+  border: 1px solid rgba(179, 145, 113, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.register-section-header {
+  display: grid;
+  gap: 8px;
+  max-width: 46rem;
+}
+
+.register-section-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(79, 56, 41, 0.7);
+}
+
+.register-section-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.register-section-header p:last-child {
+  margin: 0;
+  color: rgba(11, 11, 12, 0.64);
+  line-height: 1.55;
+}
+
+.register-trust-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(239, 236, 231, 0.9), rgba(255, 255, 255, 0.94));
+  border: 1px solid rgba(122, 94, 71, 0.14);
+}
+
+.register-trust-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.register-trust-copy p:last-child {
+  margin: 0;
+  color: rgba(11, 11, 12, 0.68);
+  line-height: 1.55;
+}
+
+.register-agreement {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(11, 11, 12, 0.08);
+}
+
+.register-submit-note {
+  max-width: 32rem;
+}
+
+.register-actions {
+  justify-content: space-between;
+}
+
+.register-actions .btn.primary {
+  min-width: 220px;
 }
 
 .otp-panel {
@@ -3881,6 +4168,10 @@ body.booking-sheet-open {
     flex-direction: column;
   }
 
+  .auth-rail {
+    position: static;
+  }
+
   .activation-dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -3903,6 +4194,10 @@ body.booking-sheet-open {
 
   .career-apply-rail {
     position: static;
+  }
+
+  .register-hero {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -3959,6 +4254,10 @@ body.booking-sheet-open {
     grid-template-columns: 1fr;
   }
 
+  .register-steps {
+    grid-template-columns: 1fr;
+  }
+
   .portal-nav {
     flex-direction: row;
     flex-wrap: wrap;
@@ -3974,6 +4273,10 @@ body.booking-sheet-open {
 
   .portal-auth {
     grid-template-columns: 1fr;
+  }
+
+  .auth-rail {
+    gap: 14px;
   }
 
   .auth-card--login {
@@ -4073,6 +4376,14 @@ body.booking-sheet-open {
     width: 100%;
   }
 
+  .register-actions {
+    align-items: stretch;
+  }
+
+  .register-submit-note {
+    max-width: none;
+  }
+
   .activation-steps li {
     flex-direction: column;
     align-items: flex-start;
@@ -4165,9 +4476,19 @@ body.booking-sheet-open {
   .booking-summary-card,
   .booking-sheet-panel,
   .mandate-form,
-  .account-form {
+  .account-form,
+  .auth-card,
+  .register-section,
+  .register-hero,
+  .register-trust-panel,
+  .auth-side-panel {
     padding: 16px;
     border-radius: 18px;
+  }
+
+  .register-badge {
+    width: 100%;
+    justify-content: center;
   }
 
   .role-tabs {

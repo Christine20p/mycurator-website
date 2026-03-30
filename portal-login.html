@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-    <link rel="stylesheet" href="styles.css?v=20260330k" />
+    <link rel="stylesheet" href="styles.css?v=20260330l" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -62,77 +62,149 @@
           </div>
           <p class="portal-message" data-portal-message></p>
           <div class="portal-auth" data-portal-auth>
-            <div class="auth-card auth-card--login">
-              <div class="auth-header">
-                <h3>Login</h3>
-                <p>Secure access to bookings, payments, and readiness updates.</p>
-              </div>
-              <form class="portal-form" data-login-form>
-                <label class="field">Email
-                  <input type="email" name="login_email" placeholder="name@email.com" required />
-                </label>
-                <label class="field">Password
-                  <input type="password" name="login_password" placeholder="Password" required />
-                </label>
-                <div class="form-actions">
-                  <button class="btn primary" type="submit">Sign in</button>
-                  <button class="auth-link" type="button" data-reset-password>Forgot password?</button>
+            <div class="auth-rail">
+              <div class="auth-card auth-card--login">
+                <div class="auth-header">
+                  <p class="auth-kicker">Existing access</p>
+                  <h3>Login</h3>
+                  <p>Secure access to bookings, payments, and readiness updates.</p>
                 </div>
-                <p class="portal-note auth-reset-note">
-                  Enter the email above and we will send a secure reset link.
+                <form class="portal-form" data-login-form>
+                  <label class="field">Email
+                    <input type="email" name="login_email" placeholder="name@email.com" required />
+                  </label>
+                  <label class="field">Password
+                    <input type="password" name="login_password" placeholder="Password" required />
+                  </label>
+                  <div class="form-actions">
+                    <button class="btn primary" type="submit">Sign in</button>
+                    <button class="auth-link" type="button" data-reset-password>Forgot password?</button>
+                  </div>
+                  <p class="portal-note auth-reset-note">
+                    Enter the email above and we will send a secure reset link.
+                  </p>
+                  <p class="form-feedback" data-login-feedback role="status" aria-live="polite"></p>
+                </form>
+              </div>
+
+              <div class="auth-side-panel">
+                <p class="auth-side-eyebrow">Portal onboarding</p>
+                <h3>Register once. Manage every client step here.</h3>
+                <p>
+                  Your portal profile links identity, property details, agent activation, and OTP verification
+                  in one place.
                 </p>
-                <p class="form-feedback" data-login-feedback role="status" aria-live="polite"></p>
-              </form>
+                <div class="auth-side-list">
+                  <div class="auth-side-item">
+                    <strong>Verified identity</strong>
+                    <span>ID or passport details are checked before activation continues.</span>
+                  </div>
+                  <div class="auth-side-item">
+                    <strong>Property linked</strong>
+                    <span>Capture the service address once and continue inside the client dashboard.</span>
+                  </div>
+                  <div class="auth-side-item">
+                    <strong>OTP protected</strong>
+                    <span>Registration is completed with a one-time code sent to the cellphone on file.</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="auth-card">
-              <div class="auth-header">
-                <h3>Register</h3>
-                <p>Use the same details required in the MyCurator app.</p>
+            <div class="auth-card auth-card--register">
+              <div class="register-hero">
+                <div class="register-hero-copy">
+                  <p class="register-eyebrow">Client onboarding</p>
+                  <h3>Create your portal profile</h3>
+                  <p>
+                    We will verify your identity, link your property address, and connect your profile to the
+                    correct real estate network.
+                  </p>
+                </div>
+                <div class="register-hero-badges" aria-hidden="true">
+                  <span class="register-badge">Identity matched</span>
+                  <span class="register-badge">Address captured</span>
+                  <span class="register-badge">Agent-linked access</span>
+                  <span class="register-badge">OTP confirmed</span>
+                </div>
               </div>
-              <form class="portal-form" data-register-form>
-                <div class="form-grid">
-                  <label class="field">Title
-                    <select name="title" required>
-                      <option value="" disabled selected>Select one</option>
-                      <option>Mr</option>
-                      <option>Ms</option>
-                      <option>Miss</option>
-                      <option>Mrs</option>
-                      <option>Dr</option>
-                      <option>Prof</option>
-                      <option>Ps</option>
-                      <option>Adv</option>
-                      <option>Rev</option>
-                    </select>
-                  </label>
-                  <label class="field">Full Name
-                    <input type="text" name="full_name" placeholder="Full Name" autocapitalize="words" required />
-                  </label>
-                  <label class="field">Surname
-                    <input type="text" name="surname" placeholder="Surname" autocapitalize="words" required />
-                  </label>
-                  <label class="field">Document Type
-                    <select name="document_type" required>
-                      <option value="" selected>Select ID or Passport</option>
-                      <option value="sa_id">South African ID</option>
-                      <option value="passport">Passport</option>
-                    </select>
-                  </label>
-                  <label class="field" data-document-number-field><span data-document-number-label>South African ID Number</span>
-                    <input type="text" name="document_number" placeholder="South African ID" required />
-                  </label>
-                  <label class="field is-hidden" data-document-country-field><span>Nationality / Country</span>
-                    <input type="text" name="document_country" placeholder="Nationality / Country" />
-                  </label>
-                  <label class="field" data-document-dob-field><span>Date of Birth (Auto)</span>
-                    <input type="text" name="dob" placeholder="Auto-filled from ID" disabled />
-                  </label>
-                  <p class="form-feedback form-span-2" data-document-feedback role="status" aria-live="polite"></p>
-                  <label class="field">Cellphone
-                    <input type="tel" name="cellphone" placeholder="079 294 1992" inputmode="numeric" required />
-                  </label>
-                  <div class="field address-fieldset form-span-2" data-address-fieldset="register">
+
+              <div class="register-steps" aria-hidden="true">
+                <div class="register-step">
+                  <span class="register-step-number">01</span>
+                  <strong>Identity</strong>
+                  <small>Profile and document details</small>
+                </div>
+                <div class="register-step">
+                  <span class="register-step-number">02</span>
+                  <strong>Property</strong>
+                  <small>Presentation address and location</small>
+                </div>
+                <div class="register-step">
+                  <span class="register-step-number">03</span>
+                  <strong>Access</strong>
+                  <small>Portal login and activation code</small>
+                </div>
+              </div>
+
+              <form class="portal-form portal-form--register" data-register-form>
+                <section class="register-section">
+                  <div class="register-section-header">
+                    <p class="register-section-kicker">Identity & verification</p>
+                    <h4>Tell us who is opening the account</h4>
+                    <p>These details are used for document checks, OTP delivery, and client profile creation.</p>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Title
+                      <select name="title" required>
+                        <option value="" disabled selected>Select one</option>
+                        <option>Mr</option>
+                        <option>Ms</option>
+                        <option>Miss</option>
+                        <option>Mrs</option>
+                        <option>Dr</option>
+                        <option>Prof</option>
+                        <option>Ps</option>
+                        <option>Adv</option>
+                        <option>Rev</option>
+                      </select>
+                    </label>
+                    <label class="field">Full Name
+                      <input type="text" name="full_name" placeholder="Full Name" autocapitalize="words" required />
+                    </label>
+                    <label class="field">Surname
+                      <input type="text" name="surname" placeholder="Surname" autocapitalize="words" required />
+                    </label>
+                    <label class="field">Document Type
+                      <select name="document_type" required>
+                        <option value="" selected>Select ID or Passport</option>
+                        <option value="sa_id">South African ID</option>
+                        <option value="passport">Passport</option>
+                      </select>
+                    </label>
+                    <label class="field" data-document-number-field><span data-document-number-label>South African ID Number</span>
+                      <input type="text" name="document_number" placeholder="South African ID" required />
+                    </label>
+                    <label class="field is-hidden" data-document-country-field><span>Nationality / Country</span>
+                      <input type="text" name="document_country" placeholder="Nationality / Country" />
+                    </label>
+                    <label class="field" data-document-dob-field><span>Date of Birth (Auto)</span>
+                      <input type="text" name="dob" placeholder="Auto-filled from ID" disabled />
+                    </label>
+                    <label class="field">Cellphone
+                      <input type="tel" name="cellphone" placeholder="079 294 1992" inputmode="numeric" required />
+                    </label>
+                    <p class="form-feedback form-span-2" data-document-feedback role="status" aria-live="polite"></p>
+                  </div>
+                </section>
+
+                <section class="register-section">
+                  <div class="register-section-header">
+                    <p class="register-section-kicker">Property details</p>
+                    <h4>Add the property presentation address</h4>
+                    <p>Search the location first, then complete the property details below for a cleaner profile setup.</p>
+                  </div>
+                  <div class="field address-fieldset" data-address-fieldset="register">
                     <span>Address</span>
                     <input type="text" name="address_search" placeholder="Search suburb, street, estate, or town" autocomplete="off" />
                     <div class="places-suggestions is-hidden" data-place-suggestions></div>
@@ -164,26 +236,46 @@
                     <input type="hidden" name="address_lat" />
                     <input type="hidden" name="address_lng" />
                   </div>
-                  <label class="field">Real estate agent code
-                    <input type="text" name="agent_code" placeholder="Agent code" required />
-                  </label>
-                  <label class="field">Email
-                    <input type="email" name="email" placeholder="name@email.com" inputmode="email" autocapitalize="none" required />
-                  </label>
-                  <label class="field">Create password
-                    <input type="password" name="password" placeholder="Create password" required />
-                  </label>
-                  <label class="field">Confirm password
-                    <input type="password" name="confirm_password" placeholder="Confirm password" required />
+                </section>
+
+                <section class="register-section">
+                  <div class="register-section-header">
+                    <p class="register-section-kicker">Portal access</p>
+                    <h4>Set your activation and login details</h4>
+                    <p>Your agent code is required for network verification before services can be activated.</p>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field">Real estate agent code
+                      <input type="text" name="agent_code" placeholder="Agent code" required />
+                    </label>
+                    <label class="field">Email
+                      <input type="email" name="email" placeholder="name@email.com" inputmode="email" autocapitalize="none" required />
+                    </label>
+                    <label class="field">Create password
+                      <input type="password" name="password" placeholder="Create password" required />
+                    </label>
+                    <label class="field">Confirm password
+                      <input type="password" name="confirm_password" placeholder="Confirm password" required />
+                    </label>
+                  </div>
+                </section>
+
+                <div class="register-trust-panel">
+                  <div class="register-trust-copy">
+                    <p class="register-section-kicker">Activation policy</p>
+                    <p>Curator operates within a verified real estate network. A registered agent code is required for activation.</p>
+                  </div>
+                  <label class="field checkbox register-agreement">
+                    <input type="checkbox" required />
+                    <span>I agree to the <a href="privacy.html">Privacy Policy</a> and <a href="legal.html">Terms & Conditions</a>.</span>
                   </label>
                 </div>
-                <p class="portal-note">Curator operates within a verified real estate network. A registered agent code is required for activation.</p>
-                <label class="field checkbox">
-                  <input type="checkbox" required />
-                  I agree to the Privacy Policy and Terms & Conditions.
-                </label>
-                <div class="form-actions">
+
+                <div class="form-actions register-actions">
                   <button class="btn primary" type="submit">Create account</button>
+                  <p class="portal-note register-submit-note">
+                    Your OTP will be sent to the cellphone above to complete registration.
+                  </p>
                 </div>
                 <p class="form-feedback" data-register-feedback role="status" aria-live="polite"></p>
               </form>

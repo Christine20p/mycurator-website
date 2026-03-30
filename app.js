@@ -975,7 +975,12 @@ const setFeedback = (el, message, isError = false) => {
 };
 
 const showRegisterPopup = (message, title = "Registration issue") => {
-  if (!(registerPopup && registerPopupMessage && registerPopupTitle)) return;
+  if (!(registerPopup && registerPopupMessage && registerPopupTitle)) {
+    if (typeof window !== "undefined" && typeof window.alert === "function") {
+      window.alert(String(message || "").trim() || title);
+    }
+    return;
+  }
   registerPopupTitle.textContent = title;
   registerPopupMessage.textContent = String(message || "").trim();
   registerPopup.classList.remove("is-hidden");
@@ -1037,7 +1042,7 @@ const showRegistrationError = (message, options = {}) => {
   const resolvedMessage = String(message || "").trim();
   if (!resolvedMessage) return;
   const feedbackTarget = options.feedbackEl || registerFeedback;
-  setFeedback(feedbackTarget, "");
+  setFeedback(feedbackTarget, resolvedMessage, true);
   if (Array.isArray(options.invalidTargets)) {
     options.invalidTargets.forEach((target) => {
       const field = target instanceof HTMLElement

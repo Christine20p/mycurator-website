@@ -1,7 +1,7 @@
 // Firebase web config for the MyCurator portal.
 window.firebaseConfig = {
   apiKey: "AIzaSyA1mO9x7rtTbgVO7hHXEfYEXQ-kmOXvCbc",
-  googlePlacesApiKey: "AIzaSyA1mO9x7rtTbgVO7hHXEfYEXQ-kmOXvCbc",
+  googlePlacesApiKey: "AIzaSyDNrVillEwJWaHlK2SXgJMP33oOKXkv2l0",
   authDomain: "mycurator-cf6ab.firebaseapp.com",
   databaseURL: "https://mycurator-cf6ab-default-rtdb.firebaseio.com",
   projectId: "mycurator-cf6ab",

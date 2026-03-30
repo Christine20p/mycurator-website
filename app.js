@@ -2058,15 +2058,11 @@ if (!isFirebaseReady) {
     return /^\+\d{8,15}$/.test(candidate) ? candidate : "";
   };
 
-  const buildDefaultMandateStartDate = (collectionDay) => {
+  const buildDefaultMandateStartDate = () => {
     const today = new Date();
     const target = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 0).getDate();
-    const safeDay = Math.min(Math.max(Number(collectionDay || 1), 1), monthEnd);
-    target.setDate(safeDay);
-    const candidate = toIsoDateValue(target);
-    const minimum = minimumMandateStartDate();
-    return candidate < minimum ? minimum : candidate;
+    target.setHours(0, 0, 0, 0);
+    return toIsoDateValue(target);
   };
 
   const bookingDayName = (value) => {
@@ -2751,6 +2747,29 @@ if (!isFirebaseReady) {
     }
   };
 
+  const syncMandateScheduleFields = () => {
+    if (!mandateForm) return;
+    const startDateField = mandateForm.querySelector("input[name='start_date']");
+    const collectionDayField = mandateForm.querySelector("input[name='collection_day']");
+    const fixedStartDate = buildDefaultMandateStartDate();
+
+    if (collectionDayField) {
+      collectionDayField.value = "1";
+      collectionDayField.min = "1";
+      collectionDayField.max = "1";
+      collectionDayField.readOnly = true;
+      collectionDayField.setAttribute("aria-readonly", "true");
+    }
+
+    if (startDateField) {
+      startDateField.value = fixedStartDate;
+      startDateField.min = fixedStartDate;
+      startDateField.max = fixedStartDate;
+      startDateField.readOnly = true;
+      startDateField.setAttribute("aria-readonly", "true");
+    }
+  };
+
   const prefillMandateForm = (data) => {
     if (!mandateForm || !data) return;
     const reference = String(data.mandateReference || data.clientCode || currentUser?.uid || "").trim();
@@ -2758,7 +2777,6 @@ if (!isFirebaseReady) {
     const bankSelect = mandateForm.querySelector("select[name='debtor_bank_id']");
     const customBankIdField = mandateForm.querySelector("input[name='custom_bank_id']");
     const customBankNameField = mandateForm.querySelector("input[name='custom_bank_name']");
-    const startDateField = mandateForm.querySelector("input[name='start_date']");
     const storedBankId = String(data.mandateDebtorBankId || "").trim();
     const storedBankName = String(data.mandateDebtorBankName || "").trim();
     const hasPresetBank = Boolean(
@@ -2787,24 +2805,10 @@ if (!isFirebaseReady) {
     setMandateFieldIfEmpty("select[name='debtor_id_type']", data.mandateIdType || "2");
     setMandateFieldIfEmpty("input[name='debtor_id']", data.IdNumber || "");
     setMandateFieldIfEmpty(
-      "input[name='start_date']",
-      data.mandateStartDate || buildDefaultMandateStartDate(data.mandateCollectionDay || 1)
-    );
-    setMandateFieldIfEmpty(
-      "input[name='collection_day']",
-      String(Number(data.mandateCollectionDay || 1) || 1)
-    );
-    setMandateFieldIfEmpty(
       "input[name='tracking_days']",
       "10"
     );
-    if (startDateField) {
-      const minimum = minimumMandateStartDate();
-      startDateField.min = minimum;
-      if (startDateField.value && startDateField.value < minimum) {
-        startDateField.value = minimum;
-      }
-    }
+    syncMandateScheduleFields();
     syncCustomMandateBankFields();
   };
 
@@ -4005,21 +4009,14 @@ if (!isFirebaseReady) {
     }
 
     if (collectionDayField) {
-      collectionDayField.addEventListener("input", () => {
-        const value = Math.min(30, Math.max(1, Number(collectionDayField.value || 1)));
-        collectionDayField.value = String(Number.isNaN(value) ? 1 : value);
-      });
+      collectionDayField.addEventListener("input", syncMandateScheduleFields);
+      collectionDayField.addEventListener("change", syncMandateScheduleFields);
     }
 
     if (startDateField && collectionDayField) {
-      startDateField.min = minimumMandateStartDate();
-      startDateField.addEventListener("change", () => {
-        if (!startDateField.value) return;
-        const date = new Date(`${startDateField.value}T00:00:00`);
-        if (!Number.isNaN(date.getTime()) && !collectionDayField.value) {
-          collectionDayField.value = String(date.getDate());
-        }
-      });
+      syncMandateScheduleFields();
+      startDateField.addEventListener("input", syncMandateScheduleFields);
+      startDateField.addEventListener("change", syncMandateScheduleFields);
     }
 
     mandateForm.addEventListener("submit", async (event) => {
@@ -4047,18 +4044,17 @@ if (!isFirebaseReady) {
         (isCustomBank ? formData.get("custom_bank_name") : selectedBankName) || ""
       ).trim();
       const debtorPhoneNumber = normalizeInternationalPhone(currentUserData.cellphone || currentUser?.phoneNumber || "");
-      const startDate = String(formData.get("start_date") || "").trim();
-      const minimumStartDate = minimumMandateStartDate();
-      const requestedCollectionDay = Number(formData.get("collection_day") || 1);
-      const collectionDay = requestedCollectionDay === 99 ? 99 : Math.min(30, Math.max(1, requestedCollectionDay || 1));
+      syncMandateScheduleFields();
+      const startDate = buildDefaultMandateStartDate();
+      const collectionDay = 1;
       const trackingIndicator = 10;
 
       if (!debtorPhoneNumber) {
         setFeedback(paymentFeedback, "Please add the cellphone number linked to this account before continuing.", true);
         return;
       }
-      if (!startDate || startDate < minimumStartDate) {
-        setFeedback(paymentFeedback, "Please choose a first collection date that is today or later.", true);
+      if (!startDate) {
+        setFeedback(paymentFeedback, "We could not prepare the monthly collection date just now.", true);
         return;
       }
 

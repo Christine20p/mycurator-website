@@ -198,14 +198,16 @@
                   <div class="mandate-section-copy">
                     <p class="mandate-section-tag">Collection timing</p>
                     <h5>How your monthly plan starts</h5>
-                    <p>Choose when the first collection can begin so the service plan can start smoothly.</p>
+                    <p>Your monthly collection is fixed to the 1st of the following month so every plan starts on the same cycle.</p>
                   </div>
                   <div class="form-grid">
                     <label class="field">First collection date
                       <input type="date" name="start_date" required />
+                      <span class="mandate-field-note">Fixed to the 1st of the following month.</span>
                     </label>
                     <label class="field">Collection day
-                      <input type="number" name="collection_day" min="1" max="30" placeholder="1-30" required />
+                      <input type="number" name="collection_day" min="1" max="1" value="1" readonly required />
+                      <span class="mandate-field-note">This stays on day 1 for every monthly collection.</span>
                     </label>
                     <label class="field">Tracking days
                       <input type="number" name="tracking_days" min="10" max="10" value="10" readonly />
@@ -317,6 +319,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260330m"></script>
+    <script src="app.js?v=20260330n"></script>
   </body>
 </html>

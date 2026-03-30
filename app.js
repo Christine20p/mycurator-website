@@ -1007,7 +1007,7 @@ const ensureAssessmentTierBeforePayment = async () => {
   if (existingTier || !isAssessmentTierRequired()) {
     return existingTier || defaultPresentationTier();
   }
-  throw new Error("Select your property presentation tier before continuing with secure payment.");
+  throw new Error("Select your property assessment fee option before continuing with secure payment.");
 };
 
 const renderPresentationTierSelector = (data) => {
@@ -1047,7 +1047,7 @@ const renderPresentationTierSelector = (data) => {
               .join("")}
           </span>
           <strong class="tier-option-price">${escapeHtml(formatCurrency(option.assessmentFeeCents))}</strong>
-          <span class="tier-option-note">Assessment fee</span>
+          <span class="tier-option-note">Property assessment fee</span>
         </button>
       `;
     })
@@ -1066,7 +1066,7 @@ const renderPresentationTierSelector = (data) => {
       if (!functions || !currentUser) {
         setFeedback(
           presentationTierFeedback,
-          "Tier selected locally. Sign in on the hosted portal to save it to your account."
+          "Assessment fee option selected locally. Sign in on the hosted portal to save it to your account."
         );
         syncPaymentConsentState();
         return;
@@ -1074,7 +1074,7 @@ const renderPresentationTierSelector = (data) => {
 
       selectingPresentationTier = true;
       renderPresentationTierSelector(currentUserData || {});
-      setFeedback(presentationTierFeedback, "Saving your selected collection...");
+      setFeedback(presentationTierFeedback, "Saving your selected property assessment fee option...");
 
       try {
         const result = await functions.httpsCallable("selectPresentationTier")({
@@ -1084,7 +1084,7 @@ const renderPresentationTierSelector = (data) => {
         updateDashboard(currentUserData);
         setFeedback(
           presentationTierFeedback,
-          `${currentUserData.presentationTierName || PRESENTATION_TIERS[tierId]?.name || "Collection"} selected.`
+          `${currentUserData.presentationTierName || PRESENTATION_TIERS[tierId]?.name || "Assessment option"} selected for the property assessment fee.`
         );
         stopPayNowListener();
       } catch (error) {
@@ -1097,7 +1097,7 @@ const renderPresentationTierSelector = (data) => {
         }
         setFeedback(
           presentationTierFeedback,
-          error.message || "We couldn't save your selected collection just now.",
+          error.message || "We couldn't save your selected property assessment fee option just now.",
           true
         );
       } finally {

@@ -1894,11 +1894,20 @@ body.nav-closing .site-footer {
   background: rgba(255, 247, 247, 0.98);
 }
 
-.address-fieldset.is-invalid,
 .register-agreement.is-invalid {
   border-color: rgba(183, 66, 66, 0.58);
   box-shadow: 0 0 0 4px rgba(183, 66, 66, 0.08);
   background: linear-gradient(180deg, rgba(255, 247, 247, 0.98), rgba(255, 252, 252, 0.96));
+}
+
+.address-fieldset.is-invalid {
+  color: inherit;
+}
+
+.address-fieldset.is-invalid > input {
+  border-color: rgba(11, 11, 12, 0.2);
+  box-shadow: none;
+  background: #fff;
 }
 
 .field select {
@@ -2015,6 +2024,12 @@ body.nav-closing .site-footer {
   border: 1px solid rgba(122, 94, 71, 0.16);
   background: linear-gradient(180deg, rgba(247, 241, 231, 0.95), rgba(255, 255, 255, 0.92));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.portal-form--register .address-fieldset.is-invalid {
+  border-color: rgba(122, 94, 71, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  background: linear-gradient(180deg, rgba(247, 241, 231, 0.95), rgba(255, 255, 255, 0.92));
 }
 
 .portal-form--register .address-fieldset > span {

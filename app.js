@@ -3597,6 +3597,7 @@ if (!isFirebaseReady) {
       state.termsAccepted;
 
     registerSubmitButton.disabled = !Boolean(isComplete);
+    registerSubmitButton.setAttribute("aria-disabled", registerSubmitButton.disabled ? "true" : "false");
   };
 
   if (registerForm) {

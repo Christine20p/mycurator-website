@@ -1436,6 +1436,164 @@ const scheduleRegisterAgentCodeCheck = () => {
   }, 320);
 };
 
+const SA_ID_ERROR_MESSAGE = "Enter a valid 13-digit South African ID number";
+const PASSPORT_ERROR_MESSAGE = "Enter a valid passport number";
+const MISSING_DOCUMENT_TYPE_MESSAGE = "Select ID or Passport to continue";
+
+const normalizePassportNumber = (value) =>
+  String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+
+const parseSouthAfricanIdBirthDate = (id) => {
+  const normalized = String(id || "").trim();
+  if (!/^\d{13}$/.test(normalized)) return null;
+  const yy = Number.parseInt(normalized.slice(0, 2), 10);
+  const mm = Number.parseInt(normalized.slice(2, 4), 10);
+  const dd = Number.parseInt(normalized.slice(4, 6), 10);
+  if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) {
+    return null;
+  }
+  const currentYear = new Date().getFullYear() % 100;
+  const fullYear = yy <= currentYear ? 2000 + yy : 1900 + yy;
+  const date = new Date(fullYear, mm - 1, dd);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== fullYear ||
+    date.getMonth() !== mm - 1 ||
+    date.getDate() !== dd
+  ) {
+    return null;
+  }
+  return date;
+};
+
+const isValidSouthAfricanIdChecksum = (id) => {
+  const normalized = String(id || "").trim();
+  if (!/^\d{13}$/.test(normalized)) return false;
+  let oddSum = 0;
+  for (let index = 0; index < 12; index += 2) {
+    oddSum += Number.parseInt(normalized[index], 10);
+  }
+  let evenDigits = "";
+  for (let index = 1; index < 12; index += 2) {
+    evenDigits += normalized[index];
+  }
+  const doubled = String(Number.parseInt(evenDigits, 10) * 2);
+  const evenSum = doubled.split("").reduce((sum, digit) => sum + Number.parseInt(digit, 10), 0);
+  const checksum = (10 - ((oddSum + evenSum) % 10)) % 10;
+  return checksum === Number.parseInt(normalized[12], 10);
+};
+
+const validateSouthAfricanID = (id) => {
+  const normalizedValue = String(id || "").trim();
+  if (!/^\d{13}$/.test(normalizedValue)) {
+    return {
+      isValid: false,
+      normalizedValue,
+      dateOfBirth: null,
+      citizenshipDigit: null,
+      errorMessage: SA_ID_ERROR_MESSAGE,
+    };
+  }
+  const dateOfBirth = parseSouthAfricanIdBirthDate(normalizedValue);
+  if (!dateOfBirth) {
+    return {
+      isValid: false,
+      normalizedValue,
+      dateOfBirth: null,
+      citizenshipDigit: null,
+      errorMessage: SA_ID_ERROR_MESSAGE,
+    };
+  }
+  const citizenshipDigit = Number.parseInt(normalizedValue[10], 10);
+  if (![0, 1].includes(citizenshipDigit) || !isValidSouthAfricanIdChecksum(normalizedValue)) {
+    return {
+      isValid: false,
+      normalizedValue,
+      dateOfBirth: null,
+      citizenshipDigit: null,
+      errorMessage: SA_ID_ERROR_MESSAGE,
+    };
+  }
+  return {
+    isValid: true,
+    normalizedValue,
+    dateOfBirth,
+    citizenshipDigit,
+    errorMessage: "",
+  };
+};
+
+const validatePassportNumber = (passport) => {
+  const normalizedValue = normalizePassportNumber(passport);
+  if (normalizedValue.length < 6 || normalizedValue.length > 20 || !/^[A-Z0-9]+$/.test(normalizedValue)) {
+    return {
+      isValid: false,
+      normalizedValue,
+      errorMessage: PASSPORT_ERROR_MESSAGE,
+    };
+  }
+  return {
+    isValid: true,
+    normalizedValue,
+    errorMessage: "",
+  };
+};
+
+const formatIdentityDate = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-ZA", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+function getRegisterIdentityState() {
+  const documentType = String(registerDocumentTypeField?.value || "").trim();
+  const documentNumber = String(registerDocumentNumberField?.value || "").trim();
+  const documentCountry = String(registerDocumentCountryField?.value || "").trim();
+
+  if (!documentType) {
+    return {
+      documentType: "",
+      documentNumber,
+      documentCountry,
+      isValid: false,
+      status: "empty",
+      message: MISSING_DOCUMENT_TYPE_MESSAGE,
+      dateOfBirth: "",
+    };
+  }
+
+  if (documentType === "sa_id") {
+    const result = validateSouthAfricanID(documentNumber);
+    return {
+      documentType,
+      documentNumber: result.normalizedValue,
+      documentCountry: "South Africa",
+      isValid: result.isValid,
+      status: result.normalizedValue ? (result.isValid ? "valid_format" : "invalid") : "empty",
+      message: result.isValid ? "" : result.errorMessage,
+      dateOfBirth: formatIdentityDate(result.dateOfBirth),
+    };
+  }
+
+  const result = validatePassportNumber(documentNumber);
+  const hasCountry = Boolean(documentCountry);
+  return {
+    documentType,
+    documentNumber: result.normalizedValue,
+    documentCountry,
+    isValid: result.isValid && hasCountry,
+    status: documentNumber ? ((result.isValid && hasCountry) ? "valid_format" : "invalid") : "empty",
+    message: !result.isValid ? result.errorMessage : (hasCountry ? "" : "Enter your nationality / country"),
+    dateOfBirth: "",
+  };
+}
+
 const getRegisterFormState = () => {
   const formData = registerForm ? new FormData(registerForm) : new FormData();
   const addressDetails = registerAddressController?.collect() || {};
@@ -4062,49 +4220,6 @@ if (!isFirebaseReady) {
       month: "short",
       year: "numeric",
     });
-  };
-
-  const getRegisterIdentityState = () => {
-    const documentType = String(registerDocumentTypeField?.value || "").trim();
-    const documentNumber = String(registerDocumentNumberField?.value || "").trim();
-    const documentCountry = String(registerDocumentCountryField?.value || "").trim();
-
-    if (!documentType) {
-      return {
-        documentType: "",
-        documentNumber,
-        documentCountry,
-        isValid: false,
-        status: "empty",
-        message: MISSING_DOCUMENT_TYPE_MESSAGE,
-        dateOfBirth: "",
-      };
-    }
-
-    if (documentType === "sa_id") {
-      const result = validateSouthAfricanID(documentNumber);
-      return {
-        documentType,
-        documentNumber: result.normalizedValue,
-        documentCountry: "South Africa",
-        isValid: result.isValid,
-        status: result.normalizedValue ? (result.isValid ? "valid_format" : "invalid") : "empty",
-        message: result.isValid ? "" : result.errorMessage,
-        dateOfBirth: formatIdentityDate(result.dateOfBirth),
-      };
-    }
-
-    const result = validatePassportNumber(documentNumber);
-    const hasCountry = Boolean(documentCountry);
-    return {
-      documentType,
-      documentNumber: result.normalizedValue,
-      documentCountry,
-      isValid: result.isValid && hasCountry,
-      status: documentNumber ? ((result.isValid && hasCountry) ? "valid_format" : "invalid") : "empty",
-      message: !result.isValid ? result.errorMessage : (hasCountry ? "" : "Enter your nationality / country"),
-      dateOfBirth: "",
-    };
   };
 
   const syncRegisterIdentityUi = () => {

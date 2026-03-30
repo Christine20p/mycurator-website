@@ -2825,21 +2825,6 @@ body.nav-closing .site-footer {
   min-width: 220px;
 }
 
-.register-actions .btn.primary[disabled] {
-  background: linear-gradient(180deg, rgba(186, 177, 164, 0.92), rgba(160, 151, 139, 0.92));
-  border-color: rgba(126, 116, 104, 0.5);
-  color: rgba(59, 52, 46, 0.8);
-  opacity: 1;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-  filter: saturate(0.35);
-}
-
-.register-actions .btn.primary[disabled]:hover {
-  transform: none;
-}
-
 .otp-panel {
   padding: 16px;
   border-radius: 18px;

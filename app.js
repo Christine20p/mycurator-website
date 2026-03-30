@@ -681,6 +681,7 @@ let userListener = null;
 let payNowListener = null;
 let pendingOtpUserId = null;
 let portalRegistrationStateCallable = null;
+let portalSessionProfileCallable = null;
 let registrationProfilePending = false;
 let hasRedirectedToBooking = false;
 let workerBookingsListener = null;
@@ -1029,6 +1030,16 @@ const checkPortalRegistrationState = async (payload = {}) => {
   portalRegistrationStateCallable =
     portalRegistrationStateCallable || functions.httpsCallable("checkPortalRegistrationState");
   const result = await portalRegistrationStateCallable(payload);
+  return result?.data || null;
+};
+
+const resolvePortalSessionProfile = async () => {
+  if (!functions?.httpsCallable) {
+    return null;
+  }
+  portalSessionProfileCallable =
+    portalSessionProfileCallable || functions.httpsCallable("resolvePortalSessionProfile");
+  const result = await portalSessionProfileCallable({});
   return result?.data || null;
 };
 
@@ -2590,7 +2601,20 @@ const ensureFreshAuthSession = async (user) => {
 
 const fetchUserProfileDoc = async (user) => {
   if (!db || !user?.uid) return null;
-  return db.collection("users").doc(user.uid).get();
+  const directSnap = await db.collection("users").doc(user.uid).get();
+  if (directSnap.exists) {
+    return directSnap;
+  }
+  const resolvedProfile = await resolvePortalSessionProfile();
+  if (!(resolvedProfile && resolvedProfile.data)) {
+    return directSnap;
+  }
+  const resolvedData = resolvedProfile.data || {};
+  return {
+    id: String(resolvedProfile.resolvedUserId || user.uid).trim() || user.uid,
+    exists: true,
+    data: () => resolvedData
+  };
 };
 
 const redirectAuthenticatedPortalUser = async (user) => {

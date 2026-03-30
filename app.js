@@ -554,6 +554,16 @@ const registerDocumentNumberLabel = registerForm?.querySelector("[data-document-
 const registerDocumentDobWrapper = registerForm?.querySelector("[data-document-dob-field]");
 const registerDocumentFeedback = registerForm?.querySelector("[data-document-feedback]");
 const registerSubmitButton = registerForm?.querySelector("button[type='submit']");
+const registerTitleField = registerForm?.querySelector("select[name='title']");
+const registerFullNameField = registerForm?.querySelector("input[name='full_name']");
+const registerSurnameField = registerForm?.querySelector("input[name='surname']");
+const registerCellphoneField = registerForm?.querySelector("input[name='cellphone']");
+const registerAgentCodeField = registerForm?.querySelector("input[name='agent_code']");
+const registerEmailField = registerForm?.querySelector("input[name='email']");
+const registerPasswordField = registerForm?.querySelector("input[name='password']");
+const registerConfirmPasswordField = registerForm?.querySelector("input[name='confirm_password']");
+const registerTermsField = registerForm?.querySelector(".register-agreement");
+const registerTermsCheckbox = registerTermsField?.querySelector("input[type='checkbox']");
 const statusTitle = document.querySelector("[data-status-title]");
 const statusMessage = document.querySelector("[data-status-message]");
 const outstandingBadge = document.querySelector("[data-outstanding]");
@@ -987,19 +997,22 @@ const formatRegistrationError = (error, fallbackMessage = "Unable to create acco
   if (code === "auth/email-already-in-use") {
     return {
       title: "Email already registered",
-      message: "That email address is already registered. Sign in instead or use a different email address."
+      message: "That email address is already registered. Sign in instead or use a different email address.",
+      invalidTargets: [registerEmailField],
     };
   }
   if (code === "auth/invalid-email") {
     return {
       title: "Invalid email",
-      message: "Enter a valid email address before continuing."
+      message: "Enter a valid email address before continuing.",
+      invalidTargets: [registerEmailField],
     };
   }
   if (code === "auth/weak-password") {
     return {
       title: "Weak password",
-      message: "Use a stronger password with at least 6 characters."
+      message: "Use a stronger password with at least 6 characters.",
+      invalidTargets: [registerPasswordField, registerConfirmPasswordField],
     };
   }
   if (code === "auth/network-request-failed") {
@@ -1025,7 +1038,140 @@ const showRegistrationError = (message, options = {}) => {
   if (!resolvedMessage) return;
   const feedbackTarget = options.feedbackEl || registerFeedback;
   setFeedback(feedbackTarget, "");
+  if (Array.isArray(options.invalidTargets)) {
+    options.invalidTargets.forEach((target) => {
+      const field = target instanceof HTMLElement
+        ? (target.classList.contains("field") || target.classList.contains("address-fieldset")
+          ? target
+          : target.closest(".field") || target)
+        : null;
+      field?.classList.add("is-invalid");
+    });
+  }
   showRegisterPopup(resolvedMessage, options.title || "Registration issue");
+};
+
+const clearRegisterFieldError = (target) => {
+  if (!(target instanceof HTMLElement)) return;
+  const field = target.classList.contains("field") || target.classList.contains("address-fieldset")
+    ? target
+    : target.closest(".field");
+  field?.classList.remove("is-invalid");
+};
+
+const clearRegisterValidationState = () => {
+  [
+    registerTitleField,
+    registerFullNameField,
+    registerSurnameField,
+    registerDocumentTypeField,
+    registerDocumentNumberField,
+    registerDocumentCountryField,
+    registerCellphoneField,
+    registerAddressFieldset,
+    registerAgentCodeField,
+    registerEmailField,
+    registerPasswordField,
+    registerConfirmPasswordField,
+    registerTermsField,
+  ].forEach((field) => clearRegisterFieldError(field));
+};
+
+const getRegisterFormState = () => {
+  const formData = registerForm ? new FormData(registerForm) : new FormData();
+  const addressDetails = registerAddressController?.collect() || {};
+  const identityState = getRegisterIdentityState();
+  const documentNumber = String(formData.get("document_number") || "").trim();
+  const documentCountry = String(formData.get("document_country") || "").trim();
+  const password = String(formData.get("password") || "");
+  const confirmPassword = String(formData.get("confirm_password") || "");
+
+  return {
+    formData,
+    addressDetails,
+    identityState,
+    title: String(formData.get("title") || "").trim(),
+    fullName: String(formData.get("full_name") || "").trim(),
+    surname: String(formData.get("surname") || "").trim(),
+    documentType: String(formData.get("document_type") || "").trim(),
+    documentNumber,
+    documentCountry,
+    cellphone: String(formData.get("cellphone") || "").trim(),
+    realEstateCode: String(formData.get("agent_code") || "").trim(),
+    email: String(formData.get("email") || "").trim(),
+    password,
+    confirmPassword,
+    termsAccepted: Boolean(registerTermsCheckbox?.checked),
+  };
+};
+
+const validateRegisterSubmission = () => {
+  const state = getRegisterFormState();
+  const invalidTargets = [];
+
+  if (!state.title) invalidTargets.push(registerTitleField);
+  if (!state.fullName) invalidTargets.push(registerFullNameField);
+  if (!state.surname) invalidTargets.push(registerSurnameField);
+  if (!state.documentType) invalidTargets.push(registerDocumentTypeField);
+  if (!state.documentNumber) invalidTargets.push(registerDocumentNumberField);
+  if (state.documentType === "passport" && !state.documentCountry) invalidTargets.push(registerDocumentCountryField);
+  if (!state.cellphone) invalidTargets.push(registerCellphoneField);
+  if (!isStructuredAddressComplete(state.addressDetails)) invalidTargets.push(registerAddressFieldset);
+  if (!state.realEstateCode) invalidTargets.push(registerAgentCodeField);
+  if (!state.email) invalidTargets.push(registerEmailField);
+  if (!state.password) invalidTargets.push(registerPasswordField);
+  if (!state.confirmPassword) invalidTargets.push(registerConfirmPasswordField);
+  if (!state.termsAccepted) invalidTargets.push(registerTermsField);
+
+  if (invalidTargets.length) {
+    return {
+      valid: false,
+      title: "Missing information",
+      message: "Please fill in all fields.",
+      invalidTargets,
+      state,
+    };
+  }
+
+  if (registerEmailField instanceof HTMLInputElement && !registerEmailField.checkValidity()) {
+    return {
+      valid: false,
+      title: "Invalid email",
+      message: "Enter a valid email address before continuing.",
+      invalidTargets: [registerEmailField],
+      state,
+    };
+  }
+
+  if (!state.identityState.isValid) {
+    const identityTargets = [registerDocumentTypeField, registerDocumentNumberField];
+    if (state.documentType === "passport") {
+      identityTargets.push(registerDocumentCountryField);
+    }
+    return {
+      valid: false,
+      title: "Check your document details",
+      message: state.identityState.message || MISSING_DOCUMENT_TYPE_MESSAGE,
+      invalidTargets: identityTargets,
+      state,
+    };
+  }
+
+  if (state.password !== state.confirmPassword) {
+    return {
+      valid: false,
+      title: "Password mismatch",
+      message: "Passwords do not match.",
+      invalidTargets: [registerPasswordField, registerConfirmPasswordField],
+      state,
+    };
+  }
+
+  return {
+    valid: true,
+    invalidTargets: [],
+    state,
+  };
 };
 
 const formatCurrency = (cents) => {
@@ -3430,51 +3576,47 @@ if (!isFirebaseReady) {
 
   const syncRegisterSubmitState = () => {
     if (!(registerForm && registerSubmitButton instanceof HTMLButtonElement)) return;
-    const formData = new FormData(registerForm);
-    const addressDetails = registerAddressController?.collect() || {};
-    const termsAccepted = Boolean(registerForm.querySelector("input[type='checkbox']")?.checked);
-    const identityState = getRegisterIdentityState();
+    const state = getRegisterFormState();
     const isComplete =
-      String(formData.get("title") || "").trim() &&
-      String(formData.get("full_name") || "").trim() &&
-      String(formData.get("surname") || "").trim() &&
-      identityState.documentType &&
-      identityState.isValid &&
-      String(formData.get("cellphone") || "").trim() &&
-      isStructuredAddressComplete(addressDetails) &&
-      String(formData.get("agent_code") || "").trim() &&
-      String(formData.get("email") || "").trim() &&
-      String(formData.get("password") || "").trim() &&
-      String(formData.get("confirm_password") || "").trim() &&
-      String(formData.get("password") || "") === String(formData.get("confirm_password") || "") &&
-      termsAccepted;
+      state.title &&
+      state.fullName &&
+      state.surname &&
+      state.documentType &&
+      state.documentNumber &&
+      (state.documentType !== "passport" || state.documentCountry) &&
+      state.cellphone &&
+      isStructuredAddressComplete(state.addressDetails) &&
+      state.realEstateCode &&
+      state.email &&
+      state.password &&
+      state.confirmPassword &&
+      state.termsAccepted;
 
     registerSubmitButton.disabled = !Boolean(isComplete);
   };
 
   if (registerForm) {
-    const registerFullNameField = registerForm.querySelector("input[name='full_name']");
-    const registerSurnameField = registerForm.querySelector("input[name='surname']");
-    const registerCellphoneField = registerForm.querySelector("input[name='cellphone']");
-    const registerEmailField = registerForm.querySelector("input[name='email']");
-
     registerFullNameField?.addEventListener("input", () => {
       registerFullNameField.value = normalizeCapitalizedWords(registerFullNameField.value).trimStart();
+      clearRegisterFieldError(registerFullNameField);
       syncRegisterSubmitState();
     });
 
     registerSurnameField?.addEventListener("input", () => {
       registerSurnameField.value = normalizeSurnameText(registerSurnameField.value);
+      clearRegisterFieldError(registerSurnameField);
       syncRegisterSubmitState();
     });
 
     registerCellphoneField?.addEventListener("input", () => {
       registerCellphoneField.value = registerCellphoneField.value.replace(/\D/g, "").slice(0, 10);
+      clearRegisterFieldError(registerCellphoneField);
       syncRegisterSubmitState();
     });
 
     registerEmailField?.addEventListener("input", () => {
       registerEmailField.value = registerEmailField.value.toLowerCase().replace(/\s+/g, "");
+      clearRegisterFieldError(registerEmailField);
       syncRegisterSubmitState();
     });
 
@@ -3483,28 +3625,38 @@ if (!isFirebaseReady) {
       registerDocumentNumberField,
       registerDocumentCountryField,
     ].forEach((field) => {
-      field?.addEventListener("change", syncRegisterIdentityUi);
+      field?.addEventListener("change", () => {
+        clearRegisterFieldError(field);
+        syncRegisterIdentityUi();
+      });
     });
 
     [
       registerDocumentTypeField,
       registerDocumentNumberField,
       registerDocumentCountryField,
-      registerForm.querySelector("input[name='full_name']"),
-      registerForm.querySelector("input[name='surname']"),
-      registerForm.querySelector("input[name='cellphone']"),
-      registerForm.querySelector("input[name='agent_code']"),
-      registerForm.querySelector("input[name='email']"),
-      registerForm.querySelector("input[name='password']"),
-      registerForm.querySelector("input[name='confirm_password']"),
-      registerForm.querySelector("select[name='title']"),
-      registerForm.querySelector("input[type='checkbox']"),
+      registerFullNameField,
+      registerSurnameField,
+      registerCellphoneField,
+      registerAgentCodeField,
+      registerEmailField,
+      registerPasswordField,
+      registerConfirmPasswordField,
+      registerTitleField,
+      registerTermsCheckbox,
     ].forEach((field) => {
-      field?.addEventListener("input", syncRegisterSubmitState);
-      field?.addEventListener("change", syncRegisterSubmitState);
+      field?.addEventListener("input", () => {
+        clearRegisterFieldError(field);
+        syncRegisterSubmitState();
+      });
+      field?.addEventListener("change", () => {
+        clearRegisterFieldError(field);
+        syncRegisterSubmitState();
+      });
     });
 
     registerAddressController?.setOnChange(() => {
+      clearRegisterFieldError(registerAddressFieldset);
       syncRegisterSubmitState();
     });
 
@@ -3556,52 +3708,27 @@ if (!isFirebaseReady) {
       hideRegisterPopup();
       setFeedback(registerFeedback, "");
       setFeedback(otpFeedback, "");
+      clearRegisterValidationState();
 
-      const formData = new FormData(registerForm);
-      const title = String(formData.get("title") || "").trim();
-      const fullName = String(formData.get("full_name") || "").trim();
-      const surname = String(formData.get("surname") || "").trim();
-      const identityState = getRegisterIdentityState();
-      const cellphone = String(formData.get("cellphone") || "").trim();
-      const addressDetails = registerAddressController?.collect() || {};
-      const address = String(addressDetails.formattedAddress || formData.get("address") || "").trim();
-      const realEstateCode = String(formData.get("agent_code") || "").trim().toUpperCase();
-      const email = String(formData.get("email") || "").trim().toLowerCase();
-      const password = String(formData.get("password") || "");
-      const confirmPassword = String(formData.get("confirm_password") || "");
+      const validation = validateRegisterSubmission();
+      const {
+        title,
+        fullName,
+        surname,
+        identityState,
+        cellphone,
+        addressDetails,
+        realEstateCode,
+        email,
+        password,
+      } = validation.state;
+      const address = String(addressDetails.formattedAddress || validation.state.formData.get("address") || "").trim();
 
-      if (
-        !title ||
-        !fullName ||
-        !surname ||
-        !identityState.documentType ||
-        !cellphone ||
-        !address ||
-        !isStructuredAddressComplete(addressDetails) ||
-        !realEstateCode ||
-        !email ||
-        !password ||
-        !confirmPassword
-      ) {
-        showRegistrationError("Please fill in all fields.", {
-          title: "Missing information",
-          feedbackEl: registerFeedback
-        });
-        return;
-      }
-
-      if (!identityState.isValid) {
-        showRegistrationError(identityState.message || MISSING_DOCUMENT_TYPE_MESSAGE, {
-          title: "Check your document details",
-          feedbackEl: registerFeedback
-        });
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        showRegistrationError("Passwords do not match.", {
-          title: "Password mismatch",
-          feedbackEl: registerFeedback
+      if (!validation.valid) {
+        showRegistrationError(validation.message, {
+          title: validation.title,
+          feedbackEl: registerFeedback,
+          invalidTargets: validation.invalidTargets,
         });
         return;
       }
@@ -3670,7 +3797,8 @@ if (!isFirebaseReady) {
         const registrationError = formatRegistrationError(error, "Unable to create account.");
         showRegistrationError(registrationError.message, {
           title: registrationError.title,
-          feedbackEl: registerFeedback
+          feedbackEl: registerFeedback,
+          invalidTargets: registrationError.invalidTargets,
         });
       } finally {
         registrationProfilePending = false;

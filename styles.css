@@ -1839,6 +1839,10 @@ body.nav-closing .site-footer {
   min-width: 0;
 }
 
+.field.is-invalid {
+  color: #9e3434;
+}
+
 .field input,
 .field select,
 .field textarea {
@@ -1852,6 +1856,22 @@ body.nav-closing .site-footer {
   font-size: 0.95rem;
   background: #fff;
   color: var(--ink);
+}
+
+.field.is-invalid > input,
+.field.is-invalid > select,
+.field.is-invalid > textarea,
+.field.is-invalid > .password-field input {
+  border-color: rgba(183, 66, 66, 0.78);
+  box-shadow: 0 0 0 4px rgba(183, 66, 66, 0.12);
+  background: rgba(255, 247, 247, 0.98);
+}
+
+.address-fieldset.is-invalid,
+.register-agreement.is-invalid {
+  border-color: rgba(183, 66, 66, 0.58);
+  box-shadow: 0 0 0 4px rgba(183, 66, 66, 0.08);
+  background: linear-gradient(180deg, rgba(255, 247, 247, 0.98), rgba(255, 252, 252, 0.96));
 }
 
 .field select {

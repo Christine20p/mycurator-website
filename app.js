@@ -3305,7 +3305,7 @@ if (!isFirebaseReady) {
     return activationStatus === "active" || activationStatus === "awaiting_start_date";
   }
 
-  const BOOKING_TIME_SLOT_VALUES = ["07:00", "14:00"];
+  const BOOKING_TIME_SLOT_VALUES = ["06:00", "11:00"];
   const BOOKING_ALLOWED_TIME_RANGES = {
     0: { start: 9 * 60, end: 15 * 60 },
     1: { start: 7 * 60, end: 18 * 60 + 30 },

@@ -2624,6 +2624,7 @@ body.nav-closing .site-footer {
 .portal-booking-page .dashboard-header {
   align-items: flex-start;
   gap: 18px;
+  margin-bottom: 14px;
 }
 
 .portal-dashboard-page .dashboard-header > div,
@@ -4602,7 +4603,7 @@ body.booking-sheet-open {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   .portal-dashboard-page [data-signout],

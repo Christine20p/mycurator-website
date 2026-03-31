@@ -2611,10 +2611,19 @@ body.nav-closing .site-footer {
   color: #d8dadd;
 }
 
+.portal-dashboard-page .dashboard-header .eyebrow,
+.portal-dashboard-page .dashboard-header h1,
+.portal-dashboard-page .dashboard-header .lead,
+.portal-booking-page .dashboard-header .eyebrow,
+.portal-booking-page .dashboard-header h1,
+.portal-booking-page .dashboard-header .lead {
+  margin: 0;
+}
+
 .portal-dashboard-page .dashboard-header > div,
 .portal-booking-page .dashboard-header > div {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .portal-dashboard-page .dashboard-header .lead:last-child,
@@ -2622,6 +2631,7 @@ body.nav-closing .site-footer {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin-top: 2px;
   width: fit-content;
   max-width: 100%;
   padding: 10px 16px;

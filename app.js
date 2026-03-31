@@ -516,6 +516,9 @@ const bookingFeedback = document.querySelector("[data-booking-feedback]");
 const bookingOpenPaymentButton = document.querySelector("[data-booking-open-payment]");
 const bookingCurrentPropertyLabel = document.querySelector("[data-booking-current-property]");
 const bookingCurrentScopeLabel = document.querySelector("[data-booking-current-scope]");
+const bookingCadenceTag = document.querySelector("[data-booking-cadence-tag]");
+const bookingCadenceTitle = document.querySelector("[data-booking-cadence-title]");
+const bookingCadenceCopy = document.querySelector("[data-booking-cadence-copy]");
 const bookingServiceDayLabel = document.querySelector("[data-booking-service-day]");
 const bookingServiceTimeLabel = document.querySelector("[data-booking-service-time]");
 const bookingPropertyGrid = document.querySelector("[data-booking-property-grid]");
@@ -3295,6 +3298,13 @@ if (!isFirebaseReady) {
     return Number.isFinite(index) ? slots[((index % slots.length) + slots.length) % slots.length] : "Reserved time to follow";
   };
 
+  function bookingAccessAllowed(statusValue) {
+    const activationStatus = String(statusValue || "")
+      .trim()
+      .toLowerCase();
+    return activationStatus === "active" || activationStatus === "awaiting_start_date";
+  }
+
   const BOOKING_TIME_SLOT_VALUES = ["07:00", "14:00"];
   const BOOKING_ALLOWED_TIME_RANGES = {
     0: { start: 9 * 60, end: 15 * 60 },
@@ -3470,7 +3480,7 @@ if (!isFirebaseReady) {
     const servicesEnabled = data.servicesEnabled !== false;
     const billingActive = data.billingActive !== false;
     const isSold = data.isSold === true;
-    const accountActive = normalizedStatus(currentUserData?.activationStatus) === "active";
+    const accountActive = bookingAccessAllowed(currentUserData?.activationStatus);
 
     return {
       id: doc.id,
@@ -3486,6 +3496,8 @@ if (!isFirebaseReady) {
 
   const renderBookingHeroState = () => {
     const selectedProperty = getSelectedBookingProperty();
+    const activationStatus = normalizedStatus(currentUserData?.activationStatus);
+    const activationScheduled = activationStatus === "awaiting_start_date";
     if (bookingCurrentPropertyLabel) {
       bookingCurrentPropertyLabel.textContent = selectedProperty?.name || "Choose a property";
     }
@@ -3497,11 +3509,22 @@ if (!isFirebaseReady) {
     if (bookingOpenSheetButton) {
       bookingOpenSheetButton.disabled = !bookingSelectionsReady();
     }
+    if (bookingCadenceTag) {
+      bookingCadenceTag.textContent = activationScheduled ? "Activation" : "Weekly Cadence";
+    }
+    if (bookingCadenceTitle) {
+      bookingCadenceTitle.textContent = activationScheduled ? "Scheduled access" : "Reserved service window";
+    }
+    if (bookingCadenceCopy) {
+      bookingCadenceCopy.textContent = activationScheduled
+        ? "Your account can move ahead with bookings now while activation stays scheduled for the start date."
+        : "Your recurring presentation slot remains visible here so your weekly rhythm is always clear at a glance.";
+    }
     if (bookingServiceDayLabel) {
-      bookingServiceDayLabel.textContent = bookingDayName(currentUserData?.serviceDayOfWeek);
+      bookingServiceDayLabel.textContent = activationScheduled ? "Activation" : bookingDayName(currentUserData?.serviceDayOfWeek);
     }
     if (bookingServiceTimeLabel) {
-      bookingServiceTimeLabel.textContent = bookingSlotLabel(currentUserData?.serviceSlot);
+      bookingServiceTimeLabel.textContent = activationScheduled ? "SCHEDULED" : bookingSlotLabel(currentUserData?.serviceSlot);
     }
     if (bookingSelectionNote) {
       bookingSelectionNote.textContent =
@@ -4317,7 +4340,7 @@ if (!isFirebaseReady) {
       }
     }
 
-    const canProceed = activationStatus === "active";
+    const canProceed = bookingAccessAllowed(activationStatus);
 
     if (bookingPage) {
       renderBookingHeroState();
@@ -4332,7 +4355,9 @@ if (!isFirebaseReady) {
 
     if (activationPage && canProceed && !hasRedirectedToBooking) {
       hasRedirectedToBooking = true;
-      showMessage("Activation complete. Redirecting to booking request...", false, {
+      showMessage(activationStatus === "awaiting_start_date"
+        ? "Activation scheduled. Redirecting to booking request..."
+        : "Activation complete. Redirecting to booking request...", false, {
         quietSuccess: true,
         noWrap: true,
       });

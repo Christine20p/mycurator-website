@@ -5465,16 +5465,25 @@ if (!isFirebaseReady) {
               }),
         });
         const result = response.data || {};
+        const mandateRequestStatus = normalizedStatus(result.status || result.mandateStatus || "");
+        const mandateFlowResult = mandateFlowStatus(mandateRequestStatus);
+        const mandateSubmissionFailed =
+          mandateFlowResult === "failed" || mandateFlowResult === "retry_required";
         setFeedback(
           paymentFeedback,
           result.message ||
             (result.status === "submission_failed"
               ? "We saved your mandate details, but could not complete the bank handover. Please try again."
-              : "Your mandate details have been received.")
+              : "Your mandate details have been received."),
+          mandateSubmissionFailed
         );
         if (result.mandateUrl && openMandateButton) {
           openMandateButton.classList.remove("is-hidden");
           openMandateButton.onclick = () => window.open(result.mandateUrl, "_blank");
+        }
+        if (mandateSubmissionFailed) {
+          setMandateFormVisible(true);
+          return;
         }
         setMandateFormVisible(false);
         mandateForm.reset();

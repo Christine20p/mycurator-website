@@ -1890,16 +1890,16 @@ const BOOKING_CONFIRMATION_MESSAGE =
 
 const BOOKING_INVALID_TIME_MESSAGE = `Please choose a date and time at least 24 hours from now.
 
-Bookings are available on the hour and half hour only.
+Manual bookings are currently available at 06:00 and 11:00.
 
 Our Working Hours:
-Monday:     07:00 AM – 18:30 PM
-Tuesday:    07:00 AM – 18:30 PM
-Wednesday:  07:00 AM – 18:30 PM
-Thursday:   07:00 AM – 18:30 PM
-Friday:     07:00 AM – 18:00 PM
-Saturday:   09:00 AM – 15:00 PM
-Sunday:     09:00 AM – 15:00 PM`;
+Monday:     06:00 AM – 18:30 PM
+Tuesday:    06:00 AM – 18:30 PM
+Wednesday:  06:00 AM – 18:30 PM
+Thursday:   06:00 AM – 18:30 PM
+Friday:     06:00 AM – 18:00 PM
+Saturday:   06:00 AM – 15:00 PM
+Sunday:     06:00 AM – 15:00 PM`;
 
 const resolveBookingNoticeMeta = (message, isError) => {
   const normalized = String(message || "").toLowerCase();
@@ -3307,13 +3307,13 @@ if (!isFirebaseReady) {
 
   const BOOKING_TIME_SLOT_VALUES = ["06:00", "11:00"];
   const BOOKING_ALLOWED_TIME_RANGES = {
-    0: { start: 9 * 60, end: 15 * 60 },
-    1: { start: 7 * 60, end: 18 * 60 + 30 },
-    2: { start: 7 * 60, end: 18 * 60 + 30 },
-    3: { start: 7 * 60, end: 18 * 60 + 30 },
-    4: { start: 7 * 60, end: 18 * 60 + 30 },
-    5: { start: 7 * 60, end: 18 * 60 },
-    6: { start: 9 * 60, end: 15 * 60 },
+    0: { start: 6 * 60, end: 15 * 60 },
+    1: { start: 6 * 60, end: 18 * 60 + 30 },
+    2: { start: 6 * 60, end: 18 * 60 + 30 },
+    3: { start: 6 * 60, end: 18 * 60 + 30 },
+    4: { start: 6 * 60, end: 18 * 60 + 30 },
+    5: { start: 6 * 60, end: 18 * 60 },
+    6: { start: 6 * 60, end: 15 * 60 },
   };
 
   const parseBookingDateValue = (value) => {

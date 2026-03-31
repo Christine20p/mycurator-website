@@ -3267,7 +3267,14 @@ if (!isFirebaseReady) {
 
   const buildDefaultMandateStartDate = () => {
     const today = new Date();
-    const target = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    today.setHours(0, 0, 0, 0);
+    let target = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const earliestEligible = new Date(today);
+    earliestEligible.setDate(earliestEligible.getDate() + 2);
+    earliestEligible.setHours(0, 0, 0, 0);
+    if (target < earliestEligible) {
+      target = new Date(today.getFullYear(), today.getMonth() + 2, 1);
+    }
     target.setHours(0, 0, 0, 0);
     return toIsoDateValue(target);
   };

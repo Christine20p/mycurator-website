@@ -4030,24 +4030,6 @@ body.booking-sheet-open {
   display: none !important;
 }
 
-.flow-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.flow-strip span {
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(211, 180, 106, 0.18);
-  border: 1px solid rgba(211, 180, 106, 0.35);
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--deep-teal);
-}
-
 .portal-highlight {
   display: flex;
   flex-wrap: wrap;

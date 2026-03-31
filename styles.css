@@ -2620,10 +2620,23 @@ body.nav-closing .site-footer {
   margin: 0;
 }
 
+.portal-dashboard-page .dashboard-header,
+.portal-booking-page .dashboard-header {
+  align-items: flex-start;
+  gap: 18px;
+}
+
 .portal-dashboard-page .dashboard-header > div,
 .portal-booking-page .dashboard-header > div {
   display: grid;
-  gap: 6px;
+  gap: 10px;
+  max-width: min(820px, 100%);
+}
+
+.portal-dashboard-page .dashboard-header .lead:not(:last-child),
+.portal-booking-page .dashboard-header .lead:not(:last-child) {
+  max-width: 72ch;
+  line-height: 1.72;
 }
 
 .portal-dashboard-page .dashboard-header .lead:last-child,
@@ -2631,7 +2644,7 @@ body.nav-closing .site-footer {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 2px;
+  margin-top: 8px;
   width: fit-content;
   max-width: 100%;
   padding: 10px 16px;

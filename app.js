@@ -587,6 +587,10 @@ const statusTitle = document.querySelector("[data-status-title]");
 const statusMessage = document.querySelector("[data-status-message]");
 const outstandingBadge = document.querySelector("[data-outstanding]");
 const userNameLabel = document.querySelector("[data-user-name]");
+const profileNameLabel = document.querySelector("[data-profile-name]");
+const profileEmailLabel = document.querySelector("[data-profile-email]");
+const profileCellphoneLabel = document.querySelector("[data-profile-cellphone]");
+const profileCodeLabel = document.querySelector("[data-profile-code]");
 const emailChangeForm = document.querySelector("[data-email-change-form]");
 const passwordChangeForm = document.querySelector("[data-password-change-form]");
 const emailChangeFeedback = document.querySelector("[data-email-change-feedback]");
@@ -4144,6 +4148,22 @@ if (!isFirebaseReady) {
     }
   };
 
+  const updateProfileSummary = (data) => {
+    if (profileNameLabel) {
+      profileNameLabel.textContent = formatWelcomeName(data, currentUser?.email, "Client");
+    }
+    if (profileEmailLabel) {
+      profileEmailLabel.textContent = String(data?.email || currentUser?.email || "").trim() || "No email on file";
+    }
+    if (profileCellphoneLabel) {
+      profileCellphoneLabel.textContent =
+        String(data?.cellphone || currentUser?.phoneNumber || "").trim() || "No cellphone on file";
+    }
+    if (profileCodeLabel) {
+      profileCodeLabel.textContent = String(data?.clientCode || currentUser?.uid || "").trim() || "Pending";
+    }
+  };
+
   const setSettingsOtpBusy = (isBusy) => {
     if (!settingsOtpPanel) return;
     disableForm(settingsOtpPanel, isBusy);
@@ -4253,6 +4273,7 @@ if (!isFirebaseReady) {
     if (userNameLabel) {
       userNameLabel.textContent = formatWelcomeName(data, currentUser?.email, "Client");
     }
+    updateProfileSummary(data);
     updateAccountSettingsSummary(data);
 
     const assessmentFeeStatus =

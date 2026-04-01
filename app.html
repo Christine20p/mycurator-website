@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-    <link rel="stylesheet" href="styles.css?v=20260401a" />
+    <link rel="stylesheet" href="styles.css?v=20260401b" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -64,6 +64,37 @@
           </div>
           <p class="portal-message" data-portal-message></p>
           <div class="dashboard-grid activation-dashboard-grid">
+            <div class="dashboard-card sections-card">
+              <h3>Portal sections</h3>
+              <p>Open the parts of the website portal you need most from one clear dashboard.</p>
+              <div class="portal-section-grid">
+                <a class="portal-section-link" href="#my-profile">
+                  <strong>My profile</strong>
+                  <span>Your account identity and contact details.</span>
+                </a>
+                <a class="portal-section-link" href="#my-properties">
+                  <strong>My properties</strong>
+                  <span>Your saved properties and presentation addresses.</span>
+                </a>
+                <a class="portal-section-link" href="#upcoming-bookings">
+                  <strong>Upcoming bookings</strong>
+                  <span>Your scheduled presentation visit activity.</span>
+                </a>
+                <a class="portal-section-link" href="#mycurator-communications">
+                  <strong>MyCurator Communications</strong>
+                  <span>Direct contact channels with the Curator team.</span>
+                </a>
+                <a class="portal-section-link" href="#viewings">
+                  <strong>Viewings</strong>
+                  <span>Viewing-related coordination and updates.</span>
+                </a>
+                <a class="portal-section-link" href="#settings">
+                  <strong>Settings</strong>
+                  <span>Email, password, and verification controls.</span>
+                </a>
+              </div>
+            </div>
+
             <div class="dashboard-card activation-card">
               <h3>Service readiness</h3>
               <p class="status-title" data-status-title>Preparing your dashboard...</p>
@@ -229,8 +260,55 @@
               <p class="portal-note">The assessment fee includes the inspection report.</p>
             </div>
 
-            <div class="dashboard-card help-card settings-card">
-              <h3>Account settings</h3>
+            <div class="dashboard-card profile-card" id="my-profile">
+              <h3>My profile</h3>
+              <p>Your core account details stay visible here for quick reference.</p>
+              <div class="portal-detail-list">
+                <div class="portal-detail-row">
+                  <span>Name</span>
+                  <strong data-profile-name>Loading...</strong>
+                </div>
+                <div class="portal-detail-row">
+                  <span>Email</span>
+                  <strong data-profile-email>Loading...</strong>
+                </div>
+                <div class="portal-detail-row">
+                  <span>Cellphone</span>
+                  <strong data-profile-cellphone>Loading...</strong>
+                </div>
+                <div class="portal-detail-row">
+                  <span>Client code</span>
+                  <strong data-profile-code>Loading...</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-card properties-card" id="my-properties">
+              <h3>My properties</h3>
+              <p>Open your booking workspace to review the saved properties attached to your presentation plan.</p>
+              <div class="dashboard-card-actions">
+                <a class="btn ghost" href="portal-booking.html">Open properties</a>
+              </div>
+            </div>
+
+            <div class="dashboard-card bookings-card" id="upcoming-bookings">
+              <h3>Upcoming bookings</h3>
+              <p>Manage your presentation visit requests, dates, times, and secure payment steps from the booking workspace.</p>
+              <div class="dashboard-card-actions">
+                <a class="btn ghost" href="portal-booking.html">Open bookings</a>
+              </div>
+            </div>
+
+            <div class="dashboard-card viewings-card" id="viewings">
+              <h3>Viewings</h3>
+              <p>Viewing-related coordination and presentation visit updates will appear here as your listing activity progresses.</p>
+              <div class="dashboard-card-actions">
+                <a class="btn ghost" href="portal-booking.html">Open booking workspace</a>
+              </div>
+            </div>
+
+            <div class="dashboard-card help-card settings-card" id="settings">
+              <h3>Settings</h3>
               <p>Protect email and password changes with a one-time code sent to your registered cellphone.</p>
               <p class="portal-note settings-channel">
                 Codes are sent to <span data-settings-otp-destination>your cellphone on file</span>.
@@ -277,9 +355,9 @@
               </div>
             </div>
 
-            <div class="dashboard-card help-card concierge-card">
-              <h3>Need concierge assistance?</h3>
-              <p>Our concierge team can assist with access, payments, and account care.</p>
+            <div class="dashboard-card help-card communications-card" id="mycurator-communications">
+              <h3>MyCurator Communications</h3>
+              <p>Reach the Curator team for access, payments, account care, and ongoing presentation coordination.</p>
               <div class="contact-links">
                 <a class="contact-email" href="mailto:bookings@mycurator.co.za">bookings@mycurator.co.za</a>
                 <a class="contact-phone" href="tel:0792941992">079 294 1992</a>
@@ -321,6 +399,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260401a"></script>
+    <script src="app.js?v=20260401b"></script>
   </body>
 </html>

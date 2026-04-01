@@ -3372,6 +3372,26 @@ body.nav-closing .site-footer {
   min-width: 0;
 }
 
+.sections-card {
+  grid-area: sections;
+}
+
+.profile-card {
+  grid-area: profile;
+}
+
+.properties-card {
+  grid-area: properties;
+}
+
+.bookings-card {
+  grid-area: bookings;
+}
+
+.viewings-card {
+  grid-area: viewings;
+}
+
 .settings-card {
   grid-area: settings;
 }
@@ -3380,8 +3400,80 @@ body.nav-closing .site-footer {
   grid-area: activation;
 }
 
-.concierge-card {
-  grid-area: concierge;
+.communications-card {
+  grid-area: communications;
+}
+
+.portal-section-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.portal-section-link {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(11, 11, 12, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.portal-section-link:hover,
+.portal-section-link:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(139, 94, 56, 0.28);
+  box-shadow: var(--shadow-soft);
+}
+
+.portal-section-link strong {
+  font-size: 0.96rem;
+}
+
+.portal-section-link span {
+  color: rgba(11, 11, 12, 0.64);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.portal-detail-list {
+  display: grid;
+  gap: 10px;
+}
+
+.portal-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(11, 11, 12, 0.08);
+}
+
+.portal-detail-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.portal-detail-row span {
+  color: rgba(11, 11, 12, 0.6);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.portal-detail-row strong {
+  text-align: right;
+  word-break: break-word;
+}
+
+.dashboard-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .booking-dashboard-grid {
@@ -4351,9 +4443,18 @@ body.booking-sheet-open {
   }
 
   .activation-dashboard-grid .settings-card,
+  .activation-dashboard-grid .sections-card,
+  .activation-dashboard-grid .profile-card,
+  .activation-dashboard-grid .properties-card,
+  .activation-dashboard-grid .bookings-card,
+  .activation-dashboard-grid .viewings-card,
   .activation-dashboard-grid .activation-card,
-  .activation-dashboard-grid .concierge-card {
+  .activation-dashboard-grid .communications-card {
     grid-area: auto;
+  }
+
+  .portal-section-grid {
+    grid-template-columns: 1fr;
   }
 
   .booking-dashboard-grid {
@@ -4903,11 +5004,17 @@ body.booking-sheet-open {
 
 @media (min-width: 981px) {
   .activation-dashboard-grid {
-    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
-      "settings settings"
-      "activation concierge";
+      "sections sections sections"
+      "activation activation profile"
+      "properties bookings viewings"
+      "communications settings settings";
     gap: 18px;
+  }
+
+  .portal-section-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .activation-dashboard-grid .settings-card {

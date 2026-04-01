@@ -512,6 +512,7 @@ const bookingForm = document.querySelector("[data-booking-form]");
 const registerAddressFieldset = registerForm?.querySelector('[data-address-fieldset="register"]');
 const bookingAddressFieldset = bookingForm?.querySelector('[data-address-fieldset="booking"]');
 const paymentFeedback = document.querySelector("[data-payment-feedback]");
+const mandateSupportHelp = document.querySelector("[data-mandate-support-help]");
 const bookingFeedback = document.querySelector("[data-booking-feedback]");
 const bookingOpenPaymentButton = document.querySelector("[data-booking-open-payment]");
 const bookingCurrentPropertyLabel = document.querySelector("[data-booking-current-property]");
@@ -620,6 +621,11 @@ const PASSWORD_RESET_SETTINGS = {
     installApp: false,
   },
 };
+const MANDATE_APPROVAL_HELP_MESSAGE =
+  "Mandate sent successfully. Need help approving it? Contact us on WhatsApp, call your bank, or accept the mandate in your banking app.";
+const MANDATE_APPROVAL_WHATSAPP_NUMBER = "27792941992";
+const MANDATE_APPROVAL_WHATSAPP_TEXT =
+  "Hi Curator, we need help setting up and approving the mandate.";
 const openCardButton = document.querySelector("[data-open-card]");
 const openMandateButton = document.querySelector("[data-open-mandate]");
 const mandateButton = document.querySelector("[data-request-mandate]");
@@ -634,6 +640,7 @@ const roleTabs = document.querySelectorAll("[data-role-tab]");
 const rolePanels = document.querySelectorAll("[data-role-panel]");
 let portalCurrentPaymentType = "";
 let portalCurrentPaymentUrl = "";
+let showMandateApprovalHelp = false;
 
 const workerPage = document.querySelector("[data-worker-page]");
 const workerStatToday = document.querySelector("[data-worker-stat-today]");
@@ -2165,6 +2172,82 @@ const continueInCurrentWindow = (
   }, browserContext.isAppLike ? 240 : 120);
 
   return true;
+};
+
+const buildMandateApprovalWhatsAppPrimaryUrl = () =>
+  `whatsapp://send?phone=${MANDATE_APPROVAL_WHATSAPP_NUMBER}&text=${encodeURIComponent(
+    MANDATE_APPROVAL_WHATSAPP_TEXT
+  )}`;
+
+const buildMandateApprovalWhatsAppFallbackUrl = () =>
+  `https://wa.me/${MANDATE_APPROVAL_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    MANDATE_APPROVAL_WHATSAPP_TEXT
+  )}`;
+
+const openMandateApprovalWhatsApp = () => {
+  const primaryUrl = buildMandateApprovalWhatsAppPrimaryUrl();
+  const fallbackUrl = buildMandateApprovalWhatsAppFallbackUrl();
+  let fallbackTimer = null;
+
+  const cleanup = () => {
+    if (fallbackTimer) {
+      window.clearTimeout(fallbackTimer);
+      fallbackTimer = null;
+    }
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === "hidden") {
+      cleanup();
+    }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  fallbackTimer = window.setTimeout(() => {
+    cleanup();
+    if (document.visibilityState === "visible") {
+      window.location.assign(fallbackUrl);
+    }
+  }, 900);
+
+  try {
+    window.location.assign(primaryUrl);
+  } catch (error) {
+    cleanup();
+    window.location.assign(fallbackUrl);
+  }
+};
+
+const setMandateApprovalHelpVisible = (visible) => {
+  if (!mandateSupportHelp) return;
+
+  if (!visible) {
+    mandateSupportHelp.classList.add("is-hidden");
+    mandateSupportHelp.innerHTML = "";
+    return;
+  }
+
+  mandateSupportHelp.innerHTML = "";
+  const prefix = document.createTextNode(
+    "Mandate sent successfully. Need help approving it? Contact us on "
+  );
+  const link = document.createElement("a");
+  link.href = buildMandateApprovalWhatsAppFallbackUrl();
+  link.textContent = "WhatsApp";
+  link.className = "mandate-support-help-link";
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    openMandateApprovalWhatsApp();
+  });
+  const suffix = document.createTextNode(
+    ", call your bank, or accept the mandate in your banking app."
+  );
+
+  mandateSupportHelp.appendChild(prefix);
+  mandateSupportHelp.appendChild(link);
+  mandateSupportHelp.appendChild(suffix);
+  mandateSupportHelp.classList.remove("is-hidden");
 };
 
 bookingNoticeDismissButtons.forEach((button) => {
@@ -4200,6 +4283,10 @@ if (!isFirebaseReady) {
     const mandateApproved = mandateStatus === "approved";
     const mandatePending = mandateStatus === "pending";
     const mandateRetryRequired = mandateStatus === "retry_required" || mandateStatus === "failed";
+    if (!mandatePending) {
+      showMandateApprovalHelp = false;
+    }
+    setMandateApprovalHelpVisible(showMandateApprovalHelp && mandatePending);
     const hasPriceOffer = priceOfferStatus === "ready";
     const payNowRequired = payNowStatus !== "not_required";
     const currentPaymentType =
@@ -5437,6 +5524,8 @@ if (!isFirebaseReady) {
       if (!currentUser || !currentUserData) return;
 
       setFeedback(paymentFeedback, "");
+      showMandateApprovalHelp = false;
+      setMandateApprovalHelpVisible(false);
       const mandateAmountCents = Number(currentUserData.priceOfferedAmount || currentUserData.mandateAmountCents || 0);
       if (!mandateAmountCents) {
         setFeedback(paymentFeedback, "Your tailored monthly fee is not ready just yet.", true);
@@ -5503,12 +5592,16 @@ if (!isFirebaseReady) {
           mandateFlowResult === "failed" || mandateFlowResult === "retry_required";
         setFeedback(
           paymentFeedback,
-          result.message ||
-            (result.status === "submission_failed"
-              ? "We saved your mandate details, but could not complete the bank handover. Please try again."
-              : "Your mandate details have been received."),
+          mandateSubmissionFailed
+            ? result.message ||
+                (result.status === "submission_failed"
+                  ? "We saved your mandate details, but could not complete the bank handover. Please try again."
+                  : "We could not prepare your mandate just now.")
+            : "",
           mandateSubmissionFailed
         );
+        showMandateApprovalHelp = !mandateSubmissionFailed;
+        setMandateApprovalHelpVisible(showMandateApprovalHelp);
         if (result.mandateUrl && openMandateButton) {
           openMandateButton.classList.remove("is-hidden");
           openMandateButton.onclick = () => window.open(result.mandateUrl, "_blank");
@@ -5521,6 +5614,8 @@ if (!isFirebaseReady) {
         mandateForm.reset();
         prefillMandateForm(currentUserData);
       } catch (error) {
+        showMandateApprovalHelp = false;
+        setMandateApprovalHelpVisible(false);
         setFeedback(paymentFeedback, error.message || "We could not prepare your mandate just now.", true);
       }
     });
@@ -5532,6 +5627,8 @@ if (!isFirebaseReady) {
     mandateButton.addEventListener("click", () => {
       if (!currentUser || !currentUserData) return;
       setFeedback(paymentFeedback, "");
+      showMandateApprovalHelp = false;
+      setMandateApprovalHelpVisible(false);
       const mandateAmountCents = Number(currentUserData.priceOfferedAmount || currentUserData.mandateAmountCents || 0);
       if (!mandateAmountCents) {
         setFeedback(paymentFeedback, "Your tailored monthly fee is not ready just yet.");
@@ -5550,6 +5647,8 @@ if (!isFirebaseReady) {
       }
       setMandateFormVisible(false);
       setFeedback(paymentFeedback, "");
+      showMandateApprovalHelp = false;
+      setMandateApprovalHelpVisible(false);
     });
   }
 

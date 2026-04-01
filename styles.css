@@ -2170,6 +2170,25 @@ body.nav-closing .site-footer {
   line-height: 1.65;
 }
 
+.mandate-support-help {
+  margin: 0;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: rgba(11, 11, 12, 0.7);
+}
+
+.mandate-support-help-link {
+  color: #245ac4;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mandate-support-help-link:hover,
+.mandate-support-help-link:focus-visible {
+  text-decoration: underline;
+}
+
 .portal-note {
   margin: 0;
   font-size: 0.85rem;

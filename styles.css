@@ -2630,36 +2630,47 @@ body.nav-closing .site-footer {
   color: #d8dadd;
 }
 
-.portal-dashboard-page .dashboard-header .eyebrow,
-.portal-dashboard-page .dashboard-header h1,
-.portal-dashboard-page .dashboard-header .lead,
 .portal-booking-page .dashboard-header .eyebrow,
 .portal-booking-page .dashboard-header h1,
 .portal-booking-page .dashboard-header .lead {
   margin: 0;
 }
 
-.portal-dashboard-page .dashboard-header,
 .portal-booking-page .dashboard-header {
   align-items: flex-start;
   gap: 18px;
   margin-bottom: 14px;
 }
 
-.portal-dashboard-page .dashboard-header > div,
+.portal-dashboard-page .dashboard-header > div {
+  display: grid;
+  gap: 10px;
+}
+
 .portal-booking-page .dashboard-header > div {
   display: grid;
   gap: 10px;
   max-width: min(820px, 100%);
 }
 
-.portal-dashboard-page .dashboard-header .lead:not(:last-child),
 .portal-booking-page .dashboard-header .lead:not(:last-child) {
   max-width: 72ch;
   line-height: 1.72;
 }
 
-.portal-dashboard-page .dashboard-header .lead:last-child,
+.portal-dashboard-page .dashboard-header .lead:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(228, 198, 176, 0.12);
+  border: 1px solid rgba(228, 198, 176, 0.28);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  color: #d7b39c;
+}
+
 .portal-booking-page .dashboard-header .lead:last-child {
   display: inline-flex;
   align-items: center;
@@ -5131,8 +5142,11 @@ body.booking-sheet-open {
 
 @media (min-width: 981px) {
   .activation-dashboard-grid {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-    gap: 22px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    grid-template-areas:
+      "settings settings"
+      "activation concierge";
+    gap: 18px;
   }
 
   .portal-section-grid {
@@ -5156,7 +5170,7 @@ body.booking-sheet-open {
   }
 
   .activation-dashboard-grid .tier-selection-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

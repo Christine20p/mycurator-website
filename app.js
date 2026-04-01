@@ -3239,20 +3239,22 @@ const ensureFreshAuthSession = async (user) => {
 
 const fetchUserProfileDoc = async (user) => {
   if (!db || !user?.uid) return null;
+  let resolvedProfile = null;
+  try {
+    resolvedProfile = await resolvePortalSessionProfile();
+  } catch (error) {
+    resolvedProfile = null;
+  }
+  if (resolvedProfile && resolvedProfile.data) {
+    const resolvedData = resolvedProfile.data || {};
+    return {
+      id: String(resolvedProfile.resolvedUserId || user.uid).trim() || user.uid,
+      exists: true,
+      data: () => resolvedData
+    };
+  }
   const directSnap = await db.collection("users").doc(user.uid).get();
-  if (directSnap.exists) {
-    return directSnap;
-  }
-  const resolvedProfile = await resolvePortalSessionProfile();
-  if (!(resolvedProfile && resolvedProfile.data)) {
-    return directSnap;
-  }
-  const resolvedData = resolvedProfile.data || {};
-  return {
-    id: String(resolvedProfile.resolvedUserId || user.uid).trim() || user.uid,
-    exists: true,
-    data: () => resolvedData
-  };
+  return directSnap;
 };
 
 const redirectAuthenticatedPortalUser = async (user) => {

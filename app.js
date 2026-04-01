@@ -3311,6 +3311,7 @@ if (!isFirebaseReady) {
 
   const minimumMandateStartDate = () => {
     const date = new Date();
+    date.setDate(date.getDate() + 2);
     date.setHours(0, 0, 0, 0);
     return toIsoDateValue(date);
   };
@@ -5581,8 +5582,8 @@ if (!isFirebaseReady) {
           ...(String(currentUserData.mandateType || "debiCheck").trim().toLowerCase().replace(/[\s_-]+/g, "") === "emandate"
             ? {}
             : {
-                authenticationType: "DELAYED",
-                debtorAuthenticationRequired: "0227",
+                authenticationType: "REALTIME",
+                debtorAuthenticationRequired: "0230",
               }),
         });
         const result = response.data || {};

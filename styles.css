@@ -3410,6 +3410,10 @@ body.nav-closing .site-footer {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.booking-section-grid {
+  margin-top: 20px;
+}
+
 .portal-section-link {
   display: grid;
   gap: 6px;
@@ -4457,6 +4461,10 @@ body.booking-sheet-open {
     grid-template-columns: 1fr;
   }
 
+  .booking-section-grid {
+    margin-top: 16px;
+  }
+
   .booking-dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -5014,6 +5022,10 @@ body.booking-sheet-open {
   }
 
   .portal-section-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .booking-section-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Curator Property Presentation Co. | Viewings</title>
+    <link rel="icon" href="/favicon.ico?v=20260330a" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20260330a" />
+    <meta
+      name="description"
+      content="Review and respond to property viewing requests in the MyCurator website portal."
+    />
+    <link rel="stylesheet" href="styles.css?v=20260401d" />
+  </head>
+  <body>
+    <div class="bg-shape shape-a" aria-hidden="true"></div>
+    <div class="bg-shape shape-b" aria-hidden="true"></div>
+    <div class="bg-shape shape-c" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">
+          <span class="nav-icon" aria-hidden="true"></span>
+          <span class="nav-label">Menu</span>
+        </button>
+        <a class="brand" href="index.html">
+          <img class="brand-logo" src="assets/companylogo.png" alt="Curator Property Presentation Co. logo" />
+          <span class="brand-text">
+            <span class="brand-name">Curator Property Presentation Co.</span>
+            <span class="brand-sub">because first impressions matter</span>
+          </span>
+        </a>
+        <div class="header-actions">
+          <a class="header-cta ghost" href="portal-login.html">Portal</a>
+          <a class="header-cta" href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div class="header-rule" aria-hidden="true"></div>
+      <nav class="site-nav" id="primary-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="company.html">Company</a>
+        <a href="index.html#services">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="platform.html">Platform</a>
+        <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
+        <a class="is-active" href="portal-login.html">Portal</a>
+        <a class="nav-cta" href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section portal-dashboard-page" data-client-viewings-page>
+        <div class="container">
+          <div class="dashboard-header">
+            <div>
+              <p class="eyebrow reveal">Client portal</p>
+              <h1 class="reveal">Viewings</h1>
+              <p class="lead reveal">Respond to incoming property viewing requests and continue payment when cleaning is required before confirmation.</p>
+              <p class="lead reveal">Welcome, <span data-user-name>Client</span>.</p>
+            </div>
+            <button class="btn ghost" type="button" data-signout>Sign out</button>
+          </div>
+          <p class="portal-message" data-portal-message></p>
+          <nav class="portal-pill-nav" aria-label="Client portal sections">
+            <a class="portal-pill-link" href="portal-profile.html">My profile</a>
+            <a class="portal-pill-link" href="portal-properties.html">My properties</a>
+            <a class="portal-pill-link" href="portal-upcoming-bookings.html">Upcoming bookings</a>
+            <a class="portal-pill-link" href="portal-communications.html">MyCurator Communications</a>
+            <a class="portal-pill-link is-active" href="portal-viewings.html">Viewings</a>
+            <a class="portal-pill-link" href="portal-settings.html">Settings</a>
+          </nav>
+          <div class="dashboard-grid portal-section-stack">
+            <div class="dashboard-card portal-section-card">
+              <div class="portal-list-summary">
+                <h3>Viewing requests</h3>
+                <p>These viewing requests use the same status flow as the mobile apps, including accept, reject, and payment continuation.</p>
+              </div>
+              <p class="form-feedback" data-client-viewings-feedback role="status" aria-live="polite"></p>
+              <div class="role-list" data-client-viewings-list>
+                <p class="portal-empty-state">Loading viewing requests...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>Curator Property Presentation Co.</strong>
+          <p>because first impressions matter</p>
+        </div>
+        <div class="footer-links">
+          <a href="company.html">Company</a>
+          <a href="index.html#services">Services</a>
+          <a href="portfolio.html">Portfolio</a>
+          <a href="platform.html">Platform</a>
+          <a href="portal-login.html">Portal</a>
+          <a href="community.html">Community</a>
+          <a href="careers.html">Careers</a>
+          <a href="payment-terms.html">Payment Terms</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="legal.html">Legal</a>
+          <a href="popia.html">POPIA</a>
+        </div>
+        <p class="footer-note">Bookings: bookings@mycurator.co.za | 079 294 1992</p>
+      </div>
+    </footer>
+
+    <script src="firebase-config.js?v=20260330b"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
+    <script src="app.js?v=20260401d"></script>
+  </body>
+</html>

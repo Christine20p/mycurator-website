@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Curator Property Presentation Co. | Settings</title>
+    <link rel="icon" href="/favicon.ico?v=20260330a" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20260330a" />
+    <meta
+      name="description"
+      content="Manage your account settings, email, and password from the MyCurator website portal."
+    />
+    <link rel="stylesheet" href="styles.css?v=20260401d" />
+  </head>
+  <body>
+    <div class="bg-shape shape-a" aria-hidden="true"></div>
+    <div class="bg-shape shape-b" aria-hidden="true"></div>
+    <div class="bg-shape shape-c" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">
+          <span class="nav-icon" aria-hidden="true"></span>
+          <span class="nav-label">Menu</span>
+        </button>
+        <a class="brand" href="index.html">
+          <img class="brand-logo" src="assets/companylogo.png" alt="Curator Property Presentation Co. logo" />
+          <span class="brand-text">
+            <span class="brand-name">Curator Property Presentation Co.</span>
+            <span class="brand-sub">because first impressions matter</span>
+          </span>
+        </a>
+        <div class="header-actions">
+          <a class="header-cta ghost" href="portal-login.html">Portal</a>
+          <a class="header-cta" href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div class="header-rule" aria-hidden="true"></div>
+      <nav class="site-nav" id="primary-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="company.html">Company</a>
+        <a href="index.html#services">Services</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="platform.html">Platform</a>
+        <a href="community.html">Community</a>
+        <a href="careers.html">Careers</a>
+        <a class="is-active" href="portal-login.html">Portal</a>
+        <a class="nav-cta" href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section portal-dashboard-page" data-client-settings-page>
+        <div class="container">
+          <div class="dashboard-header">
+            <div>
+              <p class="eyebrow reveal">Client portal</p>
+              <h1 class="reveal">Settings</h1>
+              <p class="lead reveal">Manage the email and password attached to your MyCurator portal account, with OTP protection sent to your registered cellphone.</p>
+              <p class="lead reveal">Welcome, <span data-user-name>Client</span>.</p>
+            </div>
+            <button class="btn ghost" type="button" data-signout>Sign out</button>
+          </div>
+          <p class="portal-message" data-portal-message></p>
+          <nav class="portal-pill-nav" aria-label="Client portal sections">
+            <a class="portal-pill-link" href="portal-profile.html">My profile</a>
+            <a class="portal-pill-link" href="portal-properties.html">My properties</a>
+            <a class="portal-pill-link" href="portal-upcoming-bookings.html">Upcoming bookings</a>
+            <a class="portal-pill-link" href="portal-communications.html">MyCurator Communications</a>
+            <a class="portal-pill-link" href="portal-viewings.html">Viewings</a>
+            <a class="portal-pill-link is-active" href="portal-settings.html">Settings</a>
+          </nav>
+          <div class="dashboard-grid portal-section-stack">
+            <div class="dashboard-card help-card settings-card">
+              <h3>Account settings</h3>
+              <p>Protect email and password changes with a one-time code sent to your registered cellphone.</p>
+              <p class="portal-note settings-channel">
+                Codes are sent to <span data-settings-otp-destination>your cellphone on file</span>.
+              </p>
+              <div class="settings-block">
+                <p class="settings-label">Email on file</p>
+                <p class="settings-value" data-settings-current-email>Loading...</p>
+                <form class="portal-form account-settings-form" data-email-change-form>
+                  <label class="field">New email
+                    <input type="email" name="new_email" placeholder="name@email.com" required />
+                  </label>
+                  <div class="form-actions">
+                    <button class="btn primary" type="submit">Change email</button>
+                  </div>
+                  <p class="form-feedback" data-email-change-feedback role="status" aria-live="polite"></p>
+                </form>
+              </div>
+              <div class="settings-block">
+                <form class="portal-form account-settings-form" data-password-change-form>
+                  <div class="form-grid">
+                    <label class="field">New password
+                      <input type="password" name="new_password" placeholder="New password" required />
+                    </label>
+                    <label class="field">Confirm new password
+                      <input type="password" name="confirm_password" placeholder="Confirm new password" required />
+                    </label>
+                  </div>
+                  <div class="form-actions">
+                    <button class="btn ghost" type="submit">Change password</button>
+                  </div>
+                  <p class="form-feedback" data-password-change-feedback role="status" aria-live="polite"></p>
+                </form>
+              </div>
+              <div class="otp-panel is-hidden account-settings-otp" data-settings-otp-panel>
+                <h4 data-settings-otp-title>Verify change</h4>
+                <p class="portal-note" data-settings-otp-message>Enter the code sent to your cellphone.</p>
+                <div class="form-actions otp-actions">
+                  <input type="text" name="settings_otp_code" placeholder="Enter OTP" inputmode="numeric" />
+                  <button class="btn primary" type="button" data-settings-otp-verify>Verify OTP</button>
+                  <button class="btn ghost" type="button" data-settings-otp-resend>Resend OTP</button>
+                  <button class="btn ghost" type="button" data-settings-otp-cancel>Cancel</button>
+                </div>
+                <p class="form-feedback" data-settings-otp-feedback role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>Curator Property Presentation Co.</strong>
+          <p>because first impressions matter</p>
+        </div>
+        <div class="footer-links">
+          <a href="company.html">Company</a>
+          <a href="index.html#services">Services</a>
+          <a href="portfolio.html">Portfolio</a>
+          <a href="platform.html">Platform</a>
+          <a href="portal-login.html">Portal</a>
+          <a href="community.html">Community</a>
+          <a href="careers.html">Careers</a>
+          <a href="payment-terms.html">Payment Terms</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="legal.html">Legal</a>
+          <a href="popia.html">POPIA</a>
+        </div>
+        <p class="footer-note">Bookings: bookings@mycurator.co.za | 079 294 1992</p>
+      </div>
+    </footer>
+
+    <script src="firebase-config.js?v=20260330b"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
+    <script src="app.js?v=20260401d"></script>
+  </body>
+</html>

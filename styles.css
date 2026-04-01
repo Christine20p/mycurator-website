@@ -3423,6 +3423,187 @@ body.nav-closing .site-footer {
   line-height: 1.45;
 }
 
+.portal-pill-nav {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 0 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.portal-pill-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.portal-pill-link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 11, 12, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease,
+    background 180ms ease, color 180ms ease;
+}
+
+.portal-pill-link:hover,
+.portal-pill-link:focus-visible,
+.portal-pill-link.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(139, 94, 56, 0.32);
+  background: rgba(139, 94, 56, 0.94);
+  color: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.portal-section-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.portal-section-card {
+  display: grid;
+  gap: 14px;
+}
+
+.portal-section-card h3,
+.portal-section-card h4,
+.portal-section-card p {
+  margin: 0;
+}
+
+.portal-data-list {
+  display: grid;
+  gap: 10px;
+}
+
+.portal-data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(11, 11, 12, 0.08);
+}
+
+.portal-data-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.portal-data-row span {
+  color: rgba(11, 11, 12, 0.6);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.portal-data-row strong {
+  text-align: right;
+  word-break: break-word;
+}
+
+.portal-empty-state {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px dashed rgba(15, 76, 75, 0.24);
+  background: rgba(15, 76, 75, 0.05);
+  color: rgba(11, 11, 12, 0.66);
+}
+
+.portal-list-summary {
+  display: grid;
+  gap: 6px;
+}
+
+.portal-list-summary p {
+  margin: 0;
+  color: rgba(11, 11, 12, 0.62);
+}
+
+.portal-message-list,
+.portal-section-list {
+  display: grid;
+  gap: 12px;
+}
+
+.portal-message-card {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 76, 75, 0.18);
+  background: rgba(15, 76, 75, 0.08);
+  appearance: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.portal-message-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.portal-message-card-head strong {
+  font-size: 1rem;
+}
+
+.portal-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #245ac4;
+  flex: 0 0 auto;
+}
+
+.portal-message-card p {
+  margin: 0;
+}
+
+.portal-message-card-body {
+  color: rgba(11, 11, 12, 0.72);
+  line-height: 1.6;
+}
+
+.portal-message-card-time {
+  color: rgba(11, 11, 12, 0.52);
+  font-size: 0.82rem;
+}
+
+.portal-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.portal-inline-actions .btn,
+.portal-inline-actions .role-quick-reply {
+  margin: 0;
+}
+
+.portal-subtle-note {
+  color: rgba(11, 11, 12, 0.6);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
 .booking-dashboard-grid {
   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
 }

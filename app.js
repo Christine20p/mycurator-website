@@ -497,8 +497,23 @@ document.querySelectorAll("[data-contact-form]").forEach((form) => {
 const loginPage = document.querySelector("[data-portal-login-page]");
 const activationPage = document.querySelector("[data-portal-activation-page]");
 const bookingPage = document.querySelector("[data-portal-booking-page]");
+const clientProfilePage = document.querySelector("[data-client-profile-page]");
+const clientPropertiesPage = document.querySelector("[data-client-properties-page]");
+const clientBookingsPage = document.querySelector("[data-client-bookings-page]");
+const clientCommunicationsPage = document.querySelector("[data-client-communications-page]");
+const clientViewingsPage = document.querySelector("[data-client-viewings-page]");
+const clientSettingsPage = document.querySelector("[data-client-settings-page]");
+const clientSectionPage = document.querySelector(
+  "[data-client-profile-page], [data-client-properties-page], [data-client-bookings-page], [data-client-communications-page], [data-client-viewings-page], [data-client-settings-page]"
+);
 const rolePage = document.querySelector("[data-role-page]");
-const portalPageActive = Boolean(loginPage || activationPage || bookingPage || rolePage);
+const portalPageActive = Boolean(
+  loginPage ||
+    activationPage ||
+    bookingPage ||
+    clientSectionPage ||
+    rolePage
+);
 
 const portalMessage = document.querySelector("[data-portal-message]");
 const loginForm = document.querySelector("[data-login-form]");
@@ -587,6 +602,17 @@ const statusTitle = document.querySelector("[data-status-title]");
 const statusMessage = document.querySelector("[data-status-message]");
 const outstandingBadge = document.querySelector("[data-outstanding]");
 const userNameLabel = document.querySelector("[data-user-name]");
+const profileNameLabel = document.querySelector("[data-profile-name]");
+const profileEmailLabel = document.querySelector("[data-profile-email]");
+const profileCellphoneLabel = document.querySelector("[data-profile-cellphone]");
+const profileCodeLabel = document.querySelector("[data-profile-code]");
+const profileAddressLabel = document.querySelector("[data-profile-address]");
+const profileAgentCodeLabel = document.querySelector("[data-profile-agent-code]");
+const clientPropertiesList = document.querySelector("[data-client-properties-list]");
+const clientBookingsList = document.querySelector("[data-client-bookings-list]");
+const clientMessagesList = document.querySelector("[data-client-messages-list]");
+const clientViewingsList = document.querySelector("[data-client-viewings-list]");
+const clientViewingsFeedback = document.querySelector("[data-client-viewings-feedback]");
 const emailChangeForm = document.querySelector("[data-email-change-form]");
 const passwordChangeForm = document.querySelector("[data-password-change-form]");
 const emailChangeFeedback = document.querySelector("[data-email-change-feedback]");
@@ -718,6 +744,10 @@ let adminCommsBound = false;
 const adminIncidentReplying = new Set();
 let pendingSecurityChange = null;
 let bookingPropertiesListener = null;
+let clientPropertiesListener = null;
+let clientBookingsListener = null;
+let clientMessagesListener = null;
+let clientViewingsListener = null;
 let bookingProperties = [];
 let bookingSelectedPropertyId = "";
 let bookingSelectedCategory = "";
@@ -5126,6 +5156,10 @@ if (!isFirebaseReady) {
           stopUserListener();
           stopPayNowListener();
           stopBookingPropertiesListener();
+          stopClientPropertiesListener();
+          stopClientBookingsListener();
+          stopClientMessagesListener();
+          stopClientViewingsListener();
           if (workerBookingsListener) workerBookingsListener();
           workerBookingsListener = null;
           workerBookingsCache = [];
@@ -6026,6 +6060,626 @@ if (!isFirebaseReady) {
     return data.completed === true || progress >= 100 || status.includes("complete");
   };
 
+  const stopClientPropertiesListener = () => {
+    if (clientPropertiesListener) clientPropertiesListener();
+    clientPropertiesListener = null;
+  };
+
+  const stopClientBookingsListener = () => {
+    if (clientBookingsListener) clientBookingsListener();
+    clientBookingsListener = null;
+  };
+
+  const stopClientMessagesListener = () => {
+    if (clientMessagesListener) clientMessagesListener();
+    clientMessagesListener = null;
+  };
+
+  const stopClientViewingsListener = () => {
+    if (clientViewingsListener) clientViewingsListener();
+    clientViewingsListener = null;
+  };
+
+  const resolveClientProfileAddress = (data = {}) => {
+    const fallbackAddress = String(data.address || data.homeAddress || "").trim();
+    const details = buildStructuredAddressFromRecord(data, fallbackAddress);
+    return details.formattedAddress || fallbackAddress || "No address on file";
+  };
+
+  const resolveClientAgentCode = (data = {}) =>
+    String(
+      data.realEstateCode ||
+      data.realEstateId ||
+      data.realEstateAgentCode ||
+      data.clientAgentCode ||
+      ""
+    ).trim() || "No code on file";
+
+  const renderClientProfilePage = (data = {}) => {
+    if (profileNameLabel) {
+      profileNameLabel.textContent = formatWelcomeName(data, currentUser?.email, "Client");
+    }
+    if (profileEmailLabel) {
+      profileEmailLabel.textContent = String(data.email || currentUser?.email || "").trim() || "No email on file";
+    }
+    if (profileCellphoneLabel) {
+      profileCellphoneLabel.textContent =
+        String(data.cellphone || currentUser?.phoneNumber || "").trim() || "No cellphone on file";
+    }
+    if (profileCodeLabel) {
+      profileCodeLabel.textContent = String(data.clientCode || currentUser?.uid || "").trim() || "Pending";
+    }
+    if (profileAddressLabel) {
+      profileAddressLabel.textContent = resolveClientProfileAddress(data);
+    }
+    if (profileAgentCodeLabel) {
+      profileAgentCodeLabel.textContent = resolveClientAgentCode(data);
+    }
+  };
+
+  const renderClientPropertiesSection = (properties = []) => {
+    if (!clientPropertiesList) return;
+    clientPropertiesList.innerHTML = "";
+
+    if (!properties.length) {
+      clearList(clientPropertiesList, "No properties are attached to your profile yet.");
+      return;
+    }
+
+    properties
+      .slice()
+      .sort((left, right) => {
+        if (left.id === "home" && right.id !== "home") return -1;
+        if (right.id === "home" && left.id !== "home") return 1;
+        if (left.isBookable !== right.isBookable) return left.isBookable ? -1 : 1;
+        return left.name.localeCompare(right.name);
+      })
+      .forEach((property) => {
+        let badge = "Available";
+        if (property.isSold) {
+          badge = "Concluded";
+        } else if (!property.isBookable) {
+          badge =
+            normalizedStatus(currentUserData?.activationStatus) === "active"
+              ? "Temporarily unavailable"
+              : "After activation";
+        }
+        const card = createRoleCard({
+          title: property.name,
+          meta: [property.address],
+          badge,
+        });
+        clientPropertiesList.appendChild(card);
+      });
+  };
+
+  const startClientPropertiesSectionListener = (uid) => {
+    if (!clientPropertiesList || !db || !uid) return;
+    stopClientPropertiesListener();
+    clientPropertiesListener = db
+      .collection("users")
+      .doc(uid)
+      .collection("properties")
+      .onSnapshot(
+        (snapshot) => {
+          const items = snapshot.docs.map(parseBookingPropertyDocument);
+          renderClientPropertiesSection(items);
+        },
+        () => {
+          clearList(clientPropertiesList, "We couldn't load your properties.");
+        }
+      );
+  };
+
+  const renderClientBookingsSection = (bookings = []) => {
+    if (!clientBookingsList) return;
+    clientBookingsList.innerHTML = "";
+
+    const now = new Date();
+    const upcoming = bookings
+      .filter((booking) => {
+        const scheduled = resolveBookingDate(booking);
+        return !scheduled || scheduled >= now || !isCompletedBooking(booking);
+      })
+      .sort((left, right) => {
+        const leftDate = resolveBookingDate(left) || new Date(8640000000000000);
+        const rightDate = resolveBookingDate(right) || new Date(8640000000000000);
+        return leftDate - rightDate;
+      });
+
+    if (!upcoming.length) {
+      clearList(clientBookingsList, "No upcoming bookings yet.");
+      return;
+    }
+
+    upcoming.forEach((booking) => {
+      const meta = [];
+      const address = String(booking.propertyAddress || booking.address || "").trim();
+      const scheduled = resolveBookingDate(booking);
+      const status = formatStatusLabel(resolveBookingStatus(booking));
+      if (address) meta.push(address);
+      if (scheduled) meta.push(`Scheduled: ${formatDateTime(scheduled)}`);
+      if (status) meta.push(`Status: ${status}`);
+      const card = createRoleCard({
+        title: resolveServiceSummary(booking),
+        meta,
+      });
+      clientBookingsList.appendChild(card);
+    });
+  };
+
+  const startClientBookingsSectionListener = (uid) => {
+    if (!clientBookingsList || !db || !uid) return;
+    stopClientBookingsListener();
+    clientBookingsListener = db
+      .collection("users")
+      .doc(uid)
+      .collection("bookings")
+      .onSnapshot(
+        (snapshot) => {
+          const items = snapshot.docs.map((doc) => doc.data() || {});
+          renderClientBookingsSection(items);
+        },
+        () => {
+          clearList(clientBookingsList, "We couldn't load your bookings.");
+        }
+      );
+  };
+
+  const resolvePortalTimestamp = (value) => {
+    if (!value && value !== 0) return null;
+    const directDate = toDate(value);
+    if (directDate) return directDate;
+    const numericValue =
+      typeof value === "number"
+        ? value
+        : typeof value === "string" && /^\d+$/.test(value.trim())
+          ? Number(value.trim())
+          : null;
+    if (!Number.isFinite(numericValue)) return null;
+    const millis = numericValue > 1000000000000 ? numericValue : numericValue * 1000;
+    const date = new Date(millis);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const renderClientMessagesSection = (messages = []) => {
+    if (!clientMessagesList) return;
+    clientMessagesList.innerHTML = "";
+
+    if (!messages.length) {
+      clearList(clientMessagesList, "No communications yet.");
+      return;
+    }
+
+    messages
+      .slice()
+      .sort((left, right) => {
+        const leftDate = resolvePortalTimestamp(left.timestamp) || new Date(0);
+        const rightDate = resolvePortalTimestamp(right.timestamp) || new Date(0);
+        return rightDate - leftDate;
+      })
+      .forEach((message) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "portal-message-card";
+        const timestamp = resolvePortalTimestamp(message.timestamp);
+        button.innerHTML = `
+          <div class="portal-message-card-head">
+            <strong>${escapeHtml(message.title || "Message")}</strong>
+            ${message.isRead ? "" : '<span class="portal-unread-dot" aria-hidden="true"></span>'}
+          </div>
+          <p class="portal-message-card-body">${escapeHtml(message.body || message.message || "")}</p>
+          <p class="portal-message-card-time">${escapeHtml(timestamp ? formatDateTime(timestamp) : "Pending")}</p>
+        `;
+        button.addEventListener("click", async () => {
+          if (!currentUser || !message.id || message.isRead) return;
+          try {
+            await db
+              .collection("users")
+              .doc(currentUser.uid)
+              .collection("messages")
+              .doc(message.id)
+              .update({ isRead: true });
+          } catch (error) {
+            // Ignore read-state update failures.
+          }
+        });
+        clientMessagesList.appendChild(button);
+      });
+  };
+
+  const startClientMessagesSectionListener = (uid) => {
+    if (!clientMessagesList || !db || !uid) return;
+    stopClientMessagesListener();
+    clientMessagesListener = db
+      .collection("users")
+      .doc(uid)
+      .collection("messages")
+      .onSnapshot(
+        (snapshot) => {
+          const items = snapshot.docs.map((doc) => {
+            const data = doc.data() || {};
+            return {
+              id: doc.id,
+              title: String(data.title || "").trim(),
+              body: String(data.body || data.message || "").trim(),
+              isRead: data.isRead === true,
+              timestamp: data.timestamp || data.createdAt || null,
+            };
+          });
+          renderClientMessagesSection(items);
+        },
+        () => {
+          clearList(clientMessagesList, "We couldn't load communications.");
+        }
+      );
+  };
+
+  const viewingStatusLabel = (request = {}) => {
+    const raw = String(request.status || "").trim().toLowerCase() || "pending";
+    const paymentStatus = String(request.paymentStatus || "").trim().toLowerCase();
+    const bookingStatus = String(request.bookingStatus || "").trim().toLowerCase();
+    return raw.includes("reject")
+      ? "Rejected"
+      : raw.includes("cancel")
+        ? "Cancelled"
+        : bookingStatus === "assigned" || String(request.assignedWorkerId || "").trim()
+          ? "Worker Assigned"
+          : bookingStatus === "created" || paymentStatus === "paid"
+            ? "Booked"
+            : paymentStatus === "failed"
+              ? "Payment Failed"
+              : paymentStatus === "declined"
+                ? "Payment Declined"
+                : ["queued", "ready", "processing", "pending"].includes(paymentStatus) ||
+                    bookingStatus === "payment_pending"
+                  ? "Awaiting Payment"
+                  : raw.includes("accept")
+                    ? "Accepted"
+                    : "Pending";
+  };
+
+  const viewingStatusColor = (request = {}) => {
+    const label = viewingStatusLabel(request);
+    if (label === "Booked") return "#1565C0";
+    if (label === "Worker Assigned") return "#00695C";
+    if (label === "Accepted") return "#2E7D32";
+    if (["Rejected", "Payment Failed", "Payment Declined"].includes(label)) return "#C62828";
+    if (label === "Cancelled") return "#6b7280";
+    if (label === "Awaiting Payment") return "#1565C0";
+    return "#FF8F00";
+  };
+
+  const viewingPaymentButtonTitle = (request = {}) => {
+    const paymentStatus = String(request.paymentStatus || "").trim().toLowerCase();
+    return paymentStatus === "failed" || paymentStatus === "declined"
+      ? "Retry Payment"
+      : "Continue to Payment";
+  };
+
+  const shouldShowViewingPaymentButton = (request = {}) => {
+    const status = viewingStatusLabel(request);
+    if (["Pending", "Rejected", "Cancelled", "Booked", "Worker Assigned"].includes(status)) {
+      return false;
+    }
+    return Boolean(String(request.paymentRequestId || "").trim() || String(request.payNowUrl || "").trim());
+  };
+
+  const viewingStatusDetail = (request = {}) => {
+    const status = viewingStatusLabel(request);
+    if (String(request.assignedWorkerName || "").trim()) {
+      return `Assigned curator: ${String(request.assignedWorkerName || "").trim()}`;
+    }
+    if (status === "Awaiting Payment") {
+      return "Essential Cleaning payment is required before the viewing is confirmed.";
+    }
+    if (status === "Payment Failed" || status === "Payment Declined") {
+      return "The payment was not completed. Retry payment to confirm the viewing.";
+    }
+    if (status === "Booked") {
+      return "The viewing cleaning booking has been created and will be assigned.";
+    }
+    return "";
+  };
+
+  const setClientViewingsFeedback = (message = "", isError = false) => {
+    if (!clientViewingsFeedback) return;
+    setFeedback(clientViewingsFeedback, message, isError);
+  };
+
+  const continueViewingPayment = (request = {}) => {
+    const directUrl = String(request.payNowUrl || "").trim();
+    if (directUrl) {
+      continueInCurrentWindow(directUrl);
+      return;
+    }
+
+    const requestId = String(request.paymentRequestId || "").trim();
+    if (!requestId) {
+      setClientViewingsFeedback("Payment link is still being prepared. Please try again shortly.", true);
+      return;
+    }
+
+    stopPayNowListener();
+    setClientViewingsFeedback("Preparing your secure payment link...");
+    payNowListener = watchPayNowRequest(requestId, (data) => {
+      const requestState = extractPayNowRequestState(data);
+
+      if (requestState.redirectUrl) {
+        continueInCurrentWindow(requestState.redirectUrl, {
+          onReady: () => {
+            setClientViewingsFeedback(securePaymentRedirectMessage());
+          },
+        });
+        stopPayNowListener();
+        return;
+      }
+
+      if (requestState.errorMessage || ["failed", "declined"].includes(requestState.status)) {
+        setClientViewingsFeedback(
+          requestState.errorMessage || "Payment was not completed. Please try again.",
+          true
+        );
+        stopPayNowListener();
+      }
+    });
+  };
+
+  const respondToClientViewingRequest = async (request, action) => {
+    if (!functions || !request?.id) return;
+    setClientViewingsFeedback("");
+    try {
+      const response = await functions.httpsCallable("respondToViewingRequest")({
+        requestId: request.id,
+        action,
+        gateway: "ozow",
+      });
+      const result = response?.data || {};
+      const status = String(result.status || "").trim().toLowerCase();
+
+      if (status === "payment_required") {
+        const directUrl = String(result.redirectUrl || result.payNowUrl || "").trim();
+        if (directUrl) {
+          continueInCurrentWindow(directUrl, {
+            onReady: () => {
+              setClientViewingsFeedback(securePaymentRedirectMessage());
+            },
+          });
+          return;
+        }
+        const requestId = String(result.requestId || "").trim();
+        if (requestId) {
+          stopPayNowListener();
+          setClientViewingsFeedback("Preparing your secure payment link...");
+          payNowListener = watchPayNowRequest(requestId, (data) => {
+            const requestState = extractPayNowRequestState(data);
+            if (requestState.redirectUrl) {
+              continueInCurrentWindow(requestState.redirectUrl, {
+                onReady: () => {
+                  setClientViewingsFeedback(securePaymentRedirectMessage());
+                },
+              });
+              stopPayNowListener();
+              return;
+            }
+            if (requestState.errorMessage || ["failed", "declined"].includes(requestState.status)) {
+              setClientViewingsFeedback(
+                requestState.errorMessage || "We couldn't start the payment. Please try again.",
+                true
+              );
+              stopPayNowListener();
+            }
+          });
+          return;
+        }
+        setClientViewingsFeedback("We couldn't start the payment. Please try again.", true);
+        return;
+      }
+
+      if (action === "reject") {
+        setClientViewingsFeedback("Viewing request rejected.");
+      } else {
+        setClientViewingsFeedback("Viewing request updated.");
+      }
+    } catch (error) {
+      setClientViewingsFeedback(error.message || "We couldn't update the viewing request.", true);
+    }
+  };
+
+  const renderClientViewingsSection = (requests = []) => {
+    if (!clientViewingsList) return;
+    clientViewingsList.innerHTML = "";
+
+    if (!requests.length) {
+      clearList(clientViewingsList, "No viewing requests yet.");
+      return;
+    }
+
+    requests
+      .slice()
+      .sort((left, right) => {
+        const leftDate = resolvePortalTimestamp(left.scheduledAt) || new Date(8640000000000000);
+        const rightDate = resolvePortalTimestamp(right.scheduledAt) || new Date(8640000000000000);
+        return leftDate - rightDate;
+      })
+      .forEach((request) => {
+        const card = document.createElement("div");
+        card.className = "role-card";
+
+        const header = document.createElement("div");
+        header.className = "portal-message-card-head";
+
+        const title = document.createElement("strong");
+        title.textContent = request.propertyName || "Property";
+        header.appendChild(title);
+
+        const badge = document.createElement("span");
+        badge.className = "role-badge";
+        badge.textContent = viewingStatusLabel(request);
+        badge.style.background = viewingStatusColor(request);
+        badge.style.color = "#fff";
+        header.appendChild(badge);
+        card.appendChild(header);
+
+        const address = String(request.propertyAddress || "").trim();
+        if (address) {
+          const addressLine = document.createElement("p");
+          addressLine.className = "role-card-meta";
+          addressLine.textContent = address;
+          card.appendChild(addressLine);
+        }
+
+        const scheduled = resolvePortalTimestamp(request.scheduledAt);
+        if (scheduled) {
+          const scheduledLine = document.createElement("p");
+          scheduledLine.className = "role-card-meta";
+          scheduledLine.textContent = `Viewing: ${formatDateTime(scheduled)}`;
+          card.appendChild(scheduledLine);
+        }
+
+        const note = String(request.note || "").trim();
+        if (note) {
+          const noteLine = document.createElement("p");
+          noteLine.className = "role-card-meta";
+          noteLine.textContent = `Note: ${note}`;
+          card.appendChild(noteLine);
+        }
+
+        const amount = Number(request.paymentAmountCents || 0);
+        if (amount > 0) {
+          const amountLine = document.createElement("p");
+          amountLine.className = "role-card-meta";
+          amountLine.textContent = `Essential Cleaning: ${formatCurrency(amount)}`;
+          card.appendChild(amountLine);
+        }
+
+        const detail = viewingStatusDetail(request);
+        if (detail) {
+          const detailLine = document.createElement("p");
+          detailLine.className = "role-card-meta";
+          detailLine.textContent = detail;
+          card.appendChild(detailLine);
+        }
+
+        const cleaningDate = resolvePortalTimestamp(request.cleaningScheduledAt);
+        if (cleaningDate) {
+          const cleaningLine = document.createElement("p");
+          cleaningLine.className = "role-card-meta";
+          cleaningLine.textContent = `Cleaning starts: ${formatDateTime(cleaningDate)}`;
+          card.appendChild(cleaningLine);
+        }
+
+        if (viewingStatusLabel(request) === "Pending") {
+          const actions = document.createElement("div");
+          actions.className = "role-card-actions";
+
+          const acceptButton = document.createElement("button");
+          acceptButton.type = "button";
+          acceptButton.className = "btn primary";
+          acceptButton.textContent = "Accept";
+          acceptButton.addEventListener("click", () => {
+            void respondToClientViewingRequest(request, "accept");
+          });
+          actions.appendChild(acceptButton);
+
+          const rejectButton = document.createElement("button");
+          rejectButton.type = "button";
+          rejectButton.className = "btn ghost";
+          rejectButton.textContent = "Reject";
+          rejectButton.addEventListener("click", () => {
+            void respondToClientViewingRequest(request, "reject");
+          });
+          actions.appendChild(rejectButton);
+          card.appendChild(actions);
+        } else if (shouldShowViewingPaymentButton(request)) {
+          const actions = document.createElement("div");
+          actions.className = "role-card-actions";
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "btn primary";
+          button.textContent = viewingPaymentButtonTitle(request);
+          button.addEventListener("click", () => {
+            continueViewingPayment(request);
+          });
+          actions.appendChild(button);
+          card.appendChild(actions);
+        }
+
+        clientViewingsList.appendChild(card);
+      });
+  };
+
+  const startClientViewingsSectionListener = (uid) => {
+    if (!clientViewingsList || !db || !uid) return;
+    stopClientViewingsListener();
+    clientViewingsListener = db
+      .collection("users")
+      .doc(uid)
+      .collection("viewingRequests")
+      .onSnapshot(
+        (snapshot) => {
+          const items = snapshot.docs.map((doc) => {
+            const data = doc.data() || {};
+            return {
+              id: doc.id,
+              clientId: data.clientId || "",
+              clientName: data.clientName || "",
+              clientCode: data.clientCode || "",
+              propertyId: data.propertyId || "",
+              propertyName: data.propertyName || "",
+              propertyAddress: data.propertyAddress || "",
+              realEstateAgentId: data.realEstateAgentId || "",
+              realEstateAgentName: data.realEstateAgentName || "",
+              realEstateAgentCode: data.realEstateAgentCode || "",
+              realEstateCompany: data.realEstateCompany || "",
+              status: data.status || "",
+              scheduledAt: data.scheduledAt || null,
+              createdAt: data.createdAt || null,
+              respondedAt: data.respondedAt || null,
+              note: data.note || "",
+              needsCleaning: data.needsCleaning === true,
+              cleaningStatus: data.cleaningStatus || "",
+              cleaningResponseAt: data.cleaningResponseAt || null,
+              cleaningScheduledAt: data.cleaningScheduledAt || null,
+              acceptedAt: data.acceptedAt || null,
+              rejectedAt: data.rejectedAt || null,
+              paymentRequestId: data.paymentRequestId || "",
+              paymentStatus: data.paymentStatus || "",
+              paymentGateway: data.paymentGateway || "",
+              paymentAmountCents: data.paymentAmountCents || 0,
+              paymentReference: data.paymentReference || "",
+              payNowUrl: data.payNowUrl || "",
+              paymentError: data.paymentError || "",
+              bookingId: data.bookingId || "",
+              bookingPath: data.bookingPath || "",
+              bookingStatus: data.bookingStatus || "",
+              bookingConfirmedAt: data.bookingConfirmedAt || null,
+              assignedWorkerId: data.assignedWorkerId || "",
+              assignedWorkerName: data.assignedWorkerName || "",
+              assignedWorkerCode: data.assignedWorkerCode || "",
+            };
+          });
+          renderClientViewingsSection(items);
+        },
+        () => {
+          clearList(clientViewingsList, "We couldn't load viewing requests.");
+          setClientViewingsFeedback("We couldn't load viewing requests. Please try again.", true);
+        }
+      );
+  };
+
+  const renderActiveClientSectionPage = (data = {}) => {
+    if (userNameLabel) {
+      userNameLabel.textContent = formatWelcomeName(data, currentUser?.email, "Client");
+    }
+    if (clientProfilePage) {
+      renderClientProfilePage(data);
+    }
+    if (clientSettingsPage) {
+      updateAccountSettingsSummary(data);
+    }
+  };
+
   const initWorkerDashboard = () => {
     if (!workerPage || !currentUser || !db) return;
 
@@ -6854,6 +7508,10 @@ if (!isFirebaseReady) {
       stopUserListener();
       stopPayNowListener();
       stopBookingPropertiesListener();
+      stopClientPropertiesListener();
+      stopClientBookingsListener();
+      stopClientMessagesListener();
+      stopClientViewingsListener();
       if (workerBookingsListener) workerBookingsListener();
       workerBookingsListener = null;
       workerBookingsCache = [];
@@ -6869,7 +7527,7 @@ if (!isFirebaseReady) {
       renderBookingSummary();
       setBookingSheetOpen(false);
       closeSettingsOtpPanel();
-      if (activationPage || bookingPage || rolePage) {
+      if (activationPage || bookingPage || clientSectionPage || rolePage) {
         scheduleUnauthenticatedPortalRedirect();
       }
       return;
@@ -6967,6 +7625,26 @@ if (!isFirebaseReady) {
       }
       updateDashboard(currentUserData);
       startUserListener(user.uid, updateDashboard);
+      return;
+    }
+
+    if (clientSectionPage) {
+      if (role !== "client") {
+        redirectToRole(role);
+        return;
+      }
+      renderActiveClientSectionPage(currentUserData);
+      startUserListener(user.uid, renderActiveClientSectionPage);
+
+      if (clientPropertiesPage) {
+        startClientPropertiesSectionListener(user.uid);
+      } else if (clientBookingsPage) {
+        startClientBookingsSectionListener(user.uid);
+      } else if (clientCommunicationsPage) {
+        startClientMessagesSectionListener(user.uid);
+      } else if (clientViewingsPage) {
+        startClientViewingsSectionListener(user.uid);
+      }
       return;
     }
 

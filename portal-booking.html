@@ -10,7 +10,7 @@
       name="description"
       content="Register, log in, book services, and manage payments through the MyCurator client portal."
     />
-    <link rel="stylesheet" href="styles.css?v=20260401c" />
+    <link rel="stylesheet" href="styles.css?v=20260401d" />
   </head>
   <body>
     <div class="bg-shape shape-a" aria-hidden="true"></div>
@@ -69,32 +69,14 @@
                   <p class="booking-kicker">Property Presentation</p>
                   <h3>Curator Property Presentation Co.</h3>
                 </div>
-                <div class="portal-section-grid booking-section-grid" aria-label="Client portal sections">
-                  <a class="portal-section-link" href="app.html#my-profile">
-                    <strong>My profile</strong>
-                    <span>Review your account details and client profile.</span>
-                  </a>
-                  <a class="portal-section-link" href="app.html#my-properties">
-                    <strong>My properties</strong>
-                    <span>Open your saved properties and presentation records.</span>
-                  </a>
-                  <a class="portal-section-link" href="app.html#upcoming-bookings">
-                    <strong>Upcoming bookings</strong>
-                    <span>Check your next scheduled presentation visits.</span>
-                  </a>
-                  <a class="portal-section-link" href="app.html#mycurator-communications">
-                    <strong>MyCurator Communications</strong>
-                    <span>See concierge support and presentation updates.</span>
-                  </a>
-                  <a class="portal-section-link" href="app.html#viewings">
-                    <strong>Viewings</strong>
-                    <span>Track viewing requests tied to your property journey.</span>
-                  </a>
-                  <a class="portal-section-link" href="app.html#settings">
-                    <strong>Settings</strong>
-                    <span>Manage login, billing, and account preferences.</span>
-                  </a>
-                </div>
+                <nav class="portal-pill-nav booking-section-grid" aria-label="Client portal sections">
+                  <a class="portal-pill-link" href="portal-profile.html">My profile</a>
+                  <a class="portal-pill-link" href="portal-properties.html">My properties</a>
+                  <a class="portal-pill-link" href="portal-upcoming-bookings.html">Upcoming bookings</a>
+                  <a class="portal-pill-link" href="portal-communications.html">MyCurator Communications</a>
+                  <a class="portal-pill-link" href="portal-viewings.html">Viewings</a>
+                  <a class="portal-pill-link" href="portal-settings.html">Settings</a>
+                </nav>
               </div>
 
               <div class="booking-flow-card booking-cadence-card">
@@ -298,6 +280,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-functions-compat.js"></script>
-    <script src="app.js?v=20260401b"></script>
+    <script src="app.js?v=20260401d"></script>
   </body>
 </html>
